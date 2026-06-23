@@ -1,0 +1,94 @@
+@import 'tailwindcss';
+
+/*
+  Design "Cobalt sky" exposé comme variables de theme Tailwind v4.
+  Toute couleur du projet provient d'ici.
+  Pour ajouter une teinte, on l'ajoute ici et elle devient utilisable via
+  bg-*, text-*, border-* dans tout le projet.
+*/
+@theme {
+    /* Couleurs de marque */
+    --color-primary: #0047ab; /* boutons, liens, remplissage des barres */
+    --color-primary-dark: #00327d; /* navbar et footer */
+    --color-navy: #000080; /* titres principaux */
+    --color-accent: #82c8e5; /* fonds teintes, soulignement actif */
+    --color-accent-soft: #8ad0ed; /* liens du footer */
+    /* Surfaces */
+    --color-background: #f7f9ff; /* fond de page */
+    --color-surface: #ffffff; /* cartes */
+    --color-surface-tint: #edf4ff; /* surfaces secondaires, chips */
+    --color-surface-hover: #f1f5f9; /* survol de ligne */
+    /* Texte */
+    --color-ink: #071d2e; /* corps de texte */
+    --color-ink-soft: #434653; /* texte secondaire */
+    --color-muted: #6d8196; /* légendes discrètes */
+    /* Bordures et séparateurs */
+    --color-line: #e5eaf2;
+    --color-line-soft: #f1f5f9;
+    --color-input: #cbd5e1;
+
+    /* Statuts */
+    --color-success: #16a34a;
+    --color-warning: #f59e0b;
+    --color-danger: #ba1a1a;
+
+    /* Code */
+    --color-code-bg: #0b1437;
+
+    /* Polices */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'Fira Code', ui-monospace, monospace;
+
+    /* Rayons */
+    --radius-card: 16px;
+    --radius-control: 10px;
+
+    /* Ombre de carte */
+    --shadow-card: 0 1px 3px rgba(7, 29, 46, 0.08);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background-color: var(--color-background);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Icônes Material Symbols : réglage par défaut */
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    -webkit-font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+}
+
+.icon-filled {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Lien de navigation actif géré par Vue Router */
+.nav-link.router-link-active {
+    color: var(--color-accent);
+    border-bottom: 2px solid var(--color-accent);
+    padding-top: 2px;
+}
+
+/* Respect de la préference de mouvement réduit */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

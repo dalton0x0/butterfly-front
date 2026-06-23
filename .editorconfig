@@ -1,0 +1,30 @@
+# EditorConfig harmonise le style d'édition entre les différents éditeurs et IDE.
+# Tout éditeur compatible (VS Code, IntelliJ, WebStorm, etc.) lira ce fichier.
+# Documentation : https://editorconfig.org
+
+# Indique que ce fichier est la racine : EditorConfig arrête de remonter les dossiers.
+root = true
+
+# Règles communes à tous les fichiers.
+# L'indentation par défaut est de 4 espaces, qui correspond à la convention
+# majoritaire du projet (fichiers .js, .html et .css).
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+# Composants Vue : indentation de 2 espaces, conforme au code existant.
+[*.vue]
+indent_size = 2
+
+# Fichiers JSON (package.json, etc.) : 2 espaces, convention de l'écosystème npm.
+[*.json]
+indent_size = 2
+
+# Markdown : on conserve les espaces de fin de ligne car deux espaces
+# en fin de ligne y signifient un saut de ligne volontaire.
+[*.md]
+trim_trailing_whitespace = false
