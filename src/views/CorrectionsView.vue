@@ -4,6 +4,7 @@
 // Validés / Rejetés : historique en lecture seule, avec la note et le feedback donnés.
 // File : GET /api/progress/exercises?status=... (restreinte aux apprenants du formateur).
 import {ref, computed, onMounted} from 'vue'
+import {formatDate} from '@/utils/date'
 import {correctionService} from '@/services/correctionService'
 import {userService} from '@/services/userService'
 import {exerciseService} from '@/services/exerciseService'
@@ -45,16 +46,6 @@ function studentName(userId) {
   return usersMap.value.get(userId) || `Apprenant #${userId}`
 }
 
-function formatDate(value) {
-  if (!value) {
-    return ''
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'})
-}
-
 const STATUS_CHIP = {
   SUBMITTED: {label: 'En attente', variant: 'warning'},
   VALIDATED: {label: 'Validé', variant: 'success'},
@@ -71,21 +62,21 @@ const filteredQueue = computed(() => {
     return queue.value
   }
   return queue.value.filter(
-      (item) =>
-          studentName(item.userId).toLowerCase().includes(term) ||
-          (item.exerciseName || '').toLowerCase().includes(term)
+    (item) =>
+      studentName(item.userId).toLowerCase().includes(term) ||
+      (item.exerciseName || '').toLowerCase().includes(term)
   )
 })
 
 const sortedSubmissions = computed(() =>
-    [...submissions.value].sort((a, b) => (b.attemptNumber ?? 0) - (a.attemptNumber ?? 0))
+  [...submissions.value].sort((a, b) => (b.attemptNumber ?? 0) - (a.attemptNumber ?? 0))
 )
 
 const latestSubmission = computed(() => sortedSubmissions.value[0] || null)
 
 // Soumission relue (porteuse de la note et du feedback) pour l'historique.
 const reviewedSubmission = computed(() =>
-    sortedSubmissions.value.find((s) => s.reviewedAt) || latestSubmission.value
+  sortedSubmissions.value.find((s) => s.reviewedAt) || latestSubmission.value
 )
 
 async function changeTab(key) {
@@ -209,14 +200,14 @@ onMounted(load)
   <!-- Onglets -->
   <div class="flex gap-1 mb-6 border-b border-line">
     <button
-        v-for="tab in TABS"
-        :key="tab.key"
-        type="button"
-        class="px-4 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
-        :class="currentTab === tab.key
+      v-for="tab in TABS"
+      :key="tab.key"
+      type="button"
+      class="px-4 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
+      :class="currentTab === tab.key
         ? 'border-primary text-primary'
         : 'border-transparent text-ink-soft hover:text-ink'"
-        @click="changeTab(tab.key)"
+      @click="changeTab(tab.key)"
     >
       {{ tab.label }}
     </button>
@@ -257,11 +248,11 @@ onMounted(load)
         </thead>
         <tbody>
         <tr
-            v-for="c in filteredQueue"
-            :key="c.id"
-            class="border-t border-line-soft hover:bg-surface-hover transition-colors cursor-pointer"
-            :class="{ 'bg-surface-tint/60': selected && selected.id === c.id }"
-            @click="select(c)"
+          v-for="c in filteredQueue"
+          :key="c.id"
+          class="border-t border-line-soft hover:bg-surface-hover transition-colors cursor-pointer"
+          :class="{ 'bg-surface-tint/60': selected && selected.id === c.id }"
+          @click="select(c)"
         >
           <td class="px-5 py-3"><span class="text-ink">{{ studentName(c.userId) }}</span></td>
           <td class="px-5 py-3 text-ink-soft">{{ c.exerciseName }}</td>
@@ -309,11 +300,11 @@ onMounted(load)
             <p class="text-[12px] font-semibold text-muted uppercase tracking-wide mb-2">Fichiers joints</p>
             <div class="flex flex-col gap-2">
               <button
-                  v-for="file in latestSubmission.files"
-                  :key="file.id"
-                  type="button"
-                  class="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-surface-tint hover:bg-surface-hover transition-colors text-left"
-                  @click="download(latestSubmission, file)"
+                v-for="file in latestSubmission.files"
+                :key="file.id"
+                type="button"
+                class="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-surface-tint hover:bg-surface-hover transition-colors text-left"
+                @click="download(latestSubmission, file)"
               >
                 <Icon name="download" :size="20" class="text-primary shrink-0"/>
                 <span class="text-[14px] text-ink flex-1 truncate">{{ file.originalFilename }}</span>
@@ -333,10 +324,10 @@ onMounted(load)
                 Feedback pour l'apprenant (facultatif)
               </p>
               <textarea
-                  v-model="feedback"
-                  rows="5"
-                  placeholder="Saisissez votre commentaire constructif ici..."
-                  class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
+                v-model="feedback"
+                rows="5"
+                placeholder="Saisissez votre commentaire constructif ici..."
+                class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
               ></textarea>
             </div>
 
@@ -344,12 +335,12 @@ onMounted(load)
               <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Note (sur
                 20)</label>
               <input
-                  v-model="grade"
-                  type="number"
-                  min="0"
-                  max="20"
-                  placeholder="0 - 20"
-                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                v-model="grade"
+                type="number"
+                min="0"
+                max="20"
+                placeholder="0 - 20"
+                class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
 
@@ -357,19 +348,19 @@ onMounted(load)
 
             <div class="flex justify-start gap-3 mt-1">
               <button
-                  type="button"
-                  :disabled="acting"
-                  class="h-10 px-5 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors flex items-center gap-2 disabled:opacity-60"
-                  @click="reject"
+                type="button"
+                :disabled="acting"
+                class="h-10 px-5 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors flex items-center gap-2 disabled:opacity-60"
+                @click="reject"
               >
                 <Icon name="close" :size="18"/>
                 Rejeter
               </button>
               <button
-                  type="button"
-                  :disabled="acting"
-                  class="h-10 px-5 rounded-[10px] bg-[#16a34a] text-white text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60"
-                  @click="validate"
+                type="button"
+                :disabled="acting"
+                class="h-10 px-5 rounded-[10px] bg-[#16a34a] text-white text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60"
+                @click="validate"
               >
                 <Icon name="check" :size="18"/>
                 Valider

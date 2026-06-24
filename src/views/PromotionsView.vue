@@ -4,6 +4,7 @@
 // (/api/promos). La liste ne porte que le comptage ; les membres sont chargés
 // à la demande via GET /api/promos/{id}.
 import {ref, reactive, computed, onMounted} from 'vue'
+import {formatDate} from '@/utils/date'
 import {promotionService} from '@/services/promotionService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
@@ -46,19 +47,9 @@ const filtered = computed(() => {
   return rows.value.filter((p) => (p.name || '').toLowerCase().includes(term))
 })
 
-function formatDate(value) {
-  if (!value) {
-    return null
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? null
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'})
-}
-
 function period(promo) {
-  const start = formatDate(promo.startDate)
-  const end = formatDate(promo.endDate)
+  const start = formatDate(promo.startDate, {fallback: null})
+  const end = formatDate(promo.endDate, {fallback: null})
   if (start && end) {
     return `du ${start} au ${end}`
   }

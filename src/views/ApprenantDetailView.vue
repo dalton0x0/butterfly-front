@@ -4,6 +4,7 @@
 // GET /api/users/{id} pour l'identité, GET /api/progress/users/{id}/overview
 // pour la progression (lecture seule, accessible à tout le staff).
 import {ref, computed, onMounted} from 'vue'
+import {formatDate} from '@/utils/date'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -38,16 +39,6 @@ const averageGrade = computed(() => {
   const value = overview.value?.averageGrade
   return value != null ? `${value.toFixed(1)} / 20` : '-'
 })
-
-function formatDate(value) {
-  if (!value) {
-    return ''
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'})
-}
 
 // Activité récente : on fusionne les trois flux de l'aperçu, comme le dashboard apprenant.
 const recentActivity = computed(() => {

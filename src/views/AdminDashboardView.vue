@@ -4,6 +4,8 @@
 // comptes désactivés, corbeille, blocs, promotions. Plus les derniers inscrits
 // et des raccourcis vers les écrans de gestion.
 import {ref, computed, onMounted} from 'vue'
+import {ROLES, roleChip} from '@/utils/roles'
+import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
 import {blockService} from '@/services/blockService'
@@ -23,9 +25,9 @@ const stats = computed(() => {
   const users = activeUsers.value
   return {
     total: users.length,
-    learners: users.filter((u) => u.role === 'USER').length,
-    teachers: users.filter((u) => u.role === 'TEACHER').length,
-    admins: users.filter((u) => u.role === 'ADMIN').length,
+    learners: users.filter((u) => u.role === ROLES.USER).length,
+    teachers: users.filter((u) => u.role === ROLES.TEACHER).length,
+    admins: users.filter((u) => u.role === ROLES.ADMIN).length,
     disabled: users.filter((u) => !u.enabled).length,
     deleted: deletedCount.value,
     blocks: blocksCount.value,
@@ -48,26 +50,6 @@ const cards = computed(() => [
   {label: 'Comptes désactivés', value: stats.value.disabled, icon: 'block', tint: 'bg-surface-tint text-ink-soft'},
   {label: 'Corbeille', value: stats.value.deleted, icon: 'delete', tint: 'bg-surface-tint text-ink-soft'}
 ])
-
-const ROLE_CHIP = {
-  ADMIN: {label: 'Admin', variant: 'primary'},
-  TEACHER: {label: 'Formateur', variant: 'primary'},
-  USER: {label: 'Apprenant', variant: 'neutral'}
-}
-
-function roleChip(role) {
-  return ROLE_CHIP[role] || ROLE_CHIP.USER
-}
-
-function formatDate(value) {
-  if (!value) {
-    return ''
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'})
-}
 
 const recentUsers = computed(() =>
     [...activeUsers.value]

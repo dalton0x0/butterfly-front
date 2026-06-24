@@ -2,6 +2,7 @@
 // Tableau de bord apprenant : en-tête, KPIs, blocs assignés, activité récente,
 // derniers badges. Tout vient d'un seul appel : GET /api/users/me/dashboard.
 import {ref, computed, onMounted} from 'vue'
+import {formatDate} from '@/utils/date'
 import {useAuthStore} from '@/stores/auth'
 import {dashboardService} from '@/services/dashboardService'
 import {mediaUrl} from '@/utils/media'
@@ -9,6 +10,11 @@ import Icon from '@/components/Icon.vue'
 import {badgeIcon} from '@/utils/badgeIcons'
 import ProgressBar from '@/components/ProgressBar.vue'
 import BlockCover from '@/components/BlockCover.vue'
+
+// Date courte (jour et mois) pour le fil d'activité et les badges récents.
+function formatShortDate(value) {
+  return formatDate(value, {options: {day: '2-digit', month: 'short'}})
+}
 
 const auth = useAuthStore()
 
@@ -40,16 +46,6 @@ const kpis = computed(() => [
   {label: 'Quiz réussis', value: overview.value.totalQuizzesPassed ?? 0, icon: 'quiz'},
   {label: 'XP total', value: overview.value.totalXp ?? 0, icon: 'bolt'}
 ])
-
-function formatDate(value) {
-  if (!value) {
-    return ''
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short'})
-}
 
 // Activité récente : on fusionne les trois flux de l'overview.
 const recentActivity = computed(() => {
@@ -187,7 +183,7 @@ onMounted(load)
               <Icon :name="item.icon" :size="18"/>
             </div>
             <span class="text-[15px] text-ink flex-1">{{ item.text }}</span>
-            <span class="text-[13px] text-muted shrink-0">{{ formatDate(item.at) }}</span>
+            <span class="text-[13px] text-muted shrink-0">{{ formatShortDate(item.at) }}</span>
           </li>
         </ul>
       </div>
@@ -204,7 +200,7 @@ onMounted(load)
               <Icon :name="badgeIcon(ub.badge?.icon)" :size="28" class="text-primary"/>
             </div>
             <span class="text-[13px] font-medium text-ink">{{ ub.badge?.name }}</span>
-            <span class="text-[12px] text-muted">{{ formatDate(ub.earnedAt) }}</span>
+            <span class="text-[12px] text-muted">{{ formatShortDate(ub.earnedAt) }}</span>
           </div>
         </div>
         <RouterLink to="/badges" class="text-sm text-primary font-semibold hover:underline">Voir tous mes badges

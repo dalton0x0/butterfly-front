@@ -3,12 +3,18 @@
 // GET /api/badges/me/progress renvoie tous les badges avec, pour l'utilisateur,
 // l'état (obtenu ou non), la valeur courante, la cible et le pourcentage.
 import {ref, computed, onMounted} from 'vue'
+import {formatDate} from '@/utils/date'
 import {badgeService} from '@/services/badgeService'
 import Icon from '@/components/Icon.vue'
 import {badgeIcon} from '@/utils/badgeIcons'
 import ProgressBar from '@/components/ProgressBar.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
+
+// Date d'obtention d'un badge (jour, mois et année en chiffres).
+function formatBadgeDate(value) {
+  return formatDate(value, {options: {day: '2-digit', month: '2-digit', year: 'numeric'}})
+}
 
 const loading = ref(true)
 const error = ref('')
@@ -54,16 +60,6 @@ const filtered = computed(() => {
   }
   return items.value.filter((i) => i.badge?.category === activeFilter.value)
 })
-
-function formatDate(value) {
-  if (!value) {
-    return ''
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric'})
-}
 
 async function load() {
   loading.value = true
@@ -142,7 +138,7 @@ onMounted(load)
                 :style="{ color: levelColor(item.badge.level), background: 'var(--color-surface-tint)' }">
             {{ levelLabel(item.badge.level) }}
           </span>
-          <span class="text-[12px] text-muted">Obtenu le {{ formatDate(item.earnedAt) }}</span>
+          <span class="text-[12px] text-muted">Obtenu le {{ formatBadgeDate(item.earnedAt) }}</span>
         </template>
         <template v-else>
           <ProgressBar :value="item.percent || 0"/>
@@ -203,7 +199,7 @@ onMounted(load)
       <!-- Pied : date ou récompense XP -->
       <div class="w-full flex items-center justify-between mt-5 pt-4 border-t border-line-soft text-[13px]">
         <span class="text-muted">
-          {{ selected.earned ? `Obtenu le ${formatDate(selected.earnedAt)}` : 'Pas encore obtenu' }}
+          {{ selected.earned ? `Obtenu le ${formatBadgeDate(selected.earnedAt)}` : 'Pas encore obtenu' }}
         </span>
         <span class="inline-flex items-center gap-1 text-primary font-semibold">
           <Icon name="bolt" :size="16"/> +{{ selected.badge.xpReward }} XP

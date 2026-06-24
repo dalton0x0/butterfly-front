@@ -2,6 +2,7 @@
 // Historique des tentatives de quiz de l'apprenant, tous quiz confondus.
 // GET /api/progress/me/quizzes renvoie une page de QuizAttemptResponse.
 import {ref, computed, onMounted} from 'vue'
+import {formatDate} from '@/utils/date'
 import {quizService} from '@/services/quizService'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -17,16 +18,6 @@ const sortedAttempts = computed(() =>
 
 function percent(attempt) {
   return attempt.maxScore ? Math.round((attempt.score / attempt.maxScore) * 100) : 0
-}
-
-function formatDate(value) {
-  if (!value) {
-    return ''
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'})
 }
 
 function duration(attempt) {

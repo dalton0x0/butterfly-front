@@ -3,6 +3,8 @@
 // recherche, filtres rôle et statut, et actions de cycle de vie (activer/désactiver,
 // supprimer logiquement, restaurer).
 import {ref, computed, onMounted} from 'vue'
+import {roleChip} from '@/utils/roles'
+import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
 import Icon from '@/components/Icon.vue'
@@ -27,32 +29,12 @@ const deleting = ref(null)
 const removing = ref(false)
 const deleteError = ref('')
 
-const ROLE_CHIP = {
-  ADMIN: {label: 'Admin', variant: 'primary'},
-  TEACHER: {label: 'Formateur', variant: 'primary'},
-  USER: {label: 'Apprenant', variant: 'neutral'}
-}
-
-function roleChip(role) {
-  return ROLE_CHIP[role] || ROLE_CHIP.USER
-}
-
 function isSelf(user) {
   return auth.user && user.id === auth.user.id
 }
 
 function fullName(user) {
   return `${user.firstName} ${user.lastName}`
-}
-
-function formatDate(value) {
-  if (!value) {
-    return '-'
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? '-'
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'})
 }
 
 const filtered = computed(() => {
@@ -252,7 +234,7 @@ onMounted(load)
               {{ u.enabled ? 'Actif' : 'Désactivé' }}
             </span>
         </td>
-        <td class="px-5 py-3 text-ink-soft">{{ formatDate(u.createdAt) }}</td>
+        <td class="px-5 py-3 text-ink-soft">{{ formatDate(u.createdAt, {fallback: '-'}) }}</td>
         <td class="px-5 py-3 text-right">
           <div class="flex items-center justify-end gap-1">
             <template v-if="showDeleted">

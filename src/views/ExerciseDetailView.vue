@@ -4,6 +4,8 @@
 // POST .../submissions (contenu) puis POST .../submissions/{id}/files (fichiers).
 // Historique via GET /api/progress/me/exercises/{exerciseId}/submissions.
 import {ref, computed, onMounted} from 'vue'
+import {ROLES} from '@/utils/roles'
+import {formatDate} from '@/utils/date'
 import {useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {exerciseService} from '@/services/exerciseService'
@@ -30,7 +32,7 @@ const submitError = ref('')
 const submitSuccess = ref('')
 
 // Seul un USER peut soumettre côté back.
-const canSubmit = computed(() => auth.role === 'USER')
+const canSubmit = computed(() => auth.role === ROLES.USER)
 
 const breadcrumb = computed(() => {
   const items = [{label: 'Mes blocs', to: '/blocs'}]
@@ -57,16 +59,6 @@ function statusChip(status) {
 const sortedSubmissions = computed(() =>
     [...submissions.value].sort((a, b) => (b.attemptNumber ?? 0) - (a.attemptNumber ?? 0))
 )
-
-function formatDate(value) {
-  if (!value) {
-    return ''
-  }
-  const date = new Date(value)
-  return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'})
-}
 
 // Sélection de fichiers
 function openFilePicker() {
