@@ -2,7 +2,7 @@
 // Espace admin : gestion des utilisateurs. Liste réelle (actifs ou supprimés),
 // recherche, filtres rôle et statut, et actions de cycle de vie (activer/désactiver,
 // supprimer logiquement, restaurer).
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {roleChip} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
@@ -141,8 +141,8 @@ onMounted(load)
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <h1 class="text-[30px] font-semibold text-navy">Gestion des utilisateurs</h1>
     <RouterLink
-        to="/admin/utilisateurs/nouveau"
-        class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
+      to="/admin/utilisateurs/nouveau"
+      class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
     >
       <Icon name="add" :size="20"/>
       Nouvel utilisateur
@@ -152,18 +152,18 @@ onMounted(load)
   <!-- Bascule actifs / supprimés -->
   <div class="flex gap-1 mb-5 border-b border-line">
     <button
-        type="button"
-        class="px-4 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
-        :class="!showDeleted ? 'border-primary text-primary' : 'border-transparent text-ink-soft hover:text-ink'"
-        @click="switchView(false)"
+      type="button"
+      class="px-4 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
+      :class="!showDeleted ? 'border-primary text-primary' : 'border-transparent text-ink-soft hover:text-ink'"
+      @click="switchView(false)"
     >
       Comptes actifs
     </button>
     <button
-        type="button"
-        class="px-4 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
-        :class="showDeleted ? 'border-primary text-primary' : 'border-transparent text-ink-soft hover:text-ink'"
-        @click="switchView(true)"
+      type="button"
+      class="px-4 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
+      :class="showDeleted ? 'border-primary text-primary' : 'border-transparent text-ink-soft hover:text-ink'"
+      @click="switchView(true)"
     >
       Corbeille
     </button>
@@ -243,27 +243,27 @@ onMounted(load)
             </template>
             <template v-else>
               <RouterLink
-                  :to="`/admin/utilisateurs/${u.id}`"
-                  class="text-ink-soft hover:bg-surface-tint p-2 rounded-full transition-colors inline-flex"
-                  title="Voir et modifier"
+                :to="`/admin/utilisateurs/${u.id}`"
+                class="text-ink-soft hover:bg-surface-tint p-2 rounded-full transition-colors inline-flex"
+                title="Voir et modifier"
               >
                 <Icon name="edit" :size="18"/>
               </RouterLink>
               <button
-                  class="p-2 rounded-full transition-colors"
-                  :class="isSelf(u) ? 'text-line cursor-not-allowed' : 'text-ink-soft hover:bg-surface-tint'"
-                  :disabled="isSelf(u)"
-                  :title="u.enabled ? 'Désactiver' : 'Activer'"
-                  @click="toggleEnabled(u)"
+                class="p-2 rounded-full transition-colors"
+                :class="isSelf(u) ? 'text-line cursor-not-allowed' : 'text-ink-soft hover:bg-surface-tint'"
+                :disabled="isSelf(u)"
+                :title="u.enabled ? 'Désactiver' : 'Activer'"
+                @click="toggleEnabled(u)"
               >
                 <Icon name="power_settings_new" :size="18"/>
               </button>
               <button
-                  class="p-2 rounded-full transition-colors"
-                  :class="isSelf(u) ? 'text-line cursor-not-allowed' : 'text-[#ba1a1a] hover:bg-[#ba1a1a]/8'"
-                  :disabled="isSelf(u)"
-                  title="Supprimer"
-                  @click="askDelete(u)"
+                class="p-2 rounded-full transition-colors"
+                :class="isSelf(u) ? 'text-line cursor-not-allowed' : 'text-[#ba1a1a] hover:bg-[#ba1a1a]/8'"
+                :disabled="isSelf(u)"
+                title="Supprimer"
+                @click="askDelete(u)"
               >
                 <Icon name="delete" :size="18"/>
               </button>
@@ -289,17 +289,17 @@ onMounted(load)
       <p v-if="deleteError" class="text-[13px] text-danger mb-4">{{ deleteError }}</p>
       <div class="flex justify-center gap-3">
         <button
-            type="button"
-            class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
-            @click="showDelete = false"
+          type="button"
+          class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
+          @click="showDelete = false"
         >
           Annuler
         </button>
         <button
-            type="button"
-            :disabled="removing"
-            class="h-10 px-5 rounded-[10px] bg-danger text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-            @click="confirmDelete"
+          type="button"
+          :disabled="removing"
+          class="h-10 px-5 rounded-[10px] bg-danger text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+          @click="confirmDelete"
         >
           {{ removing ? 'Suppression...' : 'Supprimer' }}
         </button>

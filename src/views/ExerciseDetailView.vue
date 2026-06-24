@@ -3,13 +3,13 @@
 // GET /api/exercises/{id} pour l'énoncé. Soumission en deux temps côté back :
 // POST .../submissions (contenu) puis POST .../submissions/{id}/files (fichiers).
 // Historique via GET /api/progress/me/exercises/{exerciseId}/submissions.
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {exerciseService} from '@/services/exerciseService'
-import {validateUploadFile, formatFileSize, ALLOWED_UPLOAD_ACCEPT} from '@/utils/upload'
+import {ALLOWED_UPLOAD_ACCEPT, formatFileSize, validateUploadFile} from '@/utils/upload'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -57,7 +57,7 @@ function statusChip(status) {
 
 // Tentatives les plus récentes en premier.
 const sortedSubmissions = computed(() =>
-    [...submissions.value].sort((a, b) => (b.attemptNumber ?? 0) - (a.attemptNumber ?? 0))
+  [...submissions.value].sort((a, b) => (b.attemptNumber ?? 0) - (a.attemptNumber ?? 0))
 )
 
 // Sélection de fichiers
@@ -175,19 +175,19 @@ onMounted(load)
           <h3 class="text-[17px] font-semibold text-ink mb-4">Déposer ma solution</h3>
 
           <input
-              ref="fileInput"
-              type="file"
-              multiple
-              :accept="ALLOWED_UPLOAD_ACCEPT"
-              class="hidden"
-              @change="onFilesSelected"
+            ref="fileInput"
+            type="file"
+            multiple
+            :accept="ALLOWED_UPLOAD_ACCEPT"
+            class="hidden"
+            @change="onFilesSelected"
           />
 
           <div
-              class="border border-dashed border-input rounded-xl bg-background p-6 flex flex-col items-center text-center gap-1 mb-4 cursor-pointer hover:border-primary transition-colors"
-              @click="openFilePicker"
-              @drop.prevent="onDrop"
-              @dragover.prevent
+            class="border border-dashed border-input rounded-xl bg-background p-6 flex flex-col items-center text-center gap-1 mb-4 cursor-pointer hover:border-primary transition-colors"
+            @click="openFilePicker"
+            @drop.prevent="onDrop"
+            @dragover.prevent
           >
             <Icon name="cloud_upload" :size="32" class="text-primary"/>
             <p class="text-[14px] text-ink">Glissez vos fichiers ici ou cliquez pour parcourir</p>
@@ -196,9 +196,9 @@ onMounted(load)
 
           <div v-if="selectedFiles.length" class="flex flex-col gap-2 mb-4">
             <div
-                v-for="(f, i) in selectedFiles"
-                :key="`${f.name}-${i}`"
-                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tint"
+              v-for="(f, i) in selectedFiles"
+              :key="`${f.name}-${i}`"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tint"
             >
               <Icon name="description" :size="20" class="text-primary"/>
               <span class="text-[14px] text-ink flex-1 truncate">{{ f.name }}</span>
@@ -210,20 +210,20 @@ onMounted(load)
           </div>
 
           <textarea
-              v-model="content"
-              rows="3"
-              placeholder="Décrivez votre solution (obligatoire)"
-              class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-3 resize-none"
+            v-model="content"
+            rows="3"
+            placeholder="Décrivez votre solution (obligatoire)"
+            class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-3 resize-none"
           ></textarea>
 
           <p v-if="submitError" class="text-[13px] text-danger mb-3">{{ submitError }}</p>
           <p v-if="submitSuccess" class="text-[13px] text-success mb-3">{{ submitSuccess }}</p>
 
           <button
-              type="button"
-              :disabled="submitting"
-              class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
-              @click="handleSubmit"
+            type="button"
+            :disabled="submitting"
+            class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+            @click="handleSubmit"
           >
             {{ submitting ? 'Envoi en cours...' : 'Soumettre' }}
           </button>
@@ -251,11 +251,11 @@ onMounted(load)
               <!-- Fichiers joints -->
               <div v-if="s.files && s.files.length" class="flex flex-col gap-1.5 mb-2">
                 <button
-                    v-for="file in s.files"
-                    :key="file.id"
-                    type="button"
-                    class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tint hover:bg-surface-hover transition-colors text-left"
-                    @click="download(s, file)"
+                  v-for="file in s.files"
+                  :key="file.id"
+                  type="button"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tint hover:bg-surface-hover transition-colors text-left"
+                  @click="download(s, file)"
                 >
                   <Icon name="download" :size="18" class="text-primary shrink-0"/>
                   <span class="text-[14px] text-ink flex-1 truncate">{{ file.originalFilename }}</span>

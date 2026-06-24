@@ -2,7 +2,7 @@
 // Espace formateur, gestion de contenu : les modules d'un bloc.
 // Le bloc et ses modules viennent de GET /api/blocks/{id}. CRUD via /api/modules.
 // Les prérequis se remplacent via PUT /api/modules/{id}/prerequisites.
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {blockService} from '@/services/blockService'
 import {moduleService} from '@/services/moduleService'
@@ -20,7 +20,7 @@ const block = ref(null)
 const success = ref('')
 
 const sortedModules = computed(() =>
-    [...(block.value?.modules || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  [...(block.value?.modules || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
 )
 
 // Formulaire (création / modification)
@@ -126,7 +126,7 @@ const loadingPrereq = ref(false)
 const savingPrereq = ref(false)
 
 const prereqCandidates = computed(() =>
-    sortedModules.value.filter((m) => m.id !== prereqModule.value?.id)
+  sortedModules.value.filter((m) => m.id !== prereqModule.value?.id)
 )
 
 async function openPrereq(module) {
@@ -197,8 +197,8 @@ onMounted(load)
         <p class="text-ink-soft mt-1">Modules du bloc</p>
       </div>
       <button
-          class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
-          @click="openCreate"
+        class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
+        @click="openCreate"
       >
         <Icon name="add" :size="18"/>
         Nouveau module
@@ -213,12 +213,12 @@ onMounted(load)
 
     <div v-else class="flex flex-col gap-3">
       <div
-          v-for="module in sortedModules"
-          :key="module.id"
-          class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col sm:flex-row sm:items-center gap-4"
+        v-for="module in sortedModules"
+        :key="module.id"
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col sm:flex-row sm:items-center gap-4"
       >
         <div
-            class="w-10 h-10 rounded-full bg-primary text-white font-semibold flex items-center justify-center shrink-0">
+          class="w-10 h-10 rounded-full bg-primary text-white font-semibold flex items-center justify-center shrink-0">
           {{ module.position }}
         </div>
         <div class="flex-1 min-w-0">
@@ -232,30 +232,30 @@ onMounted(load)
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <RouterLink
-              :to="`/formateur/contenus/modules/${module.id}`"
-              class="h-9 px-3 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+            :to="`/formateur/contenus/modules/${module.id}`"
+            class="h-9 px-3 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity"
           >
             <Icon name="folder_open" :size="16"/>
             Gérer
           </RouterLink>
           <button
-              class="h-9 px-3 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-1.5 hover:bg-surface-tint transition-colors"
-              @click="openPrereq(module)"
+            class="h-9 px-3 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-1.5 hover:bg-surface-tint transition-colors"
+            @click="openPrereq(module)"
           >
             <Icon name="account_tree" :size="16"/>
             Prérequis
           </button>
           <button
-              class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
-              aria-label="Modifier"
-              @click="openEdit(module)"
+            class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
+            aria-label="Modifier"
+            @click="openEdit(module)"
           >
             <Icon name="edit" :size="16"/>
           </button>
           <button
-              class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
-              aria-label="Supprimer"
-              @click="openDelete(module)"
+            class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
+            aria-label="Supprimer"
+            @click="openDelete(module)"
           >
             <Icon name="delete" :size="16"/>
           </button>
@@ -272,30 +272,30 @@ onMounted(load)
         <div>
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom du module</label>
           <input
-              v-model="form.name"
-              type="text"
-              maxlength="255"
-              placeholder="Ex : Introduction aux processus"
-              class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            v-model="form.name"
+            type="text"
+            maxlength="255"
+            placeholder="Ex : Introduction aux processus"
+            class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
           />
         </div>
         <div>
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Description (facultative)</label>
           <textarea
-              v-model="form.description"
-              rows="3"
-              maxlength="500"
-              placeholder="Décrivez le module..."
-              class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
+            v-model="form.description"
+            rows="3"
+            maxlength="500"
+            placeholder="Décrivez le module..."
+            class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
           ></textarea>
         </div>
         <div>
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Position (ordre dans le bloc)</label>
           <input
-              v-model="form.position"
-              type="number"
-              min="0"
-              class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            v-model="form.position"
+            type="number"
+            min="0"
+            class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
           />
         </div>
         <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>
@@ -328,16 +328,16 @@ onMounted(load)
         </p>
         <div v-else class="flex flex-col gap-2 mb-4 max-h-[320px] overflow-y-auto">
           <label
-              v-for="candidate in prereqCandidates"
-              :key="candidate.id"
-              class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
-              :class="prereqSelected.has(candidate.id) ? 'bg-accent/15' : 'bg-background hover:bg-surface-tint'"
+            v-for="candidate in prereqCandidates"
+            :key="candidate.id"
+            class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
+            :class="prereqSelected.has(candidate.id) ? 'bg-accent/15' : 'bg-background hover:bg-surface-tint'"
           >
             <input
-                type="checkbox"
-                class="w-4 h-4 accent-[var(--color-primary)]"
-                :checked="prereqSelected.has(candidate.id)"
-                @change="togglePrereq(candidate.id)"
+              type="checkbox"
+              class="w-4 h-4 accent-[var(--color-primary)]"
+              :checked="prereqSelected.has(candidate.id)"
+              @change="togglePrereq(candidate.id)"
             />
             <span class="text-[14px] text-ink">{{ candidate.position }}. {{ candidate.name }}</span>
           </label>

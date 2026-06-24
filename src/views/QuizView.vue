@@ -3,7 +3,7 @@
 // GET /api/quizzes/{id}/play (sans les bonnes réponses), navigation question par
 // question, puis POST /api/progress/quizzes/{id}/submit. Le serveur calcule
 // le score et la réussite. Le résultat renvoie la correction par question.
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
@@ -168,14 +168,14 @@ onMounted(load)
       <h3 class="text-[17px] font-semibold text-ink mb-4">Détail des réponses</h3>
       <div>
         <div
-            v-for="(r, i) in result.results"
-            :key="r.questionId"
-            class="flex items-start gap-3 py-3"
-            :class="{ 'border-t border-line-soft': i > 0 }"
+          v-for="(r, i) in result.results"
+          :key="r.questionId"
+          class="flex items-start gap-3 py-3"
+          :class="{ 'border-t border-line-soft': i > 0 }"
         >
           <div
-              class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-              :class="r.correct ? 'bg-[#16a34a]/12 text-[#16a34a]' : 'bg-danger/10 text-danger'"
+            class="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+            :class="r.correct ? 'bg-[#16a34a]/12 text-[#16a34a]' : 'bg-danger/10 text-danger'"
           >
             <Icon :name="r.correct ? 'check' : 'close'" :size="18"/>
           </div>
@@ -205,10 +205,10 @@ onMounted(load)
         <span class="text-[13px] text-muted">Question {{ index + 1 }} / {{ questions.length }}</span>
         <div class="flex gap-1 h-2">
           <div
-              v-for="(q, i) in questions"
-              :key="q.id"
-              class="flex-1 rounded-full transition-colors"
-              :class="segmentClass(i)"
+            v-for="(q, i) in questions"
+            :key="q.id"
+            class="flex-1 rounded-full transition-colors"
+            :class="segmentClass(i)"
           ></div>
         </div>
       </div>
@@ -224,23 +224,23 @@ onMounted(load)
       </div>
       <div class="flex flex-col gap-3">
         <button
-            v-for="option in current.options"
-            :key="option.id"
-            type="button"
-            class="flex items-center gap-4 p-4 rounded-xl text-left transition-colors"
-            :class="isSelected(current.id, option.id) ? 'bg-accent/15' : 'bg-background hover:bg-surface-tint'"
-            @click="chooseOption(current, option.id)"
+          v-for="option in current.options"
+          :key="option.id"
+          type="button"
+          class="flex items-center gap-4 p-4 rounded-xl text-left transition-colors"
+          :class="isSelected(current.id, option.id) ? 'bg-accent/15' : 'bg-background hover:bg-surface-tint'"
+          @click="chooseOption(current, option.id)"
         >
           <span
-              class="w-5 h-5 flex items-center justify-center shrink-0 border-2"
-              :class="[
+            class="w-5 h-5 flex items-center justify-center shrink-0 border-2"
+            :class="[
               current.type === 'MULTIPLE_CHOICE' ? 'rounded' : 'rounded-full',
               isSelected(current.id, option.id) ? 'border-primary' : 'border-input'
             ]"
           >
             <span
-                v-if="isSelected(current.id, option.id)"
-                :class="current.type === 'MULTIPLE_CHOICE' ? 'w-3 h-3 rounded-[2px] bg-primary' : 'w-2.5 h-2.5 rounded-full bg-primary'"
+              v-if="isSelected(current.id, option.id)"
+              :class="current.type === 'MULTIPLE_CHOICE' ? 'w-3 h-3 rounded-[2px] bg-primary' : 'w-2.5 h-2.5 rounded-full bg-primary'"
             ></span>
           </span>
           <span class="text-[15px]" :class="isSelected(current.id, option.id) ? 'font-semibold text-ink' : 'text-ink'">{{
@@ -255,27 +255,27 @@ onMounted(load)
     <!-- Contrôles -->
     <div class="flex items-center justify-between">
       <button
-          type="button"
-          class="h-10 px-6 rounded-[10px] bg-surface border border-input text-primary text-sm font-semibold hover:bg-surface-hover transition-colors disabled:opacity-40"
-          :disabled="index === 0"
-          @click="prev"
+        type="button"
+        class="h-10 px-6 rounded-[10px] bg-surface border border-input text-primary text-sm font-semibold hover:bg-surface-hover transition-colors disabled:opacity-40"
+        :disabled="index === 0"
+        @click="prev"
       >
         Précédent
       </button>
       <div class="flex gap-2 items-center">
         <span
-            v-for="(q, i) in questions"
-            :key="q.id"
-            class="w-2 h-2 rounded-full transition-all"
-            :class="i === index ? 'bg-accent scale-125' : (selections[q.id] && selections[q.id].length) ? 'bg-primary' : 'bg-[#e2e8f0]'"
+          v-for="(q, i) in questions"
+          :key="q.id"
+          class="w-2 h-2 rounded-full transition-all"
+          :class="i === index ? 'bg-accent scale-125' : (selections[q.id] && selections[q.id].length) ? 'bg-primary' : 'bg-[#e2e8f0]'"
         ></span>
       </div>
       <button
-          type="button"
-          :disabled="submitting"
-          class="h-10 px-6 rounded-[10px] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-          :class="isLast ? 'bg-[#16a34a]' : 'bg-primary'"
-          @click="next"
+        type="button"
+        :disabled="submitting"
+        class="h-10 px-6 rounded-[10px] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+        :class="isLast ? 'bg-[#16a34a]' : 'bg-primary'"
+        @click="next"
       >
         {{ isLast ? (submitting ? 'Envoi...' : 'Terminer le quiz') : 'Suivant' }}
       </button>

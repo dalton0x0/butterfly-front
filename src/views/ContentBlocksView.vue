@@ -2,10 +2,10 @@
 // Espace formateur, gestion de contenu : les blocs.
 // Un formateur ne voit et ne gère que ses blocs assignés (filtrage côté back).
 // GET /api/blocks (liste), POST/PUT/DELETE /api/blocks (CRUD, ADMIN/TEACHER).
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {blockService} from '@/services/blockService'
 import {mediaService} from '@/services/mediaService'
-import {mediaUrl, validateImageFile, ALLOWED_IMAGE_ACCEPT} from '@/utils/media'
+import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import BlockCover from '@/components/BlockCover.vue'
 import Modal from '@/components/Modal.vue'
@@ -168,8 +168,8 @@ onMounted(load)
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <h1 class="text-[30px] font-semibold text-navy">Contenus - Mes blocs</h1>
     <button
-        class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
-        @click="openCreate"
+      class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
+      @click="openCreate"
     >
       <Icon name="add" :size="18"/>
       Nouveau bloc
@@ -186,9 +186,9 @@ onMounted(load)
 
   <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     <div
-        v-for="block in blocks"
-        :key="block.id"
-        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden flex flex-col"
+      v-for="block in blocks"
+      :key="block.id"
+      class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden flex flex-col"
     >
       <div class="h-[200px]">
         <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name" class="w-full h-[200px] object-cover"/>
@@ -199,23 +199,23 @@ onMounted(load)
         <p class="text-[13px] text-ink-soft line-clamp-2 flex-1">{{ block.description || 'Aucune description.' }}</p>
         <div class="flex items-center gap-2 pt-2">
           <RouterLink
-              :to="`/formateur/contenus/blocs/${block.id}`"
-              class="h-9 px-3 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+            :to="`/formateur/contenus/blocs/${block.id}`"
+            class="h-9 px-3 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity"
           >
             <Icon name="folder_open" :size="16"/>
             Gérer le contenu
           </RouterLink>
           <button
-              class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
-              aria-label="Modifier"
-              @click="openEdit(block)"
+            class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
+            aria-label="Modifier"
+            @click="openEdit(block)"
           >
             <Icon name="edit" :size="16"/>
           </button>
           <button
-              class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
-              aria-label="Supprimer"
-              @click="openDelete(block)"
+            class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
+            aria-label="Supprimer"
+            @click="openDelete(block)"
           >
             <Icon name="delete" :size="16"/>
           </button>
@@ -233,52 +233,52 @@ onMounted(load)
         <div>
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom du bloc</label>
           <input
-              v-model="form.name"
-              type="text"
-              maxlength="100"
-              placeholder="Ex : Administration système"
-              class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            v-model="form.name"
+            type="text"
+            maxlength="100"
+            placeholder="Ex : Administration système"
+            class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
           />
         </div>
 
         <div>
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Description (facultative)</label>
           <textarea
-              v-model="form.description"
-              rows="3"
-              maxlength="500"
-              placeholder="Décrivez le bloc de compétences..."
-              class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
+            v-model="form.description"
+            rows="3"
+            maxlength="500"
+            placeholder="Décrivez le bloc de compétences..."
+            class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
           ></textarea>
         </div>
 
         <div>
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Image de couverture (facultative)</label>
           <input
-              ref="coverInput"
-              type="file"
-              :accept="ALLOWED_IMAGE_ACCEPT"
-              class="hidden"
-              @change="onCoverSelected"
+            ref="coverInput"
+            type="file"
+            :accept="ALLOWED_IMAGE_ACCEPT"
+            class="hidden"
+            @change="onCoverSelected"
           />
           <div v-if="form.cover" class="mb-2 rounded-[10px] overflow-hidden border border-line">
             <img :src="mediaUrl(form.cover)" alt="Aperçu de la couverture" class="w-full h-[200px] object-cover"/>
           </div>
           <div class="flex items-center gap-2">
             <button
-                type="button"
-                :disabled="uploadingCover"
-                class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors disabled:opacity-60"
-                @click="openCoverPicker"
+              type="button"
+              :disabled="uploadingCover"
+              class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors disabled:opacity-60"
+              @click="openCoverPicker"
             >
               <Icon name="upload" :size="16"/>
               {{ uploadingCover ? 'Envoi...' : (form.cover ? "Changer l'image" : 'Choisir une image') }}
             </button>
             <button
-                v-if="form.cover"
-                type="button"
-                class="h-10 px-3 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors"
-                @click="removeCover"
+              v-if="form.cover"
+              type="button"
+              class="h-10 px-3 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors"
+              @click="removeCover"
             >
               Retirer
             </button>
@@ -291,17 +291,17 @@ onMounted(load)
 
         <div class="flex justify-end gap-3 mt-1">
           <button
-              type="button"
-              class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
-              @click="showForm = false"
+            type="button"
+            class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
+            @click="showForm = false"
           >
             Annuler
           </button>
           <button
-              type="button"
-              :disabled="saving"
-              class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-              @click="save"
+            type="button"
+            :disabled="saving"
+            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+            @click="save"
           >
             {{ saving ? 'Enregistrement...' : 'Enregistrer' }}
           </button>
@@ -323,17 +323,17 @@ onMounted(load)
       <p v-if="deleteError" class="text-[13px] text-danger mb-4">{{ deleteError }}</p>
       <div class="flex justify-center gap-3">
         <button
-            type="button"
-            class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
-            @click="showDelete = false"
+          type="button"
+          class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
+          @click="showDelete = false"
         >
           Annuler
         </button>
         <button
-            type="button"
-            :disabled="removing"
-            class="h-10 px-5 rounded-[10px] bg-danger text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-            @click="confirmDelete"
+          type="button"
+          :disabled="removing"
+          class="h-10 px-5 rounded-[10px] bg-danger text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+          @click="confirmDelete"
         >
           {{ removing ? 'Suppression...' : 'Supprimer' }}
         </button>

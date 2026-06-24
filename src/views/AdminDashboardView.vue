@@ -3,8 +3,8 @@
 // listes existantes (pas d'endpoint de stats dédié) : utilisateurs par rôle,
 // comptes désactivés, corbeille, blocs, promotions. Plus les derniers inscrits
 // et des raccourcis vers les écrans de gestion.
-import {ref, computed, onMounted} from 'vue'
-import {ROLES, roleChip} from '@/utils/roles'
+import {computed, onMounted, ref} from 'vue'
+import {roleChip, ROLES} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
@@ -52,10 +52,10 @@ const cards = computed(() => [
 ])
 
 const recentUsers = computed(() =>
-    [...activeUsers.value]
-        .filter((u) => u.createdAt)
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 5)
+  [...activeUsers.value]
+    .filter((u) => u.createdAt)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 5)
 )
 
 const quickLinks = [
@@ -121,10 +121,10 @@ onMounted(load)
         <p v-if="recentUsers.length === 0" class="text-[14px] text-muted">Aucun utilisateur.</p>
         <ul v-else>
           <li
-              v-for="(u, i) in recentUsers"
-              :key="u.id"
-              class="flex items-center gap-3 py-2.5"
-              :class="{ 'border-t border-line-soft': i > 0 }"
+            v-for="(u, i) in recentUsers"
+            :key="u.id"
+            class="flex items-center gap-3 py-2.5"
+            :class="{ 'border-t border-line-soft': i > 0 }"
           >
             <Avatar :src="u.avatar" :name="`${u.firstName} ${u.lastName}`" :size="36"/>
             <div class="flex-1 min-w-0">
@@ -142,10 +142,10 @@ onMounted(load)
         <h2 class="text-[17px] font-semibold text-ink mb-4">Raccourcis</h2>
         <div class="flex flex-col gap-2">
           <RouterLink
-              v-for="link in quickLinks"
-              :key="link.to"
-              :to="link.to"
-              class="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-tint hover:bg-surface-hover transition-colors"
+            v-for="link in quickLinks"
+            :key="link.to"
+            :to="link.to"
+            class="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-tint hover:bg-surface-hover transition-colors"
           >
             <div class="w-9 h-9 rounded-lg bg-accent/15 text-primary flex items-center justify-center">
               <Icon :name="link.icon" :size="20"/>

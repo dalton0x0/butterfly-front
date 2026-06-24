@@ -1,7 +1,7 @@
 <script setup>
 // Espace admin : création d'un utilisateur. POST /api/users.
 // La promotion n'est proposée que pour le rôle Apprenant (contrainte back).
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
 import {useRouter} from 'vue-router'
 import {userService} from '@/services/userService'

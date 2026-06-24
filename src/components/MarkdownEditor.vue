@@ -3,11 +3,11 @@
 // Écrire (zone de saisie) et Aperçu (rendu formaté).
 // Un bouton permet de téléverser une image, elle est envoyée au back
 // puis la syntaxe ![](url) est insérée à l'endroit du curseur.
-import {ref, nextTick} from 'vue'
+import {nextTick, ref} from 'vue'
 import Icon from './Icon.vue'
 import MarkdownContent from './MarkdownContent.vue'
 import {mediaService} from '@/services/mediaService'
-import {validateImageFile, ALLOWED_IMAGE_ACCEPT} from '@/utils/media'
+import {ALLOWED_IMAGE_ACCEPT, validateImageFile} from '@/utils/media'
 
 const props = defineProps({
   modelValue: {type: String, default: ''},
@@ -76,19 +76,19 @@ async function onImageSelected(event) {
     <div class="flex items-center justify-between border-b border-line bg-surface-tint px-2 py-1.5">
       <div class="flex items-center gap-1">
         <button
-            type="button"
-            class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 transition-colors"
-            :class="mode === 'write' ? 'bg-white text-primary shadow-sm' : 'text-ink-soft hover:text-ink'"
-            @click="mode = 'write'"
+          type="button"
+          class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 transition-colors"
+          :class="mode === 'write' ? 'bg-white text-primary shadow-sm' : 'text-ink-soft hover:text-ink'"
+          @click="mode = 'write'"
         >
           <Icon name="edit" :size="16"/>
           Écrire
         </button>
         <button
-            type="button"
-            class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 transition-colors"
-            :class="mode === 'preview' ? 'bg-white text-primary shadow-sm' : 'text-ink-soft hover:text-ink'"
-            @click="mode = 'preview'"
+          type="button"
+          class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 transition-colors"
+          :class="mode === 'preview' ? 'bg-white text-primary shadow-sm' : 'text-ink-soft hover:text-ink'"
+          @click="mode = 'preview'"
         >
           <Icon name="visibility" :size="16"/>
           Aperçu
@@ -96,18 +96,18 @@ async function onImageSelected(event) {
       </div>
 
       <input
-          ref="imageInput"
-          type="file"
-          :accept="ALLOWED_IMAGE_ACCEPT"
-          class="hidden"
-          @change="onImageSelected"
+        ref="imageInput"
+        type="file"
+        :accept="ALLOWED_IMAGE_ACCEPT"
+        class="hidden"
+        @change="onImageSelected"
       />
       <button
-          v-if="mode === 'write'"
-          type="button"
-          :disabled="uploadingImage"
-          class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 text-ink-soft hover:text-primary transition-colors disabled:opacity-60"
-          @click="openImagePicker"
+        v-if="mode === 'write'"
+        type="button"
+        :disabled="uploadingImage"
+        class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 text-ink-soft hover:text-primary transition-colors disabled:opacity-60"
+        @click="openImagePicker"
       >
         <Icon name="image" :size="16"/>
         {{ uploadingImage ? 'Envoi...' : 'Image' }}
@@ -116,13 +116,13 @@ async function onImageSelected(event) {
 
     <!-- Saisie -->
     <textarea
-        v-if="mode === 'write'"
-        ref="textarea"
-        :value="modelValue"
-        :rows="rows"
-        placeholder="Rédigez en Markdown..."
-        class="w-full px-4 py-3 text-[14px] text-ink font-mono leading-relaxed focus:outline-none resize-y"
-        @input="onInput"
+      v-if="mode === 'write'"
+      ref="textarea"
+      :value="modelValue"
+      :rows="rows"
+      placeholder="Rédigez en Markdown..."
+      class="w-full px-4 py-3 text-[14px] text-ink font-mono leading-relaxed focus:outline-none resize-y"
+      @input="onInput"
     ></textarea>
 
     <!-- Aperçu -->

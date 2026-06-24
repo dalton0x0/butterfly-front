@@ -9,8 +9,8 @@ defineProps({
 
 <template>
   <div
-      class="w-full bg-primary-dark flex items-center justify-center overflow-hidden"
-      :style="{ height: typeof height === 'number' ? height + 'px' : height }"
+    class="w-full bg-primary-dark flex items-center justify-center overflow-hidden"
+    :style="{ height: typeof height === 'number' ? height + 'px' : height }"
   >
     <svg viewBox="0 0 240 120" class="w-full h-full" fill="none" stroke-width="2">
       <!-- Theme système : serveurs empilés + terminal -->

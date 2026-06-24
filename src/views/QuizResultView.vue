@@ -1,7 +1,7 @@
 <script setup>
 // Historique des tentatives de quiz de l'apprenant, tous quiz confondus.
 // GET /api/progress/me/quizzes renvoie une page de QuizAttemptResponse.
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {quizService} from '@/services/quizService'
 import StatusChip from '@/components/StatusChip.vue'
@@ -13,7 +13,7 @@ const attempts = ref([])
 
 // Tentatives les plus récentes en premier.
 const sortedAttempts = computed(() =>
-    [...attempts.value].sort((a, b) => new Date(b.finishedAt || b.startedAt) - new Date(a.finishedAt || a.startedAt))
+  [...attempts.value].sort((a, b) => new Date(b.finishedAt || b.startedAt) - new Date(a.finishedAt || a.startedAt))
 )
 
 function percent(attempt) {
@@ -76,8 +76,8 @@ onMounted(load)
           <td class="px-5 py-3 text-ink-soft">{{ duration(t) }}</td>
           <td class="px-5 py-3">
             <StatusChip
-                :label="t.passed ? 'Réussi' : 'Échoué'"
-                :variant="t.passed ? 'success' : 'danger'"
+              :label="t.passed ? 'Réussi' : 'Échoué'"
+              :variant="t.passed ? 'success' : 'danger'"
             />
           </td>
         </tr>

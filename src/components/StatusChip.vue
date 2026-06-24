@@ -23,8 +23,8 @@ const classes = computed(() => {
 
 <template>
   <span
-      class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium whitespace-nowrap"
-      :class="classes"
+    class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[13px] font-medium whitespace-nowrap"
+    :class="classes"
   >
     <Icon v-if="icon" :name="icon" :size="16"/>
     {{ label }}

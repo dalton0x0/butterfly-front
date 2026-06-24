@@ -3,7 +3,7 @@
 // bascule active, et consultation des membres. S'appuie sur promotionService
 // (/api/promos). La liste ne porte que le comptage ; les membres sont chargés
 // à la demande via GET /api/promos/{id}.
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {promotionService} from '@/services/promotionService'
 import Icon from '@/components/Icon.vue'
@@ -189,9 +189,9 @@ onMounted(load)
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <h1 class="text-[30px] font-semibold text-navy">Promotions</h1>
     <button
-        type="button"
-        class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
-        @click="openCreate"
+      type="button"
+      class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
+      @click="openCreate"
     >
       <Icon name="add" :size="20"/>
       Nouvelle promotion
@@ -243,10 +243,10 @@ onMounted(load)
               <Icon name="edit" :size="18"/>
             </button>
             <button
-                class="p-2 rounded-full transition-colors"
-                :class="p.active ? 'text-ink-soft hover:bg-surface-tint' : 'text-[#16a34a] hover:bg-[#16a34a]/8'"
-                :title="p.active ? 'Désactiver' : 'Activer'"
-                @click="toggleActive(p)"
+              class="p-2 rounded-full transition-colors"
+              :class="p.active ? 'text-ink-soft hover:bg-surface-tint' : 'text-[#16a34a] hover:bg-[#16a34a]/8'"
+              :title="p.active ? 'Désactiver' : 'Activer'"
+              @click="toggleActive(p)"
             >
               <Icon name="power_settings_new" :size="18"/>
             </button>
@@ -269,11 +269,11 @@ onMounted(load)
         <div>
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom de la promotion</label>
           <input
-              v-model="form.name"
-              type="text"
-              maxlength="100"
-              placeholder="Ex : Promotion 2026"
-              class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            v-model="form.name"
+            type="text"
+            maxlength="100"
+            placeholder="Ex : Promotion 2026"
+            class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
           />
         </div>
         <div class="grid grid-cols-2 gap-3">

@@ -1,7 +1,7 @@
 <script setup>
 // Mes quiz : liste des quiz visibles avec leur état (tenté, réussi, meilleur
 // score). Chaque carte mène au passage du quiz. GET /api/users/me/quizzes.
-import {ref, onMounted} from 'vue'
+import {onMounted, ref} from 'vue'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
@@ -53,10 +53,10 @@ onMounted(load)
 
   <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <RouterLink
-        v-for="quiz in quizzes"
-        :key="quiz.id"
-        :to="`/quiz/${quiz.id}`"
-        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
+      v-for="quiz in quizzes"
+      :key="quiz.id"
+      :to="`/quiz/${quiz.id}`"
+      class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
     >
       <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-primary shrink-0">
         <Icon name="quiz" :size="22"/>

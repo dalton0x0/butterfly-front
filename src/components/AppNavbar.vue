@@ -75,10 +75,10 @@ async function logout() {
       <!-- Liens (desktop) -->
       <nav class="hidden md:flex items-center gap-6 h-full">
         <RouterLink
-            v-for="link in links"
-            :key="link.to"
-            :to="link.to"
-            class="nav-link text-white/80 hover:text-white text-sm h-full flex items-center gap-1.5 transition-colors"
+          v-for="link in links"
+          :key="link.to"
+          :to="link.to"
+          class="nav-link text-white/80 hover:text-white text-sm h-full flex items-center gap-1.5 transition-colors"
         >
           <Icon :name="link.icon" :size="20"/>
           {{ link.label }}
@@ -91,16 +91,16 @@ async function logout() {
         <div class="hidden sm:flex items-center">
           <transition name="search">
             <div
-                v-if="searchOpen"
-                class="flex items-center gap-2 h-9 px-3 mr-1 rounded-full bg-white/15 backdrop-blur-sm"
+              v-if="searchOpen"
+              class="flex items-center gap-2 h-9 px-3 mr-1 rounded-full bg-white/15 backdrop-blur-sm"
             >
               <Icon name="search" :size="20" class="text-white/80"/>
               <input
-                  ref="searchInput"
-                  type="text"
-                  placeholder="Rechercher..."
-                  class="bg-transparent outline-none text-sm text-white placeholder:text-white/60 w-44"
-                  @keyup.esc="searchOpen = false"
+                ref="searchInput"
+                type="text"
+                placeholder="Rechercher..."
+                class="bg-transparent outline-none text-sm text-white placeholder:text-white/60 w-44"
+                @keyup.esc="searchOpen = false"
               />
               <button class="text-white/70 hover:text-white" @click="searchOpen = false">
                 <Icon name="close" :size="18"/>
@@ -108,10 +108,10 @@ async function logout() {
             </div>
           </transition>
           <button
-              v-if="!searchOpen"
-              class="text-white p-2 rounded-full hover:bg-white/10 transition-colors"
-              aria-label="Rechercher"
-              @click="toggleSearch"
+            v-if="!searchOpen"
+            class="text-white p-2 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Rechercher"
+            @click="toggleSearch"
           >
             <Icon name="search" :size="22"/>
           </button>
@@ -125,9 +125,9 @@ async function logout() {
         <!-- Menu utilisateur -->
         <div class="relative">
           <button
-              class="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full hover:bg-white/10 transition-colors text-white ml-1"
-              aria-label="Menu utilisateur"
-              @click="userMenuOpen = !userMenuOpen"
+            class="flex items-center gap-1.5 pl-1 pr-2 py-1 rounded-full hover:bg-white/10 transition-colors text-white ml-1"
+            aria-label="Menu utilisateur"
+            @click="userMenuOpen = !userMenuOpen"
           >
             <span class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ring-1 ring-white/30">
               <Avatar :src="auth.user?.avatar" :name="auth.fullName" :size="32"/>
@@ -139,8 +139,8 @@ async function logout() {
           <!-- Dropdown -->
           <transition name="dropdown">
             <div
-                v-if="userMenuOpen"
-                class="absolute right-0 mt-2 w-60 bg-surface rounded-2xl shadow-lg border border-line overflow-hidden z-50"
+              v-if="userMenuOpen"
+              class="absolute right-0 mt-2 w-60 bg-surface rounded-2xl shadow-lg border border-line overflow-hidden z-50"
             >
               <!-- En-tete -->
               <div class="px-4 py-3 border-b border-line-soft flex items-center gap-3">
@@ -152,26 +152,26 @@ async function logout() {
               </div>
               <!-- Liens -->
               <RouterLink
-                  to="/profil"
-                  class="flex items-center gap-3 px-4 py-2.5 text-[14px] text-ink hover:bg-surface-tint transition-colors"
-                  @click="userMenuOpen = false"
+                to="/profil"
+                class="flex items-center gap-3 px-4 py-2.5 text-[14px] text-ink hover:bg-surface-tint transition-colors"
+                @click="userMenuOpen = false"
               >
                 <Icon name="person" :size="20" class="text-muted"/>
                 Mon profil
               </RouterLink>
               <RouterLink
-                  v-if="!auth.isTeacher && !auth.isAdmin"
-                  to="/badges"
-                  class="flex items-center gap-3 px-4 py-2.5 text-[14px] text-ink hover:bg-surface-tint transition-colors"
-                  @click="userMenuOpen = false"
+                v-if="!auth.isTeacher && !auth.isAdmin"
+                to="/badges"
+                class="flex items-center gap-3 px-4 py-2.5 text-[14px] text-ink hover:bg-surface-tint transition-colors"
+                @click="userMenuOpen = false"
               >
                 <Icon name="military_tech" :size="20" class="text-muted"/>
                 Mes badges
               </RouterLink>
               <div class="border-t border-line-soft">
                 <button
-                    class="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-[#ba1a1a] hover:bg-[#ba1a1a]/8 transition-colors"
-                    @click="logout"
+                  class="w-full flex items-center gap-3 px-4 py-2.5 text-[14px] text-[#ba1a1a] hover:bg-[#ba1a1a]/8 transition-colors"
+                  @click="logout"
                 >
                   <Icon name="logout" :size="20"/>
                   Déconnexion
@@ -191,11 +191,11 @@ async function logout() {
     <!-- Menu mobile déroulant -->
     <nav v-if="menuOpen" class="md:hidden bg-primary-dark border-t border-white/10 px-6 py-3 flex flex-col gap-1">
       <RouterLink
-          v-for="link in links"
-          :key="link.to"
-          :to="link.to"
-          class="nav-link text-white/80 hover:text-white text-sm py-2 flex items-center gap-2"
-          @click="menuOpen = false"
+        v-for="link in links"
+        :key="link.to"
+        :to="link.to"
+        class="nav-link text-white/80 hover:text-white text-sm py-2 flex items-center gap-2"
+        @click="menuOpen = false"
       >
         <Icon :name="link.icon" :size="20"/>
         {{ link.label }}
@@ -205,9 +205,9 @@ async function logout() {
 
   <!-- Couche transparente : ferme les menus au clic extérieur -->
   <div
-      v-if="userMenuOpen || searchOpen"
-      class="fixed inset-0 z-40"
-      @click="userMenuOpen = false; searchOpen = false"
+    v-if="userMenuOpen || searchOpen"
+    class="fixed inset-0 z-40"
+    @click="userMenuOpen = false; searchOpen = false"
   ></div>
 </template>
 

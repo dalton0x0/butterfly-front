@@ -1,15 +1,15 @@
 <script setup>
 // Inscription.
-import {ref, reactive, computed} from 'vue'
+import {computed, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {
-  validateRequired,
-  validateEmail,
-  validatePassword,
-  validateMatch,
+  mapBackendError,
   passwordStrength,
-  mapBackendError
+  validateEmail,
+  validateMatch,
+  validatePassword,
+  validateRequired
 } from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
 
@@ -63,11 +63,11 @@ function validate() {
   errors.password = validatePassword(form.password)
   errors.confirmPassword = validateMatch(form.password, form.confirmPassword)
   return (
-      !errors.firstName &&
-      !errors.lastName &&
-      !errors.email &&
-      !errors.password &&
-      !errors.confirmPassword
+    !errors.firstName &&
+    !errors.lastName &&
+    !errors.email &&
+    !errors.password &&
+    !errors.confirmPassword
   )
 }
 
@@ -114,22 +114,22 @@ async function handleRegister() {
         <div>
           <label class="block text-[13px] text-ink-soft mb-1">Prénom</label>
           <input
-              v-model="form.firstName"
-              @input="clearError('firstName')"
-              placeholder="Jean"
-              class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-              :class="errors.firstName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+            v-model="form.firstName"
+            @input="clearError('firstName')"
+            placeholder="Jean"
+            class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+            :class="errors.firstName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
           />
           <p v-if="errors.firstName" class="text-[12px] text-danger mt-1">{{ errors.firstName }}</p>
         </div>
         <div>
           <label class="block text-[13px] text-ink-soft mb-1">Nom</label>
           <input
-              v-model="form.lastName"
-              @input="clearError('lastName')"
-              placeholder="Dupont"
-              class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-              :class="errors.lastName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+            v-model="form.lastName"
+            @input="clearError('lastName')"
+            placeholder="Dupont"
+            class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+            :class="errors.lastName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
           />
           <p v-if="errors.lastName" class="text-[12px] text-danger mt-1">{{ errors.lastName }}</p>
         </div>
@@ -138,16 +138,16 @@ async function handleRegister() {
       <div>
         <label class="block text-[13px] text-ink-soft mb-1">Adresse e-mail</label>
         <div
-            class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
-            :class="errors.email ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
+          class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
+          :class="errors.email ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="mail" :size="20" class="text-muted mr-2"/>
           <input
-              v-model="form.email"
-              @input="clearError('email')"
-              type="email"
-              placeholder="jean.dupont@infradev.fr"
-              class="flex-1 outline-none text-[15px] bg-transparent"
+            v-model="form.email"
+            @input="clearError('email')"
+            type="email"
+            placeholder="jean.dupont@infradev.fr"
+            class="flex-1 outline-none text-[15px] bg-transparent"
           />
         </div>
         <p v-if="errors.email" class="text-[12px] text-danger mt-1">{{ errors.email }}</p>
@@ -156,16 +156,16 @@ async function handleRegister() {
       <div>
         <label class="block text-[13px] text-ink-soft mb-1">Mot de passe</label>
         <div
-            class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
-            :class="errors.password ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
+          class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
+          :class="errors.password ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="lock" :size="20" class="text-muted mr-2"/>
           <input
-              v-model="form.password"
-              @input="clearError('password')"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="••••••••••"
-              class="flex-1 outline-none text-[15px] bg-transparent"
+            v-model="form.password"
+            @input="clearError('password')"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="••••••••••"
+            class="flex-1 outline-none text-[15px] bg-transparent"
           />
           <button type="button" class="text-muted hover:text-ink transition-colors"
                   @click="showPassword = !showPassword">
@@ -175,10 +175,10 @@ async function handleRegister() {
         <!-- Jauge de force : se remplit selon les critères satisfaits -->
         <div class="mt-3 flex gap-1 h-1">
           <div
-              v-for="bar in 4"
-              :key="bar"
-              class="flex-1 rounded-full transition-colors"
-              :class="bar <= strength ? strengthColor : 'bg-input'"
+            v-for="bar in 4"
+            :key="bar"
+            class="flex-1 rounded-full transition-colors"
+            :class="bar <= strength ? strengthColor : 'bg-input'"
           ></div>
         </div>
         <p v-if="errors.password" class="text-[12px] text-danger mt-2">{{ errors.password }}</p>
@@ -189,27 +189,27 @@ async function handleRegister() {
       <div>
         <label class="block text-[13px] text-ink-soft mb-1">Confirmer le mot de passe</label>
         <div
-            class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
-            :class="errors.confirmPassword ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
+          class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
+          :class="errors.confirmPassword ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="lock" :size="20" class="text-muted mr-2"/>
           <input
-              v-model="form.confirmPassword"
-              @input="clearError('confirmPassword')"
-              type="password"
-              placeholder="••••••••"
-              class="flex-1 outline-none text-[15px] bg-transparent"
+            v-model="form.confirmPassword"
+            @input="clearError('confirmPassword')"
+            type="password"
+            placeholder="••••••••"
+            class="flex-1 outline-none text-[15px] bg-transparent"
           />
         </div>
         <p v-if="errors.confirmPassword" class="text-[12px] text-danger mt-1">{{ errors.confirmPassword }}</p>
       </div>
 
       <button
-          type="submit"
-          :disabled="auth.loading"
-          class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+        type="submit"
+        :disabled="auth.loading"
+        class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {{ auth.loading ? 'Création en cours...' : "S'inscrire" }}
+        {{ auth.loading ? 'Inscription en cours...' : "S'inscrire" }}
       </button>
 
       <p class="text-center text-[13px] text-muted">

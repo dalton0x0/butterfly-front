@@ -3,7 +3,7 @@
 // inactifs), édition des valeurs ajustables (nom, description, icône, bonus XP, seuil,
 // actif), et recalcul des badges d'un apprenant. La création d'un type de badge passe
 // par le back (enum BadgeCode + logique d'évaluation), elle n'est donc pas proposée ici.
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
 import {badgeService} from '@/services/badgeService'
 import {userService} from '@/services/userService'
@@ -162,9 +162,9 @@ onMounted(load)
           <option v-for="u in learners" :key="u.id" :value="u.id">{{ u.firstName }} {{ u.lastName }}</option>
         </select>
         <button
-            :disabled="recomputing || recomputeUserId === ''"
-            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
-            @click="recompute"
+          :disabled="recomputing || recomputeUserId === ''"
+          class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center gap-2"
+          @click="recompute"
         >
           <Icon name="refresh" :size="18"/>
           {{ recomputing ? 'Recalcul...' : 'Recalculer' }}
@@ -176,10 +176,10 @@ onMounted(load)
     <!-- Catalogue -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <div
-          v-for="badge in badges"
-          :key="badge.code"
-          class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col gap-3"
-          :class="{ 'opacity-60': badge.active === false }"
+        v-for="badge in badges"
+        :key="badge.code"
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col gap-3"
+        :class="{ 'opacity-60': badge.active === false }"
       >
         <div class="flex items-start gap-3">
           <div class="w-12 h-12 rounded-xl bg-accent/15 text-primary flex items-center justify-center shrink-0">
@@ -232,8 +232,8 @@ onMounted(load)
           <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Icône du badge</label>
           <div class="flex items-center gap-2">
             <span
-                class="w-10 h-10 rounded-[10px] bg-surface-tint text-primary flex items-center justify-center shrink-0"><Icon
-                :name="badgeIcon(form.icon)" :size="22"/></span>
+              class="w-10 h-10 rounded-[10px] bg-surface-tint text-primary flex items-center justify-center shrink-0"><Icon
+              :name="badgeIcon(form.icon)" :size="22"/></span>
             <input v-model="form.icon" type="text" maxlength="100" placeholder="ex : flame, star, rocket"
                    class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
           </div>

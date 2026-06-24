@@ -2,7 +2,7 @@
 // Lecture d'un cours : en-tête, vidéo optionnelle, contenu, puis barre d'actions.
 // GET /api/courses/{id} renvoie name, description, videoUrl, content, completed.
 // POST /api/progress/courses/{courseId}/complete marque le cours terminé (USER).
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
@@ -85,13 +85,13 @@ onMounted(load)
         <!-- Vidéo en tête du cours (lien embarqué ou fichier téléversé) -->
         <div v-if="videoSource" class="aspect-video w-full rounded-xl overflow-hidden mb-8 bg-black">
           <iframe
-              v-if="videoSource.type === 'iframe'"
-              :src="videoSource.src"
-              class="w-full h-full"
-              title="Vidéo du cours"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
+            v-if="videoSource.type === 'iframe'"
+            :src="videoSource.src"
+            class="w-full h-full"
+            title="Vidéo du cours"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
           ></iframe>
           <video v-else :src="videoSource.src" controls class="w-full h-full"></video>
         </div>
@@ -103,9 +103,9 @@ onMounted(load)
       <!-- Barre d'actions -->
       <div class="bg-surface-tint px-6 py-4 flex items-center justify-between gap-4 flex-wrap">
         <RouterLink
-            v-if="course.moduleId"
-            :to="`/modules/${course.moduleId}`"
-            class="h-10 px-4 rounded-[10px] bg-white border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-background transition-colors"
+          v-if="course.moduleId"
+          :to="`/modules/${course.moduleId}`"
+          class="h-10 px-4 rounded-[10px] bg-white border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-background transition-colors"
         >
           <Icon name="arrow_back" :size="18"/>
           Retour au module
@@ -115,16 +115,16 @@ onMounted(load)
         <div class="flex items-center gap-3">
           <span v-if="completeError" class="text-[13px] text-danger">{{ completeError }}</span>
           <span
-              v-if="completed"
-              class="h-10 px-4 rounded-[10px] bg-success/10 text-success text-sm font-semibold flex items-center gap-2"
+            v-if="completed"
+            class="h-10 px-4 rounded-[10px] bg-success/10 text-success text-sm font-semibold flex items-center gap-2"
           >
             <Icon name="check_circle" :size="18"/> Terminé
           </span>
           <button
-              v-else-if="canComplete"
-              :disabled="completing"
-              class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
-              @click="markCompleted"
+            v-else-if="canComplete"
+            :disabled="completing"
+            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+            @click="markCompleted"
           >
             <Icon name="check" :size="18"/>
             {{ completing ? 'Validation...' : 'Marquer comme terminé' }}

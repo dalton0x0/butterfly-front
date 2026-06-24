@@ -3,7 +3,7 @@
 // Les cours et exercices s'éditent sur des pages dédiées (contenu Markdown long).
 // Le quiz (métadonnées courtes) reste géré dans une modale ; ses questions ont
 // leur propre éditeur. GET /api/modules/{id} fournit cours, exercices et quiz.
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {moduleService} from '@/services/moduleService'
 import {courseService} from '@/services/courseService'
@@ -165,11 +165,11 @@ onMounted(load)
     <!-- Onglets -->
     <div class="flex gap-6 border-b border-line mb-5">
       <button
-          v-for="t in tabs"
-          :key="t.key"
-          class="pb-3 text-sm font-semibold transition-colors -mb-px"
-          :class="tab === t.key ? 'text-primary border-b-2 border-primary' : 'text-ink-soft hover:text-ink'"
-          @click="tab = t.key"
+        v-for="t in tabs"
+        :key="t.key"
+        class="pb-3 text-sm font-semibold transition-colors -mb-px"
+        :class="tab === t.key ? 'text-primary border-b-2 border-primary' : 'text-ink-soft hover:text-ink'"
+        @click="tab = t.key"
       >
         {{ t.label }}
       </button>
@@ -179,8 +179,8 @@ onMounted(load)
     <div v-if="tab === 'courses'">
       <div class="flex justify-end mb-4">
         <RouterLink
-            :to="`/formateur/contenus/modules/${moduleId}/cours/nouveau`"
-            class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
+          :to="`/formateur/contenus/modules/${moduleId}/cours/nouveau`"
+          class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
           <Icon name="add" :size="18"/>
           Nouveau cours
@@ -199,15 +199,15 @@ onMounted(load)
           </div>
           <StatusChip v-if="c.videoUrl" label="Vidéo" variant="primary" icon="play_circle"/>
           <RouterLink
-              :to="`/formateur/contenus/cours/${c.id}`"
-              class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
-              aria-label="Modifier"
+            :to="`/formateur/contenus/cours/${c.id}`"
+            class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
+            aria-label="Modifier"
           >
             <Icon name="edit" :size="16"/>
           </RouterLink>
           <button
-              class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
-              aria-label="Supprimer" @click="openDelete('course', c)">
+            class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
+            aria-label="Supprimer" @click="openDelete('course', c)">
             <Icon name="delete" :size="16"/>
           </button>
         </div>
@@ -218,8 +218,8 @@ onMounted(load)
     <div v-else-if="tab === 'exercises'">
       <div class="flex justify-end mb-4">
         <RouterLink
-            :to="`/formateur/contenus/modules/${moduleId}/exercices/nouveau`"
-            class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
+          :to="`/formateur/contenus/modules/${moduleId}/exercices/nouveau`"
+          class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
           <Icon name="add" :size="18"/>
           Nouvel exercice
@@ -237,15 +237,15 @@ onMounted(load)
             <h3 class="text-[16px] font-semibold text-ink truncate">{{ e.name }}</h3>
           </div>
           <RouterLink
-              :to="`/formateur/contenus/exercices/${e.id}`"
-              class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
-              aria-label="Modifier"
+            :to="`/formateur/contenus/exercices/${e.id}`"
+            class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
+            aria-label="Modifier"
           >
             <Icon name="edit" :size="16"/>
           </RouterLink>
           <button
-              class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
-              aria-label="Supprimer" @click="openDelete('exercise', e)">
+            class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
+            aria-label="Supprimer" @click="openDelete('exercise', e)">
             <Icon name="delete" :size="16"/>
           </button>
         </div>
@@ -265,20 +265,20 @@ onMounted(load)
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <RouterLink
-              :to="`/formateur/contenus/quiz/${quiz.id}`"
-              class="h-9 px-3 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity"
+            :to="`/formateur/contenus/quiz/${quiz.id}`"
+            class="h-9 px-3 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-1.5 hover:opacity-90 transition-opacity"
           >
             <Icon name="format_list_numbered" :size="16"/>
             Gérer les questions
           </RouterLink>
           <button
-              class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
-              aria-label="Modifier" @click="openEditQuiz">
+            class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
+            aria-label="Modifier" @click="openEditQuiz">
             <Icon name="edit" :size="16"/>
           </button>
           <button
-              class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
-              aria-label="Supprimer" @click="openDelete('quiz', quiz)">
+            class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
+            aria-label="Supprimer" @click="openDelete('quiz', quiz)">
             <Icon name="delete" :size="16"/>
           </button>
         </div>
@@ -286,8 +286,8 @@ onMounted(load)
       <div v-else class="text-center py-8">
         <p class="text-[15px] text-muted mb-4">Aucun quiz dans ce module.</p>
         <button
-            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
-            @click="openCreateQuiz">
+          class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold inline-flex items-center gap-2 hover:opacity-90 transition-opacity"
+          @click="openCreateQuiz">
           <Icon name="add" :size="18"/>
           Créer le quiz
         </button>

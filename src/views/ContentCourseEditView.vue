@@ -3,12 +3,12 @@
 // Le contenu se rédige en Markdown via un éditeur à onglets Écrire / Aperçu.
 // Création : /formateur/contenus/modules/:moduleId/cours/nouveau
 // Édition : /formateur/contenus/cours/:id
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {courseService} from '@/services/courseService'
 import {moduleService} from '@/services/moduleService'
 import {mediaService} from '@/services/mediaService'
-import {validateVideoFile, ALLOWED_VIDEO_ACCEPT, resolveVideoSource} from '@/utils/media'
+import {ALLOWED_VIDEO_ACCEPT, resolveVideoSource, validateVideoFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
@@ -142,7 +142,7 @@ onMounted(load)
 
   <div v-else class="max-w-[900px] mx-auto">
     <Breadcrumb
-        :items="[
+      :items="[
         { label: 'Contenus', to: '/formateur/contenus' },
         { label: moduleName, to: backTo },
         { label: title }
@@ -154,55 +154,55 @@ onMounted(load)
       <div>
         <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom du cours</label>
         <input
-            v-model="form.name"
-            type="text"
-            maxlength="255"
-            placeholder="Ex : Gérer les services avec systemd"
-            class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+          v-model="form.name"
+          type="text"
+          maxlength="255"
+          placeholder="Ex : Gérer les services avec systemd"
+          class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
         />
       </div>
 
       <div>
         <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Description (facultative)</label>
         <textarea
-            v-model="form.description"
-            rows="2"
-            maxlength="500"
-            placeholder="Courte description affichée en en-tête du cours"
-            class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
+          v-model="form.description"
+          rows="2"
+          maxlength="500"
+          placeholder="Courte description affichée en en-tête du cours"
+          class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
         ></textarea>
       </div>
 
       <div>
         <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Vidéo (facultative)</label>
         <input
-            ref="videoInput"
-            type="file"
-            :accept="ALLOWED_VIDEO_ACCEPT"
-            class="hidden"
-            @change="onVideoSelected"
+          ref="videoInput"
+          type="file"
+          :accept="ALLOWED_VIDEO_ACCEPT"
+          class="hidden"
+          @change="onVideoSelected"
         />
         <div class="flex items-center gap-2">
           <input
-              v-model="form.videoUrl"
-              type="text"
-              placeholder="Collez un lien YouTube, Vimeo ou une URL de vidéo"
-              class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            v-model="form.videoUrl"
+            type="text"
+            placeholder="Collez un lien YouTube, Vimeo ou une URL de vidéo"
+            class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
           />
           <button
-              type="button"
-              :disabled="uploadingVideo"
-              class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors disabled:opacity-60 shrink-0"
-              @click="openVideoPicker"
+            type="button"
+            :disabled="uploadingVideo"
+            class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors disabled:opacity-60 shrink-0"
+            @click="openVideoPicker"
           >
             <Icon name="upload" :size="16"/>
             {{ uploadingVideo ? 'Envoi...' : 'Téléverser' }}
           </button>
           <button
-              v-if="form.videoUrl"
-              type="button"
-              class="h-10 px-3 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors shrink-0"
-              @click="removeVideo"
+            v-if="form.videoUrl"
+            type="button"
+            class="h-10 px-3 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors shrink-0"
+            @click="removeVideo"
           >
             Retirer
           </button>
@@ -214,12 +214,12 @@ onMounted(load)
         <!-- Aperçu -->
         <div v-if="videoSource" class="mt-3 rounded-[12px] overflow-hidden border border-line bg-black">
           <iframe
-              v-if="videoSource.type === 'iframe'"
-              :src="videoSource.src"
-              class="w-full aspect-video"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
+            v-if="videoSource.type === 'iframe'"
+            :src="videoSource.src"
+            class="w-full aspect-video"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
           ></iframe>
           <video v-else :src="videoSource.src" controls class="w-full aspect-video"></video>
         </div>
@@ -238,10 +238,10 @@ onMounted(load)
           Annuler
         </RouterLink>
         <button
-            type="button"
-            :disabled="saving"
-            class="h-10 px-6 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
-            @click="save"
+          type="button"
+          :disabled="saving"
+          class="h-10 px-6 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+          @click="save"
         >
           <Icon name="save" :size="18"/>
           {{ saving ? 'Enregistrement...' : 'Enregistrer' }}

@@ -1,9 +1,9 @@
 <script setup>
 // Connexion.
-import {ref, reactive} from 'vue'
-import {useRouter, useRoute} from 'vue-router'
+import {reactive, ref} from 'vue'
+import {useRoute, useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
-import {validateEmail, validateRequired, mapBackendError} from '@/utils/validators'
+import {mapBackendError, validateEmail, validateRequired} from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
 
 const router = useRouter()
@@ -64,16 +64,16 @@ async function handleLogin() {
       <div class="flex flex-col gap-1.5">
         <label class="text-[13px] text-ink-soft font-medium">Adresse e-mail</label>
         <div
-            class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
-            :class="errors.email ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
+          class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
+          :class="errors.email ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="mail" :size="20" class="text-muted mr-2"/>
           <input
-              v-model="form.email"
-              @input="clearError('email')"
-              type="email"
-              placeholder="exemple@infradev.fr"
-              class="flex-1 outline-none text-[15px] bg-transparent"
+            v-model="form.email"
+            @input="clearError('email')"
+            type="email"
+            placeholder="exemple@infradev.fr"
+            class="flex-1 outline-none text-[15px] bg-transparent"
           />
         </div>
         <p v-if="errors.email" class="text-[12px] text-danger">{{ errors.email }}</p>
@@ -82,16 +82,16 @@ async function handleLogin() {
       <div class="flex flex-col gap-1.5">
         <label class="text-[13px] text-ink-soft font-medium">Mot de passe</label>
         <div
-            class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
-            :class="errors.password ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
+          class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
+          :class="errors.password ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="lock" :size="20" class="text-muted mr-2"/>
           <input
-              v-model="form.password"
-              @input="clearError('password')"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="••••••••"
-              class="flex-1 outline-none text-[15px] bg-transparent"
+            v-model="form.password"
+            @input="clearError('password')"
+            :type="showPassword ? 'text' : 'password'"
+            placeholder="••••••••"
+            class="flex-1 outline-none text-[15px] bg-transparent"
           />
           <button type="button" class="text-muted hover:text-ink transition-colors"
                   @click="showPassword = !showPassword">
@@ -117,9 +117,9 @@ async function handleLogin() {
       </p>
 
       <button
-          type="submit"
-          :disabled="auth.loading"
-          class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+        type="submit"
+        :disabled="auth.loading"
+        class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
       >
         {{ auth.loading ? 'Connexion en cours...' : 'Se connecter' }}
       </button>

@@ -3,7 +3,7 @@
 // L'énoncé se rédige en Markdown (peut contenir du code, des images...).
 // Création : /formateur/contenus/modules/:moduleId/exercices/nouveau
 // Édition : /formateur/contenus/exercices/:id
-import {ref, reactive, computed, onMounted} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {exerciseService} from '@/services/exerciseService'
 import {moduleService} from '@/services/moduleService'
@@ -90,7 +90,7 @@ onMounted(load)
 
   <div v-else class="max-w-[900px] mx-auto">
     <Breadcrumb
-        :items="[
+      :items="[
         { label: 'Contenus', to: '/formateur/contenus' },
         { label: moduleName, to: backTo },
         { label: title }
@@ -102,11 +102,11 @@ onMounted(load)
       <div>
         <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom de l'exercice</label>
         <input
-            v-model="form.name"
-            type="text"
-            maxlength="255"
-            placeholder="Ex : Créer un service systemd personnalisé"
-            class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+          v-model="form.name"
+          type="text"
+          maxlength="255"
+          placeholder="Ex : Créer un service systemd personnalisé"
+          class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
         />
       </div>
 
@@ -123,10 +123,10 @@ onMounted(load)
           Annuler
         </RouterLink>
         <button
-            type="button"
-            :disabled="saving"
-            class="h-10 px-6 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
-            @click="save"
+          type="button"
+          :disabled="saving"
+          class="h-10 px-6 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-60"
+          @click="save"
         >
           <Icon name="save" :size="18"/>
           {{ saving ? 'Enregistrement...' : 'Enregistrer' }}

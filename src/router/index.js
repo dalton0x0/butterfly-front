@@ -89,7 +89,8 @@ const routes = [
         path: '/profil',
         name: 'profile',
         component: () => import('@/views/ProfileView.vue'),
-        meta: {requiresAuth: true}},
+        meta: {requiresAuth: true}
+    },
 
     // Formateur (TEACHER ou ADMIN)
     {

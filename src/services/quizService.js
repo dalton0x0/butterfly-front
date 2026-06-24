@@ -12,7 +12,7 @@
 */
 
 import http from './http'
-import {normalizePage, buildPageParams} from '@/utils/pagination'
+import {buildPageParams, normalizePage} from '@/utils/pagination'
 
 export const quizService = {
     /**

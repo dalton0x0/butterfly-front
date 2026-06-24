@@ -1,19 +1,19 @@
 <script setup>
 // Mon profil : informations personnelles et sécurité.
-import {ref, reactive, computed} from 'vue'
+import {computed, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {profileService} from '@/services/profileService'
 import {
-  validateRequired,
-  validateEmail,
-  validatePassword,
-  validateMatch,
+  mapBackendError,
   passwordStrength,
-  mapBackendError
+  validateEmail,
+  validateMatch,
+  validatePassword,
+  validateRequired
 } from '@/utils/validators'
 import {mediaService} from '@/services/mediaService'
-import {mediaUrl, validateImageFile, ALLOWED_IMAGE_ACCEPT} from '@/utils/media'
+import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -33,8 +33,8 @@ const memberSince = computed(() => {
   }
   const date = new Date(raw)
   return Number.isNaN(date.getTime())
-      ? ''
-      : date.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'})
+    ? ''
+    : date.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'})
 })
 
 // Informations personnelles
@@ -224,20 +224,20 @@ async function reconnect() {
           <div>
             <label class="block text-[13px] text-ink-soft mb-1">Prénom</label>
             <input
-                v-model="infoForm.firstName"
-                @input="clearInfoError('firstName')"
-                class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-                :class="infoErrors.firstName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+              v-model="infoForm.firstName"
+              @input="clearInfoError('firstName')"
+              class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+              :class="infoErrors.firstName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
             />
             <p v-if="infoErrors.firstName" class="text-[12px] text-danger mt-1">{{ infoErrors.firstName }}</p>
           </div>
           <div>
             <label class="block text-[13px] text-ink-soft mb-1">Nom</label>
             <input
-                v-model="infoForm.lastName"
-                @input="clearInfoError('lastName')"
-                class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-                :class="infoErrors.lastName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+              v-model="infoForm.lastName"
+              @input="clearInfoError('lastName')"
+              class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+              :class="infoErrors.lastName ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
             />
             <p v-if="infoErrors.lastName" class="text-[12px] text-danger mt-1">{{ infoErrors.lastName }}</p>
           </div>
@@ -246,11 +246,11 @@ async function reconnect() {
         <div class="mb-4">
           <label class="block text-[13px] text-ink-soft mb-1">Adresse e-mail</label>
           <input
-              v-model="infoForm.email"
-              @input="clearInfoError('email')"
-              type="email"
-              class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-              :class="infoErrors.email ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+            v-model="infoForm.email"
+            @input="clearInfoError('email')"
+            type="email"
+            class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+            :class="infoErrors.email ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
           />
           <p v-if="infoErrors.email" class="text-[12px] text-danger mt-1">{{ infoErrors.email }}</p>
         </div>
@@ -258,33 +258,33 @@ async function reconnect() {
         <div class="mb-4">
           <label class="block text-[13px] text-ink-soft mb-1">Avatar (facultatif)</label>
           <input
-              ref="avatarInput"
-              type="file"
-              :accept="ALLOWED_IMAGE_ACCEPT"
-              class="hidden"
-              @change="onAvatarSelected"
+            ref="avatarInput"
+            type="file"
+            :accept="ALLOWED_IMAGE_ACCEPT"
+            class="hidden"
+            @change="onAvatarSelected"
           />
           <div class="flex items-center gap-3">
             <div
-                class="w-14 h-14 rounded-full bg-surface-tint flex items-center justify-center text-primary overflow-hidden shrink-0">
+              class="w-14 h-14 rounded-full bg-surface-tint flex items-center justify-center text-primary overflow-hidden shrink-0">
               <img v-if="infoForm.avatar" :src="mediaUrl(infoForm.avatar)" alt="Aperçu de l'avatar"
                    class="w-full h-full object-cover"/>
               <Icon v-else name="account_circle" :size="40"/>
             </div>
             <button
-                type="button"
-                :disabled="uploadingAvatar"
-                class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors disabled:opacity-60"
-                @click="openAvatarPicker"
+              type="button"
+              :disabled="uploadingAvatar"
+              class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors disabled:opacity-60"
+              @click="openAvatarPicker"
             >
               <Icon name="upload" :size="16"/>
               {{ uploadingAvatar ? 'Envoi...' : "Changer l'avatar" }}
             </button>
             <button
-                v-if="infoForm.avatar"
-                type="button"
-                class="h-10 px-3 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors"
-                @click="removeAvatar"
+              v-if="infoForm.avatar"
+              type="button"
+              class="h-10 px-3 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors"
+              @click="removeAvatar"
             >
               Retirer
             </button>
@@ -300,10 +300,10 @@ async function reconnect() {
 
         <div class="flex justify-end">
           <button
-              type="button"
-              :disabled="infoLoading"
-              class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
-              @click="submitInfo"
+            type="button"
+            :disabled="infoLoading"
+            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+            @click="submitInfo"
           >
             {{ infoLoading ? 'Enregistrement...' : 'Enregistrer les modifications' }}
           </button>
@@ -320,9 +320,9 @@ async function reconnect() {
             Mot de passe mis à jour. Pour des raisons de sécurité, toutes vos sessions ont été déconnectées.
           </p>
           <button
-              type="button"
-              class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
-              @click="reconnect"
+            type="button"
+            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            @click="reconnect"
           >
             Se reconnecter
           </button>
@@ -333,12 +333,12 @@ async function reconnect() {
             <div>
               <label class="block text-[13px] text-ink-soft mb-1">Mot de passe actuel</label>
               <input
-                  v-model="pwdForm.currentPassword"
-                  @input="clearPwdError('currentPassword')"
-                  type="password"
-                  placeholder="••••••••"
-                  class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-                  :class="pwdErrors.currentPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+                v-model="pwdForm.currentPassword"
+                @input="clearPwdError('currentPassword')"
+                type="password"
+                placeholder="••••••••"
+                class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+                :class="pwdErrors.currentPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
               />
               <p v-if="pwdErrors.currentPassword" class="text-[12px] text-danger mt-1">{{
                   pwdErrors.currentPassword
@@ -348,19 +348,19 @@ async function reconnect() {
             <div>
               <label class="block text-[13px] text-ink-soft mb-1">Nouveau mot de passe</label>
               <input
-                  v-model="pwdForm.newPassword"
-                  @input="clearPwdError('newPassword')"
-                  type="password"
-                  placeholder="••••••••"
-                  class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-                  :class="pwdErrors.newPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+                v-model="pwdForm.newPassword"
+                @input="clearPwdError('newPassword')"
+                type="password"
+                placeholder="••••••••"
+                class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+                :class="pwdErrors.newPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
               />
               <div class="mt-2 flex gap-1 h-1">
                 <div
-                    v-for="bar in 4"
-                    :key="bar"
-                    class="flex-1 rounded-full transition-colors"
-                    :class="bar <= strength ? strengthColor : 'bg-input'"
+                  v-for="bar in 4"
+                  :key="bar"
+                  class="flex-1 rounded-full transition-colors"
+                  :class="bar <= strength ? strengthColor : 'bg-input'"
                 ></div>
               </div>
               <p v-if="pwdErrors.newPassword" class="text-[12px] text-danger mt-1">{{ pwdErrors.newPassword }}</p>
@@ -369,12 +369,12 @@ async function reconnect() {
             <div>
               <label class="block text-[13px] text-ink-soft mb-1">Confirmer le nouveau mot de passe</label>
               <input
-                  v-model="pwdForm.confirmPassword"
-                  @input="clearPwdError('confirmPassword')"
-                  type="password"
-                  placeholder="••••••••"
-                  class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
-                  :class="pwdErrors.confirmPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+                v-model="pwdForm.confirmPassword"
+                @input="clearPwdError('confirmPassword')"
+                type="password"
+                placeholder="••••••••"
+                class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+                :class="pwdErrors.confirmPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
               />
               <p v-if="pwdErrors.confirmPassword" class="text-[12px] text-danger mt-1">{{
                   pwdErrors.confirmPassword
@@ -389,10 +389,10 @@ async function reconnect() {
 
           <div class="flex justify-end">
             <button
-                type="button"
-                :disabled="pwdLoading"
-                class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
-                @click="submitPwd"
+              type="button"
+              :disabled="pwdLoading"
+              class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+              @click="submitPwd"
             >
               {{ pwdLoading ? 'Modification...' : 'Changer le mot de passe' }}
             </button>

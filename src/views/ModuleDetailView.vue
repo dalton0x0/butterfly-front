@@ -3,7 +3,7 @@
 // GET /api/modules/{id} renvoie en un seul appel les cours, exercices et le quiz,
 // chacun avec un booléen "completed". La progression de l'en-tête est dérivée de
 // ces éléments réels.
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {moduleService} from '@/services/moduleService'
 import Icon from '@/components/Icon.vue'
@@ -31,9 +31,9 @@ const tabs = computed(() => [
 const derived = computed(() => {
   const total = courses.value.length + exercises.value.length + (quiz.value ? 1 : 0)
   const done =
-      courses.value.filter((c) => c.completed).length +
-      exercises.value.filter((e) => e.completed).length +
-      (quiz.value?.completed ? 1 : 0)
+    courses.value.filter((c) => c.completed).length +
+    exercises.value.filter((e) => e.completed).length +
+    (quiz.value?.completed ? 1 : 0)
   return {total, done, percent: total ? Math.round((done / total) * 100) : 0}
 })
 
@@ -98,11 +98,11 @@ onMounted(load)
     <!-- Onglets -->
     <div class="flex gap-6 border-b border-line mb-5">
       <button
-          v-for="t in tabs"
-          :key="t.key"
-          class="pb-3 text-sm font-semibold transition-colors -mb-px"
-          :class="tab === t.key ? 'text-primary border-b-2 border-primary' : 'text-ink-soft hover:text-ink'"
-          @click="tab = t.key"
+        v-for="t in tabs"
+        :key="t.key"
+        class="pb-3 text-sm font-semibold transition-colors -mb-px"
+        :class="tab === t.key ? 'text-primary border-b-2 border-primary' : 'text-ink-soft hover:text-ink'"
+        @click="tab = t.key"
       >
         {{ t.label }}
       </button>
@@ -112,11 +112,11 @@ onMounted(load)
     <div v-if="tab === 'courses'" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
       <p v-if="courses.length === 0" class="px-5 py-6 text-[15px] text-muted">Aucun cours dans ce module.</p>
       <RouterLink
-          v-for="(c, i) in courses"
-          :key="c.id"
-          :to="`/cours/${c.id}`"
-          class="flex items-center gap-3 px-5 py-4 hover:bg-surface-hover transition-colors"
-          :class="{ 'border-t border-line-soft': i > 0 }"
+        v-for="(c, i) in courses"
+        :key="c.id"
+        :to="`/cours/${c.id}`"
+        class="flex items-center gap-3 px-5 py-4 hover:bg-surface-hover transition-colors"
+        :class="{ 'border-t border-line-soft': i > 0 }"
       >
         <div class="w-9 h-9 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
           <Icon name="menu_book" :size="18"/>
@@ -134,19 +134,19 @@ onMounted(load)
     <div v-else-if="tab === 'exercises'" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
       <p v-if="exercises.length === 0" class="px-5 py-6 text-[15px] text-muted">Aucun exercice dans ce module.</p>
       <RouterLink
-          v-for="(e, i) in exercises"
-          :key="e.id"
-          :to="`/exercices/${e.id}`"
-          class="flex items-center gap-3 px-5 py-4 hover:bg-surface-hover transition-colors"
-          :class="{ 'border-t border-line-soft': i > 0 }"
+        v-for="(e, i) in exercises"
+        :key="e.id"
+        :to="`/exercices/${e.id}`"
+        class="flex items-center gap-3 px-5 py-4 hover:bg-surface-hover transition-colors"
+        :class="{ 'border-t border-line-soft': i > 0 }"
       >
         <div class="w-9 h-9 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
           <Icon name="terminal" :size="18"/>
         </div>
         <span class="flex-1 text-[15px] text-ink">{{ e.name }}</span>
         <StatusChip
-            :label="e.completed ? 'Terminé' : 'À faire'"
-            :variant="e.completed ? 'success' : 'neutral'"
+          :label="e.completed ? 'Terminé' : 'À faire'"
+          :variant="e.completed ? 'success' : 'neutral'"
         />
         <Icon name="chevron_right" :size="20" class="text-muted"/>
       </RouterLink>

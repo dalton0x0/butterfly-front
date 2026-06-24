@@ -18,24 +18,24 @@ const offset = computed(() => circumference.value * (1 - clamped.value / 100))
   <div class="relative inline-flex items-center justify-center" :style="{ width: size + 'px', height: size + 'px' }">
     <svg :width="size" :height="size" class="-rotate-90">
       <circle
-          :cx="size / 2"
-          :cy="size / 2"
-          :r="radius"
-          fill="none"
-          stroke="#e2e8f0"
-          :stroke-width="stroke"
+        :cx="size / 2"
+        :cy="size / 2"
+        :r="radius"
+        fill="none"
+        stroke="#e2e8f0"
+        :stroke-width="stroke"
       />
       <circle
-          :cx="size / 2"
-          :cy="size / 2"
-          :r="radius"
-          fill="none"
-          stroke="var(--color-primary)"
-          :stroke-width="stroke"
-          stroke-linecap="round"
-          :stroke-dasharray="circumference"
-          :stroke-dashoffset="offset"
-          class="transition-all"
+        :cx="size / 2"
+        :cy="size / 2"
+        :r="radius"
+        fill="none"
+        stroke="var(--color-primary)"
+        :stroke-width="stroke"
+        stroke-linecap="round"
+        :stroke-dasharray="circumference"
+        :stroke-dashoffset="offset"
+        class="transition-all"
       />
     </svg>
     <span class="absolute text-base font-semibold text-primary tabular-nums">{{ clamped }} %</span>

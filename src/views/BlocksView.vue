@@ -3,7 +3,7 @@
 // Les blocs viennent de GET /api/blocks, la progression de chaque bloc vient
 // de GET /api/users/me/blocks (fusionnée par blockId). Le statut affiché est
 // dérivé du pourcentage de progression (pas de verrouillage au niveau bloc).
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {blockService} from '@/services/blockService'
 import {progressService} from '@/services/progressService'
 import Icon from '@/components/Icon.vue'
@@ -109,11 +109,11 @@ onMounted(load)
     <h1 class="text-[30px] font-semibold text-navy">Mes blocs de compétences</h1>
     <div class="inline-flex bg-surface rounded-full p-1 shadow-[var(--shadow-card)]">
       <button
-          v-for="f in filters"
-          :key="f.key"
-          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-          :class="filter === f.key ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'"
-          @click="filter = f.key"
+        v-for="f in filters"
+        :key="f.key"
+        class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+        :class="filter === f.key ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'"
+        @click="filter = f.key"
       >
         {{ f.label }}
       </button>
@@ -132,10 +132,10 @@ onMounted(load)
   <!-- Liste -->
   <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     <RouterLink
-        v-for="block in filtered"
-        :key="block.id"
-        :to="`/blocs/${block.id}`"
-        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden flex flex-col transition-all hover:shadow-md"
+      v-for="block in filtered"
+      :key="block.id"
+      :to="`/blocs/${block.id}`"
+      class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden flex flex-col transition-all hover:shadow-md"
     >
       <div class="relative">
         <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name" class="w-full h-[200px] object-cover"/>

@@ -3,7 +3,7 @@
 // À corriger (SUBMITTED) : panneau de correction (note + feedback, valider/rejeter).
 // Validés / Rejetés : historique en lecture seule, avec la note et le feedback donnés.
 // File : GET /api/progress/exercises?status=... (restreinte aux apprenants du formateur).
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {correctionService} from '@/services/correctionService'
 import {userService} from '@/services/userService'

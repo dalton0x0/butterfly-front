@@ -1,7 +1,7 @@
 <script setup>
 // Espace formateur : liste des apprenants. Chaque ligne mène à la page détail
 // complète de l'apprenant (progression, activité). GET /api/users (filtré USER).
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
 import {useRouter} from 'vue-router'
 import {userService} from '@/services/userService'
@@ -22,9 +22,9 @@ const filtered = computed(() => {
     return learners.value
   }
   return learners.value.filter(
-      (u) =>
-          `${u.firstName} ${u.lastName}`.toLowerCase().includes(term) ||
-          (u.email || '').toLowerCase().includes(term)
+    (u) =>
+      `${u.firstName} ${u.lastName}`.toLowerCase().includes(term) ||
+      (u.email || '').toLowerCase().includes(term)
   )
 })
 
@@ -80,10 +80,10 @@ onMounted(load)
         </thead>
         <tbody>
         <tr
-            v-for="u in filtered"
-            :key="u.id"
-            class="border-t border-line-soft hover:bg-surface-hover transition-colors cursor-pointer"
-            @click="openDetail(u.id)"
+          v-for="u in filtered"
+          :key="u.id"
+          class="border-t border-line-soft hover:bg-surface-hover transition-colors cursor-pointer"
+          @click="openDetail(u.id)"
         >
           <td class="px-5 py-3">
             <div class="flex items-center gap-2.5">
@@ -95,8 +95,8 @@ onMounted(load)
           <td class="px-5 py-3 text-ink-soft">{{ u.promotionName || '-' }}</td>
           <td class="px-5 py-3">
             <StatusChip
-                :label="u.enabled ? 'Actif' : 'Désactivé'"
-                :variant="u.enabled ? 'success' : 'neutral'"
+              :label="u.enabled ? 'Actif' : 'Désactivé'"
+              :variant="u.enabled ? 'success' : 'neutral'"
             />
           </td>
           <td class="px-5 py-3 text-right">

@@ -2,7 +2,7 @@
 // Catalogue des exercices de l'apprenant.
 // GET /api/users/me/exercises renvoie tous les exercices visibles (y compris
 // NOT_STARTED) avec leur statut. On filtre par statut côté client.
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {exerciseService} from '@/services/exerciseService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
@@ -62,11 +62,11 @@ onMounted(load)
     <h1 class="text-[30px] font-semibold text-navy">Mes exercices</h1>
     <div class="inline-flex bg-surface rounded-full p-1 shadow-[var(--shadow-card)] flex-wrap">
       <button
-          v-for="f in filters"
-          :key="f.key"
-          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-          :class="filter === f.key ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'"
-          @click="filter = f.key"
+        v-for="f in filters"
+        :key="f.key"
+        class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+        :class="filter === f.key ? 'bg-primary text-white' : 'text-ink-soft hover:text-ink'"
+        @click="filter = f.key"
       >
         {{ f.label }}
       </button>
@@ -80,10 +80,10 @@ onMounted(load)
 
   <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
     <RouterLink
-        v-for="e in filtered"
-        :key="e.id"
-        :to="`/exercices/${e.id}`"
-        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
+      v-for="e in filtered"
+      :key="e.id"
+      :to="`/exercices/${e.id}`"
+      class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
     >
       <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-primary shrink-0">
         <Icon name="terminal" :size="22"/>

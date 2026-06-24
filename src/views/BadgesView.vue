@@ -2,7 +2,7 @@
 // Page des badges : grille de médaillons et pop-up de détail.
 // GET /api/badges/me/progress renvoie tous les badges avec, pour l'utilisateur,
 // l'état (obtenu ou non), la valeur courante, la cible et le pourcentage.
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {badgeService} from '@/services/badgeService'
 import Icon from '@/components/Icon.vue'
@@ -82,7 +82,7 @@ onMounted(load)
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
     <h1 class="text-[30px] font-semibold text-navy">Mes badges</h1>
     <span
-        class="inline-flex items-center px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium self-start">
+      class="inline-flex items-center px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium self-start">
       {{ earnedCount }} obtenus / {{ items.length }}
     </span>
   </div>
@@ -94,11 +94,11 @@ onMounted(load)
     <!-- Filtres -->
     <div class="flex flex-wrap gap-2 mb-6">
       <button
-          v-for="f in filters"
-          :key="f.key"
-          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
-          :class="activeFilter === f.key ? 'bg-primary text-white' : 'bg-surface-tint text-primary hover:bg-accent/20'"
-          @click="activeFilter = f.key"
+        v-for="f in filters"
+        :key="f.key"
+        class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors"
+        :class="activeFilter === f.key ? 'bg-primary text-white' : 'bg-surface-tint text-primary hover:bg-accent/20'"
+        @click="activeFilter = f.key"
       >
         {{ f.label }}
       </button>
@@ -107,14 +107,14 @@ onMounted(load)
     <!-- Grille -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
       <button
-          v-for="item in filtered"
-          :key="item.badge.id"
-          class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col items-center text-center gap-2 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
-          @click="selected = item"
+        v-for="item in filtered"
+        :key="item.badge.id"
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col items-center text-center gap-2 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer"
+        @click="selected = item"
       >
         <div
-            class="rounded-full flex items-center justify-center relative"
-            :style="{
+          class="rounded-full flex items-center justify-center relative"
+          :style="{
             width: '72px',
             height: '72px',
             border: `3px solid ${item.earned ? levelColor(item.badge.level) : '#cbd5e1'}`,
@@ -125,8 +125,8 @@ onMounted(load)
         >
           <Icon :name="badgeIcon(item.badge.icon)" :size="30" class="text-primary"/>
           <span
-              v-if="!item.earned"
-              class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#6d8196] text-white flex items-center justify-center"
+            v-if="!item.earned"
+            class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#6d8196] text-white flex items-center justify-center"
           >
             <Icon name="lock" :size="14"/>
           </span>
@@ -152,8 +152,8 @@ onMounted(load)
   <Modal v-if="selected" @close="selected = null">
     <div class="flex flex-col items-center text-center px-6 pt-8 pb-6">
       <div
-          class="rounded-full flex items-center justify-center relative mb-4"
-          :style="{
+        class="rounded-full flex items-center justify-center relative mb-4"
+        :style="{
           width: '96px',
           height: '96px',
           border: `4px solid ${selected.earned ? levelColor(selected.badge.level) : '#cbd5e1'}`,
@@ -163,8 +163,8 @@ onMounted(load)
       >
         <Icon :name="badgeIcon(selected.badge.icon)" :size="42" class="text-primary"/>
         <span
-            v-if="!selected.earned"
-            class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#6d8196] text-white flex items-center justify-center"
+          v-if="!selected.earned"
+          class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#6d8196] text-white flex items-center justify-center"
         >
           <Icon name="lock" :size="16"/>
         </span>
@@ -177,8 +177,8 @@ onMounted(load)
           Niveau {{ levelLabel(selected.badge.level) }}
         </span>
         <span
-            class="inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full"
-            :class="selected.earned ? 'bg-[#16a34a]/12 text-[#16a34a]' : 'bg-[#6d8196]/12 text-[#6d8196]'"
+          class="inline-flex items-center gap-1 text-[12px] px-2 py-0.5 rounded-full"
+          :class="selected.earned ? 'bg-[#16a34a]/12 text-[#16a34a]' : 'bg-[#6d8196]/12 text-[#6d8196]'"
         >
           <Icon :name="selected.earned ? 'check_circle' : 'schedule'" :size="14"/>
           {{ selected.earned ? 'Obtenu' : 'En cours' }}

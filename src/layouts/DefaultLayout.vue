@@ -6,12 +6,12 @@ import AppFooter from '@/components/AppFooter.vue'
 
 <template>
   <div class="min-h-screen flex flex-col">
-    <AppNavbar />
+    <AppNavbar/>
     <main class="flex-grow pt-[88px] pb-10 px-6">
       <div class="max-w-[1200px] mx-auto w-full">
-        <slot />
+        <slot/>
       </div>
     </main>
-    <AppFooter />
+    <AppFooter/>
   </div>
 </template>

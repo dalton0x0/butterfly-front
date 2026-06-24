@@ -1,7 +1,7 @@
 <script setup>
 // Espace admin : page détail et édition d'un utilisateur.
-import {ref, reactive, computed, onMounted} from 'vue'
-import {ROLES, roleChip as roleChipFor} from '@/utils/roles'
+import {computed, onMounted, reactive, ref} from 'vue'
+import {roleChip as roleChipFor, ROLES} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
@@ -114,17 +114,17 @@ function saveRole() {
 
 function toggleStatus() {
   run(savingStatus, () => userService.toggleEnabled(userId.value),
-      user.value.enabled ? 'Compte désactivé.' : 'Compte activé.')
+    user.value.enabled ? 'Compte désactivé.' : 'Compte activé.')
 }
 
 function savePromotion() {
   const promotionId = selectedPromotionId.value
   run(
-      savingPromotion,
-      () => (promotionId === '' || promotionId === null
-          ? userService.removePromotion(userId.value)
-          : userService.assignPromotion(userId.value, promotionId)),
-      'Promotion mise à jour.'
+    savingPromotion,
+    () => (promotionId === '' || promotionId === null
+      ? userService.removePromotion(userId.value)
+      : userService.assignPromotion(userId.value, promotionId)),
+    'Promotion mise à jour.'
   )
 }
 
@@ -231,10 +231,10 @@ onMounted(load)
             <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Statut du
               compte</label>
             <button
-                :disabled="savingStatus || isSelf"
-                class="h-10 px-4 rounded-[10px] text-sm font-semibold border transition-colors flex items-center gap-2 disabled:opacity-50"
-                :class="user.enabled ? 'border-danger text-danger hover:bg-danger/8' : 'border-[#16a34a] text-[#16a34a] hover:bg-[#16a34a]/8'"
-                @click="toggleStatus"
+              :disabled="savingStatus || isSelf"
+              class="h-10 px-4 rounded-[10px] text-sm font-semibold border transition-colors flex items-center gap-2 disabled:opacity-50"
+              :class="user.enabled ? 'border-danger text-danger hover:bg-danger/8' : 'border-[#16a34a] text-[#16a34a] hover:bg-[#16a34a]/8'"
+              @click="toggleStatus"
             >
               <Icon name="power_settings_new" :size="18"/>
               {{ user.enabled ? 'Désactiver le compte' : 'Activer le compte' }}

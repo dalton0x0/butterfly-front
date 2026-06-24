@@ -1,7 +1,7 @@
 <script setup>
 // Tableau de bord apprenant : en-tête, KPIs, blocs assignés, activité récente,
 // derniers badges. Tout vient d'un seul appel : GET /api/users/me/dashboard.
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {useAuthStore} from '@/stores/auth'
 import {dashboardService} from '@/services/dashboardService'
@@ -78,9 +78,9 @@ const recentActivity = computed(() => {
     })
   }
   return items
-      .filter((i) => i.at)
-      .sort((a, b) => new Date(b.at) - new Date(a.at))
-      .slice(0, 6)
+    .filter((i) => i.at)
+    .sort((a, b) => new Date(b.at) - new Date(a.at))
+    .slice(0, 6)
 })
 
 async function load() {
@@ -111,15 +111,15 @@ onMounted(load)
       </div>
       <div class="flex flex-wrap gap-2">
         <span
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
           <Icon name="bolt" :size="18"/> {{ overview.totalXp ?? 0 }} XP
         </span>
         <span
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
           <Icon name="local_fire_department" :size="18"/> Série : {{ streak.currentStreak ?? 0 }} jours
         </span>
         <span
-            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
           <Icon name="quiz" :size="18"/> {{ overview.totalQuizzesPassed ?? 0 }} quiz réussis
         </span>
       </div>
@@ -145,10 +145,10 @@ onMounted(load)
     </div>
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-10">
       <RouterLink
-          v-for="block in assignedBlocks"
-          :key="block.blockId"
-          :to="`/blocs/${block.blockId}`"
-          class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
+        v-for="block in assignedBlocks"
+        :key="block.blockId"
+        :to="`/blocs/${block.blockId}`"
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
       >
         <div class="w-30 h-16 rounded-xl overflow-hidden shrink-0">
           <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.blockName" class="w-30 h-16 object-cover"/>
@@ -161,7 +161,7 @@ onMounted(load)
           <ProgressBar :value="Math.round(block.overallPercent || 0)" show-label/>
         </div>
         <button
-            class="shrink-0 h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity hidden sm:block">
+          class="shrink-0 h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity hidden sm:block">
           Continuer
         </button>
       </RouterLink>
@@ -174,10 +174,10 @@ onMounted(load)
         <p v-if="recentActivity.length === 0" class="text-[14px] text-muted">Aucune activité récente.</p>
         <ul v-else>
           <li
-              v-for="(item, i) in recentActivity"
-              :key="i"
-              class="flex items-center gap-3 py-2.5"
-              :class="{ 'border-t border-line-soft': i > 0 }"
+            v-for="(item, i) in recentActivity"
+            :key="i"
+            class="flex items-center gap-3 py-2.5"
+            :class="{ 'border-t border-line-soft': i > 0 }"
           >
             <div class="w-8 h-8 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
               <Icon :name="item.icon" :size="18"/>
@@ -194,8 +194,8 @@ onMounted(load)
         <div v-else class="flex justify-around mb-4">
           <div v-for="ub in latestBadges" :key="ub.id" class="flex flex-col items-center text-center gap-2">
             <div
-                class="w-16 h-16 rounded-full flex items-center justify-center"
-                :style="{ border: `3px solid ${levelColor(ub.badge?.level)}`, background: 'var(--color-surface-tint)' }"
+              class="w-16 h-16 rounded-full flex items-center justify-center"
+              :style="{ border: `3px solid ${levelColor(ub.badge?.level)}`, background: 'var(--color-surface-tint)' }"
             >
               <Icon :name="badgeIcon(ub.badge?.icon)" :size="28" class="text-primary"/>
             </div>

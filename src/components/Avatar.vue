@@ -33,8 +33,8 @@ const fontSize = computed(() => Math.round(props.size * 0.4))
 
 <template>
   <span
-      class="inline-flex items-center justify-center rounded-full overflow-hidden bg-surface-tint text-primary font-semibold shrink-0"
-      :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${fontSize}px` }"
+    class="inline-flex items-center justify-center rounded-full overflow-hidden bg-surface-tint text-primary font-semibold shrink-0"
+    :style="{ width: `${size}px`, height: `${size}px`, fontSize: `${fontSize}px` }"
   >
     <img v-if="resolvedSrc" :src="resolvedSrc" :alt="name" class="w-full h-full object-cover"/>
     <template v-else-if="initials">{{ initials }}</template>

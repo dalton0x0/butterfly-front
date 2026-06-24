@@ -3,7 +3,7 @@
 // statut), indicateurs de progression, note moyenne et activité récente.
 // GET /api/users/{id} pour l'identité, GET /api/progress/users/{id}/overview
 // pour la progression (lecture seule, accessible à tout le staff).
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
@@ -22,7 +22,7 @@ const overview = ref(null)
 const userId = computed(() => Number(route.params.id))
 
 const fullName = computed(() =>
-    learner.value ? `${learner.value.firstName} ${learner.value.lastName}` : ''
+  learner.value ? `${learner.value.firstName} ${learner.value.lastName}` : ''
 )
 
 const kpis = computed(() => {
@@ -71,9 +71,9 @@ const recentActivity = computed(() => {
     })
   }
   return items
-      .filter((i) => i.at)
-      .sort((a, b) => new Date(b.at) - new Date(a.at))
-      .slice(0, 12)
+    .filter((i) => i.at)
+    .sort((a, b) => new Date(b.at) - new Date(a.at))
+    .slice(0, 12)
 })
 
 async function load() {
@@ -112,11 +112,11 @@ onMounted(load)
           <p class="text-ink-soft truncate">{{ learner.email }}</p>
           <div class="flex flex-wrap items-center gap-2 mt-2">
             <StatusChip
-                :label="learner.enabled ? 'Actif' : 'Désactivé'"
-                :variant="learner.enabled ? 'success' : 'neutral'"
+              :label="learner.enabled ? 'Actif' : 'Désactivé'"
+              :variant="learner.enabled ? 'success' : 'neutral'"
             />
             <span
-                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-tint text-[13px] text-ink-soft">
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-tint text-[13px] text-ink-soft">
               <Icon name="school" :size="16"/> {{ learner.promotionName || 'Sans promotion' }}
             </span>
           </div>
@@ -148,10 +148,10 @@ onMounted(load)
       <p v-if="recentActivity.length === 0" class="text-[14px] text-muted">Aucune activité récente.</p>
       <ul v-else>
         <li
-            v-for="(item, i) in recentActivity"
-            :key="i"
-            class="flex items-center gap-3 py-2.5"
-            :class="{ 'border-t border-line-soft': i > 0 }"
+          v-for="(item, i) in recentActivity"
+          :key="i"
+          class="flex items-center gap-3 py-2.5"
+          :class="{ 'border-t border-line-soft': i > 0 }"
         >
           <div class="w-8 h-8 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
             <Icon :name="item.icon" :size="18"/>

@@ -8,9 +8,9 @@ defineProps({
 
 <template>
   <span
-      class="material-symbols-outlined"
-      :class="{ 'icon-filled': filled }"
-      :style="{ fontSize: size + 'px' }"
+    class="material-symbols-outlined"
+    :class="{ 'icon-filled': filled }"
+    :style="{ fontSize: size + 'px' }"
   >
     {{ name }}
   </span>

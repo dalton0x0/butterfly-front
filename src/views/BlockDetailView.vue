@@ -3,7 +3,7 @@
 // progression depuis le résumé) puis liste des modules présentée en parcours.
 // GET /api/blocks/{id} renvoie le bloc et ses modules (locked, completed,
 // position, compteurs). GET /api/progress/blocks/{id}/summary donne le pourcentage.
-import {ref, computed, onMounted} from 'vue'
+import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {blockService} from '@/services/blockService'
 import {progressService} from '@/services/progressService'
@@ -25,7 +25,7 @@ const coverTheme = computed(() => COVER_THEMES[((block.value?.id || 1) - 1) % CO
 
 // Modules triés par position.
 const sortedModules = computed(() =>
-    [...(block.value?.modules || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  [...(block.value?.modules || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
 )
 
 // Compteurs de l'en-tête dérivés des modules du bloc.
@@ -76,7 +76,7 @@ onMounted(load)
 
     <!-- En-tête du bloc -->
     <div
-        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col md:flex-row gap-6 items-start mb-8">
+      class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col md:flex-row gap-6 items-start mb-8">
       <div class="w-50 h-30 rounded-xl overflow-hidden shrink-0">
         <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name" class="w-50 h-30 p-3 object-cover"/>
         <BlockCover v-else :theme="coverTheme" :height="96"/>
@@ -101,18 +101,18 @@ onMounted(load)
     <div v-if="sortedModules.length === 0" class="text-[15px] text-muted">Aucun module dans ce bloc.</div>
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <component
-          :is="moduleState(module) === 'locked' ? 'div' : 'RouterLink'"
-          v-for="module in sortedModules"
-          :key="module.id"
-          :to="moduleState(module) === 'locked' ? undefined : `/modules/${module.id}`"
-          class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col gap-3 transition-all"
-          :class="moduleState(module) === 'locked' ? 'opacity-70' : 'hover:shadow-md'"
+        :is="moduleState(module) === 'locked' ? 'div' : 'RouterLink'"
+        v-for="module in sortedModules"
+        :key="module.id"
+        :to="moduleState(module) === 'locked' ? undefined : `/modules/${module.id}`"
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col gap-3 transition-all"
+        :class="moduleState(module) === 'locked' ? 'opacity-70' : 'hover:shadow-md'"
       >
         <!-- En-tête : pastille de position + titre + statut -->
         <div class="flex items-start gap-3">
           <div
-              class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
-              :class="moduleState(module) === 'done' ? 'bg-[#16a34a]' : 'bg-primary'"
+            class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold shrink-0"
+            :class="moduleState(module) === 'done' ? 'bg-[#16a34a]' : 'bg-primary'"
           >
             <Icon v-if="moduleState(module) === 'done'" name="check" :size="20"/>
             <span v-else>{{ module.position }}</span>
