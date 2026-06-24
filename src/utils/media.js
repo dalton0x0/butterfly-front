@@ -11,7 +11,7 @@
 
 // VITE_API_URL vaut par exemple http://localhost:8080/api ; l'origine est donc
 // cette valeur privée de son suffixe /api.
-const API_BASE = import.meta.env.VITE_API_URL
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 const BACKEND_ORIGIN = API_BASE.replace(/\/api\/?$/, '')
 
 /**
