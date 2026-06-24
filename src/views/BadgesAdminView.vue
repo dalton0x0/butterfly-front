@@ -4,6 +4,7 @@
 // actif), et recalcul des badges d'un apprenant. La création d'un type de badge passe
 // par le back (enum BadgeCode + logique d'évaluation), elle n'est donc pas proposée ici.
 import {ref, reactive, computed, onMounted} from 'vue'
+import {ROLES} from '@/utils/roles'
 import {badgeService} from '@/services/badgeService'
 import {userService} from '@/services/userService'
 import Icon from '@/components/Icon.vue'
@@ -63,7 +64,7 @@ async function load() {
       userService.getUsers().catch(() => ({items: []}))
     ])
     badges.value = catalog
-    learners.value = users.items.filter((u) => u.role === 'USER')
+    learners.value = users.items.filter((u) => u.role === ROLES.USER)
   } catch (err) {
     error.value = err.message || 'Impossible de charger les badges.'
   } finally {

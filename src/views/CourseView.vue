@@ -3,6 +3,7 @@
 // GET /api/courses/{id} renvoie name, description, videoUrl, content, completed.
 // POST /api/progress/courses/{courseId}/complete marque le cours terminé (USER).
 import {ref, computed, onMounted} from 'vue'
+import {ROLES} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {courseService} from '@/services/courseService'
@@ -22,7 +23,7 @@ const completing = ref(false)
 const completeError = ref('')
 
 // Seul un USER possède une progression de cours.
-const canComplete = computed(() => auth.role === 'USER')
+const canComplete = computed(() => auth.role === ROLES.USER)
 
 // Source de la vidéo : lecteur embarqué (YouTube/Vimeo) ou balise video (fichier/URL directe).
 const videoSource = computed(() => resolveVideoSource(course.value?.videoUrl))

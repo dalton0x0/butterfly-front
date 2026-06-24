@@ -1,6 +1,7 @@
 <script setup>
 // Espace admin : page détail et édition d'un utilisateur.
 import {ref, reactive, computed, onMounted} from 'vue'
+import {ROLES, roleChip as roleChipFor} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
@@ -27,7 +28,7 @@ const blocks = ref([])
 
 // Formulaires de chaque section
 const identity = reactive({firstName: '', lastName: '', email: ''})
-const selectedRole = ref('USER')
+const selectedRole = ref(ROLES.USER)
 const selectedPromotionId = ref('')
 const selectedBlockIds = ref([])
 
@@ -38,12 +39,7 @@ const savingStatus = ref(false)
 const savingPromotion = ref(false)
 const savingBlocks = ref(false)
 
-const ROLE_CHIP = {
-  ADMIN: {label: 'Admin', variant: 'primary'},
-  TEACHER: {label: 'Formateur', variant: 'primary'},
-  USER: {label: 'Apprenant', variant: 'neutral'}
-}
-const roleChip = computed(() => ROLE_CHIP[user.value?.role] || ROLE_CHIP.USER)
+const roleChip = computed(() => roleChipFor(user.value?.role))
 const fullName = computed(() => (user.value ? `${user.value.firstName} ${user.value.lastName}` : ''))
 
 function flashMessage(text) {
@@ -250,7 +246,7 @@ onMounted(load)
       </div>
 
       <!-- Promotion (apprenant) -->
-      <div v-if="user.role === 'USER'" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+      <div v-if="user.role === ROLES.USER" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
         <h2 class="text-[17px] font-semibold text-ink mb-4">Promotion</h2>
         <div class="flex gap-2">
           <select v-model="selectedPromotionId"

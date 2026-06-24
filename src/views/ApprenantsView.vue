@@ -2,6 +2,7 @@
 // Espace formateur : liste des apprenants. Chaque ligne mène à la page détail
 // complète de l'apprenant (progression, activité). GET /api/users (filtré USER).
 import {ref, computed, onMounted} from 'vue'
+import {ROLES} from '@/utils/roles'
 import {useRouter} from 'vue-router'
 import {userService} from '@/services/userService'
 import Icon from '@/components/Icon.vue'
@@ -36,7 +37,7 @@ async function load() {
   error.value = ''
   try {
     const page = await userService.getUsers()
-    learners.value = page.items.filter((u) => u.role === 'USER')
+    learners.value = page.items.filter((u) => u.role === ROLES.USER)
   } catch (err) {
     error.value = err.message || 'Impossible de charger les apprenants.'
   } finally {

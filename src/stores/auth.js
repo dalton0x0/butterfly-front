@@ -1,5 +1,6 @@
 import {defineStore} from 'pinia'
 import {ref, computed} from 'vue'
+import {ROLES} from '@/utils/roles'
 import {authService} from '@/services/authService'
 import {tokenStorage} from '@/services/tokenStorage'
 
@@ -30,8 +31,8 @@ export const useAuthStore = defineStore('auth', () => {
     // Getters
     const isAuthenticated = computed(() => user.value !== null)
     const role = computed(() => user.value?.role ?? null)
-    const isAdmin = computed(() => role.value === 'ADMIN')
-    const isTeacher = computed(() => role.value === 'TEACHER')
+    const isAdmin = computed(() => role.value === ROLES.ADMIN)
+    const isTeacher = computed(() => role.value === ROLES.TEACHER)
     const fullName = computed(() =>
         user.value ? `${user.value.firstName} ${user.value.lastName}` : ''
     )

@@ -2,6 +2,7 @@
 // Espace admin : création d'un utilisateur. POST /api/users.
 // La promotion n'est proposée que pour le rôle Apprenant (contrainte back).
 import {ref, reactive, computed, onMounted} from 'vue'
+import {ROLES} from '@/utils/roles'
 import {useRouter} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
@@ -14,7 +15,7 @@ const form = reactive({
   lastName: '',
   email: '',
   password: '',
-  role: 'USER',
+  role: ROLES.USER,
   promotionId: ''
 })
 
@@ -22,7 +23,7 @@ const promotions = ref([])
 const saving = ref(false)
 const error = ref('')
 
-const isLearner = computed(() => form.role === 'USER')
+const isLearner = computed(() => form.role === ROLES.USER)
 
 async function loadPromotions() {
   try {
