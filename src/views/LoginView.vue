@@ -11,7 +11,7 @@ const route = useRoute()
 const auth = useAuthStore()
 
 const showPassword = ref(false)
-const rememberMe = ref(true)
+const rememberMe = ref(false)
 const showForgotInfo = ref(false)
 
 const form = reactive({email: '', password: ''})
