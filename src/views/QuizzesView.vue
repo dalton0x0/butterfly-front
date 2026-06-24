@@ -1,7 +1,7 @@
 <script setup>
 // Mes quiz : liste des quiz visibles avec leur état (tenté, réussi, meilleur
 // score). Chaque carte mène au passage du quiz. GET /api/users/me/quizzes.
-import {ref, computed, onMounted} from 'vue'
+import {ref, onMounted} from 'vue'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
