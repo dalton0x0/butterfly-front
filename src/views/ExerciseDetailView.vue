@@ -34,6 +34,8 @@ const submitSuccess = ref('')
 // Seul un USER peut soumettre côté back.
 const canSubmit = computed(() => auth.role === ROLES.USER)
 
+const isValidated = computed(() => submissions.value.some((s) => s.status === 'VALIDATED'))
+
 const breadcrumb = computed(() => {
   const items = [{label: 'Mes blocs', to: '/blocs'}]
   if (exercise.value?.moduleId) {
@@ -62,6 +64,9 @@ const sortedSubmissions = computed(() =>
 
 // Sélection de fichiers
 function openFilePicker() {
+  if (isValidated.value) {
+    return
+  }
   fileInput.value?.click()
 }
 
@@ -71,6 +76,9 @@ function onFilesSelected(event) {
 }
 
 function onDrop(event) {
+  if (isValidated.value) {
+    return
+  }
   addFiles(Array.from(event.dataTransfer?.files || []))
 }
 
@@ -94,6 +102,9 @@ function removeFile(index) {
 async function handleSubmit() {
   submitError.value = ''
   submitSuccess.value = ''
+  if (isValidated.value) {
+    return
+  }
   if (!content.value.trim()) {
     submitError.value = 'Le contenu de la soumission est obligatoire.'
     return
@@ -174,6 +185,13 @@ onMounted(load)
         <div v-if="canSubmit" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
           <h3 class="text-[17px] font-semibold text-ink mb-4">Déposer ma solution</h3>
 
+          <div v-if="isValidated" class="rounded-[10px] bg-success/8 px-4 py-3 mb-4 flex items-start gap-2">
+            <Icon name="check_circle" :size="20" class="text-success shrink-0"/>
+            <p class="text-[14px] text-ink">
+              Cet exercice a été validé par le formateur. Vous ne pouvez plus déposer de nouvelle soumission.
+            </p>
+          </div>
+
           <input
             ref="fileInput"
             type="file"
@@ -184,7 +202,10 @@ onMounted(load)
           />
 
           <div
-            class="border border-dashed border-input rounded-xl bg-background p-6 flex flex-col items-center text-center gap-1 mb-4 cursor-pointer hover:border-primary transition-colors"
+            class="border border-dashed border-input rounded-xl p-6 flex flex-col items-center text-center gap-1 mb-4 transition-colors"
+            :class="isValidated
+                ? 'bg-background/60 opacity-60 cursor-not-allowed'
+                : 'bg-background cursor-pointer hover:border-primary'"
             @click="openFilePicker"
             @drop.prevent="onDrop"
             @dragover.prevent
@@ -212,8 +233,9 @@ onMounted(load)
           <textarea
             v-model="content"
             rows="3"
+            :disabled="isValidated"
             placeholder="Décrivez votre solution (obligatoire)"
-            class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-3 resize-none"
+            class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-3 resize-none disabled:opacity-60 disabled:cursor-not-allowed"
           ></textarea>
 
           <p v-if="submitError" class="text-[13px] text-danger mb-3">{{ submitError }}</p>
@@ -221,7 +243,7 @@ onMounted(load)
 
           <button
             type="button"
-            :disabled="submitting"
+            :disabled="submitting || isValidated"
             class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
             @click="handleSubmit"
           >
