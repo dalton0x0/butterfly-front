@@ -7,7 +7,7 @@ import Icon from '@/components/Icon.vue'
   <div class="min-h-screen flex flex-col">
     <header class="fixed top-0 left-0 w-full z-50 bg-primary-dark h-16 flex items-center px-6">
       <div class="flex items-center gap-2 text-white font-bold text-[17px]">
-        <Icon name="terminal" filled />
+        <Icon name="verified" filled />
         InfraDev LMS
       </div>
     </header>
