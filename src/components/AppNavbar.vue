@@ -69,7 +69,7 @@ async function logout() {
     <div class="flex items-center justify-between px-6 max-w-[1200px] mx-auto w-full h-full">
       <RouterLink :to="homeLink" class="flex items-center gap-2 text-white font-bold text-[17px] tracking-tight">
         <Icon name="verified" filled/>
-        InfraDev LMS
+        InfraDev
       </RouterLink>
 
       <!-- Liens (desktop) -->
