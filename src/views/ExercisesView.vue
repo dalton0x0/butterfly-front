@@ -79,21 +79,41 @@ onMounted(load)
   </div>
 
   <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <RouterLink
-      v-for="e in filtered"
-      :key="e.id"
-      :to="`/exercices/${e.id}`"
-      class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
-    >
-      <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-primary shrink-0">
-        <Icon name="terminal" :size="22"/>
+    <template v-for="e in filtered" :key="e.id">
+      <!-- Exercice accessible -->
+      <RouterLink
+        v-if="!e.locked"
+        :to="`/exercices/${e.id}`"
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
+      >
+        <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-primary shrink-0">
+          <Icon name="terminal" :size="22"/>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[15px] font-medium text-ink block truncate">{{ e.name }}</span>
+          <span class="text-[13px] text-muted">{{ e.moduleName }}</span>
+        </div>
+        <StatusChip v-bind="statusChip(e.status)"/>
+        <Icon name="chevron_right" :size="20" class="text-muted shrink-0"/>
+      </RouterLink>
+
+      <!-- Exercice d'un module verrouillé -->
+      <div
+        v-else
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 opacity-60 cursor-not-allowed"
+        title="Module verrouillé : terminez d'abord ses prérequis"
+      >
+        <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-muted shrink-0">
+          <Icon name="lock" :size="22"/>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[15px] font-medium text-ink block truncate">{{ e.name }}</span>
+          <span class="text-[13px] text-muted">{{ e.moduleName }}</span>
+        </div>
+        <span class="text-[13px] text-muted flex items-center gap-1 shrink-0">
+          <Icon name="lock" :size="16"/> Verrouillé
+        </span>
       </div>
-      <div class="flex-1 min-w-0">
-        <span class="text-[15px] font-medium text-ink block truncate">{{ e.name }}</span>
-        <span class="text-[13px] text-muted">{{ e.moduleName }}</span>
-      </div>
-      <StatusChip v-bind="statusChip(e.status)"/>
-      <Icon name="chevron_right" :size="20" class="text-muted shrink-0"/>
-    </RouterLink>
+    </template>
   </div>
 </template>

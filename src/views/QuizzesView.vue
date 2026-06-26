@@ -52,26 +52,46 @@ onMounted(load)
   <div v-else-if="quizzes.length === 0" class="text-[15px] text-muted py-10 text-center">Aucun quiz à afficher.</div>
 
   <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <RouterLink
-      v-for="quiz in quizzes"
-      :key="quiz.id"
-      :to="`/quiz/${quiz.id}`"
-      class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
-    >
-      <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-primary shrink-0">
-        <Icon name="quiz" :size="22"/>
-      </div>
-      <div class="flex-1 min-w-0">
-        <span class="text-[15px] font-medium text-ink block truncate">{{ quiz.name }}</span>
-        <span class="text-[13px] text-muted">
-          {{ quiz.moduleName }}
-          <template v-if="quiz.attempted"> &bull; Meilleur score : {{ quiz.bestScore }}/{{ quiz.maxScore }}</template>
+    <template v-for="quiz in quizzes" :key="quiz.id">
+      <!-- Quiz accessible -->
+      <RouterLink
+        v-if="!quiz.locked"
+        :to="`/quiz/${quiz.id}`"
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 hover:shadow-md transition-shadow"
+      >
+        <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-primary shrink-0">
+          <Icon name="quiz" :size="22"/>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[15px] font-medium text-ink block truncate">{{ quiz.name }}</span>
+          <span class="text-[13px] text-muted">
+            {{ quiz.moduleName }}
+            <template v-if="quiz.attempted"> &bull; Meilleur score : {{ quiz.bestScore }}/{{ quiz.maxScore }}</template>
+          </span>
+        </div>
+        <StatusChip v-bind="statusChip(quiz)"/>
+        <span class="h-9 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center shrink-0">
+          {{ quiz.attempted ? 'Rejouer' : 'Commencer' }}
+        </span>
+      </RouterLink>
+
+      <!-- Quiz d'un module verrouillé -->
+      <div
+        v-else
+        class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4 opacity-60 cursor-not-allowed"
+        title="Module verrouillé : terminez d'abord ses prérequis"
+      >
+        <div class="w-11 h-11 rounded-xl bg-surface-tint flex items-center justify-center text-muted shrink-0">
+          <Icon name="lock" :size="22"/>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[15px] font-medium text-ink block truncate">{{ quiz.name }}</span>
+          <span class="text-[13px] text-muted">{{ quiz.moduleName }}</span>
+        </div>
+        <span class="text-[13px] text-muted flex items-center gap-1 shrink-0">
+          <Icon name="lock" :size="16"/> Verrouillé
         </span>
       </div>
-      <StatusChip v-bind="statusChip(quiz)"/>
-      <span class="h-9 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center shrink-0">
-        {{ quiz.attempted ? 'Rejouer' : 'Commencer' }}
-      </span>
-    </RouterLink>
+    </template>
   </div>
 </template>
