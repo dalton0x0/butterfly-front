@@ -39,6 +39,7 @@ function addQuestion() {
     statement: '',
     type: 'SINGLE_CHOICE',
     points: 1,
+    timeLimitSeconds: '',
     options: [
       {text: '', correct: false},
       {text: '', correct: false}
@@ -128,6 +129,7 @@ async function save() {
       statement: q.statement.trim(),
       type: q.type,
       points: Number(q.points),
+      timeLimitSeconds: q.timeLimitSeconds === '' || q.timeLimitSeconds == null ? null : Number(q.timeLimitSeconds),
       options: q.options.map((o) => ({text: o.text.trim(), correct: Boolean(o.correct)}))
     }))
     await quizService.updateQuestions(quizId, payload)
@@ -155,6 +157,7 @@ async function load() {
         statement: q.statement || '',
         type: q.type || 'SINGLE_CHOICE',
         points: q.points ?? 1,
+        timeLimitSeconds: q.timeLimitSeconds ?? '',
         options: (q.options || [])
           .slice()
           .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
@@ -236,6 +239,17 @@ onMounted(load)
                 v-model="question.points"
                 type="number"
                 min="1"
+                class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+              />
+            </div>
+            <div class="w-40">
+              <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Durée (secondes)</label>
+              <input
+                v-model="question.timeLimitSeconds"
+                type="number"
+                min="5"
+                max="3600"
+                placeholder="défaut"
                 class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>

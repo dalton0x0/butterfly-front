@@ -3,7 +3,7 @@
 // GET /api/quizzes/{id}/play (sans les bonnes réponses), navigation question par
 // question, puis POST /api/progress/quizzes/{id}/submit. Le serveur calcule
 // le score et la réussite. Le résultat renvoie la correction par question.
-import {computed, onMounted, reactive, ref} from 'vue'
+import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
@@ -24,6 +24,21 @@ const result = ref(null)
 
 const current = computed(() => questions.value[index.value] || null)
 const isLast = computed(() => index.value === questions.value.length - 1)
+
+// Minuteur par question
+const DEFAULT_QUESTION_TIME = 30
+const remaining = ref(0)
+let timerId = null
+
+const timerLabel = computed(() => {
+  const s = Math.max(0, remaining.value)
+  const minutes = Math.floor(s / 60)
+  const seconds = s % 60
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+})
+
+// Les cinq dernières secondes passent en alerte visuelle.
+const timerLow = computed(() => remaining.value <= 5)
 
 // Sélection des réponses
 function isSelected(questionId, optionId) {
@@ -53,13 +68,32 @@ function chooseOption(question, optionId) {
   }
 }
 
-function prev() {
-  if (index.value > 0) {
-    index.value--
+function clearTimer() {
+  if (timerId !== null) {
+    clearInterval(timerId)
+    timerId = null
   }
 }
 
-function next() {
+// Démarre le compte à rebours de la question courante avec sa durée effective.
+function startTimer() {
+  clearTimer()
+  const limit = current.value?.timeLimitSeconds
+  remaining.value = (typeof limit === 'number' && limit > 0) ? limit : DEFAULT_QUESTION_TIME
+  timerId = setInterval(() => {
+    remaining.value -= 1
+    if (remaining.value <= 0) {
+      clearTimer()
+      goNext()
+    }
+  }, 1000)
+}
+
+// Passage forcé à la question suivante (ou soumission si dernière).
+// La réponse est figée en l'état : une question laissée sans réponse à l'expiration
+// du minuteur reste donc non validée, donc comptée comme fausse au moment du calcul.
+function goNext() {
+  clearTimer()
   if (isLast.value) {
     submit()
   } else {
@@ -75,6 +109,7 @@ function segmentClass(i) {
 
 // Soumission
 async function submit() {
+  clearTimer()
   submitError.value = ''
   submitting.value = true
   try {
@@ -97,6 +132,9 @@ function restart() {
   index.value = 0
   result.value = null
   submitError.value = ''
+  if (current.value) {
+    startTimer()
+  }
 }
 
 // Rendu du résultat
@@ -135,7 +173,17 @@ async function load() {
   }
 }
 
+// Redémarre le compte à rebours à chaque changement de question pendant la passation.
+watch(current, (question) => {
+  if (question && !result.value) {
+    startTimer()
+  } else {
+    clearTimer()
+  }
+})
+
 onMounted(load)
+onUnmounted(clearTimer)
 </script>
 
 <template>
@@ -216,11 +264,21 @@ onMounted(load)
 
     <!-- Carte question -->
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-8 flex flex-col gap-6">
-      <div>
-        <h2 class="text-[22px] font-semibold text-navy mb-1">{{ current.statement }}</h2>
-        <span class="text-[13px] text-muted">
-          {{ current.type === 'MULTIPLE_CHOICE' ? 'Plusieurs réponses possibles' : 'Une seule réponse possible' }}
-        </span>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="text-[22px] font-semibold text-navy mb-1">{{ current.statement }}</h2>
+          <span class="text-[13px] text-muted">
+            {{ current.type === 'MULTIPLE_CHOICE' ? 'Plusieurs réponses possibles' : 'Une seule réponse possible' }}
+          </span>
+        </div>
+        <div
+          class="flex items-center gap-1.5 px-3 h-9 rounded-full shrink-0 transition-colors"
+          :class="timerLow ? 'bg-danger/10 text-danger' : 'bg-surface-tint text-ink-soft'"
+          title="Temps restant pour cette question"
+        >
+          <Icon name="timer" :size="18"/>
+          <span class="text-[14px] font-semibold tabular-nums">{{ timerLabel }}</span>
+        </div>
       </div>
       <div class="flex flex-col gap-3">
         <button
@@ -253,15 +311,10 @@ onMounted(load)
     <p v-if="submitError" class="text-[13px] text-danger">{{ submitError }}</p>
 
     <!-- Contrôles -->
-    <div class="flex items-center justify-between">
-      <button
-        type="button"
-        class="h-10 px-6 rounded-[10px] bg-surface border border-input text-primary text-sm font-semibold hover:bg-surface-hover transition-colors disabled:opacity-40"
-        :disabled="index === 0"
-        @click="prev"
-      >
-        Précédent
-      </button>
+    <div class="flex items-center justify-between gap-3">
+      <span class="text-[13px] text-muted max-w-[45%]">
+        Le temps écoulé passe automatiquement à la question suivante.
+      </span>
       <div class="flex gap-2 items-center">
         <span
           v-for="(q, i) in questions"
@@ -275,7 +328,7 @@ onMounted(load)
         :disabled="submitting"
         class="h-10 px-6 rounded-[10px] text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
         :class="isLast ? 'bg-[#16a34a]' : 'bg-primary'"
-        @click="next"
+        @click="goNext"
       >
         {{ isLast ? (submitting ? 'Envoi...' : 'Terminer le quiz') : 'Suivant' }}
       </button>

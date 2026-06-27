@@ -100,7 +100,7 @@ export const quizService = {
     /**
      * Remplace l'intégralité des questions d'un quiz.
      * @param id
-     * @param {Array<{ statement: string, type: string, points: number, options: Array<{ text: string, correct: boolean }> }>} questions
+     * @param {Array<{ statement: string, type: string, points: number, timeLimitSeconds: ?number, options: Array<{ text: string, correct: boolean }> }>} questions
      */
     async updateQuestions(id, questions) {
         const envelope = await http.put(`/quizzes/${id}/questions`, {questions})
