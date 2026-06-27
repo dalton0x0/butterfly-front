@@ -9,7 +9,7 @@
   - GET /api/progress/me/exercises/{exerciseId}/submissions vers Page<ExerciseSubmissionResponse>
   - GET /api/progress/submissions/{submissionId}/files/{fileId} vers fichier binaire
 
-  0n crée d'abord la soumission (contenu obligatoire),
+  On crée d'abord la soumission (contenu obligatoire),
   puis on joint les éventuels fichiers à la soumission créée.
 */
 
@@ -59,6 +59,29 @@ export const exerciseService = {
         const envelope = await http.post(
             `/progress/exercises/${exerciseId}/submissions/${submissionId}/files`,
             formData
+        )
+        return envelope.data
+    },
+
+    /**
+     * Met à jour le contenu d'une soumission encore en attente de correction.
+     * @returns {Promise<object>} ExerciseSubmissionResponse mise à jour
+     */
+    async updateSubmission(exerciseId, submissionId, content) {
+        const envelope = await http.put(
+            `/progress/exercises/${exerciseId}/submissions/${submissionId}`,
+            {content}
+        )
+        return envelope.data
+    },
+
+    /**
+     * Retire un fichier d'une soumission encore en attente de correction.
+     * @returns {Promise<object>} ExerciseSubmissionResponse mise à jour
+     */
+    async deleteFile(exerciseId, submissionId, fileId) {
+        const envelope = await http.delete(
+            `/progress/exercises/${exerciseId}/submissions/${submissionId}/files/${fileId}`
         )
         return envelope.data
     },

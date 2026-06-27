@@ -31,6 +31,15 @@ const submitting = ref(false)
 const submitError = ref('')
 const submitSuccess = ref('')
 
+// Édition d'une soumission encore en attente (commentaire et fichiers)
+const editingId = ref(null)
+const editContent = ref('')
+const editError = ref('')
+const editSaving = ref(false)
+const editBusy = ref(false)
+const editFileInput = ref(null)
+const editFileTargetId = ref(null)
+
 // Seul un USER peut soumettre côté back.
 const canSubmit = computed(() => auth.role === ROLES.USER)
 
@@ -96,6 +105,80 @@ function addFiles(files) {
 
 function removeFile(index) {
   selectedFiles.value.splice(index, 1)
+}
+
+function canEdit(s) {
+  return canSubmit.value && s.status === 'SUBMITTED'
+}
+
+function startEdit(s) {
+  editingId.value = s.id
+  editContent.value = s.content || ''
+  editError.value = ''
+}
+
+function cancelEdit() {
+  editingId.value = null
+  editError.value = ''
+}
+
+async function saveEdit(s) {
+  editError.value = ''
+  if (!editContent.value.trim()) {
+    editError.value = 'Le contenu de la soumission est obligatoire.'
+    return
+  }
+  editSaving.value = true
+  try {
+    await exerciseService.updateSubmission(exercise.value.id, s.id, editContent.value.trim())
+    editingId.value = null
+    await loadSubmissions()
+  } catch (err) {
+    editError.value = err.message || 'La modification a échoué.'
+  } finally {
+    editSaving.value = false
+  }
+}
+
+async function removeSubmissionFile(s, file) {
+  editError.value = ''
+  editBusy.value = true
+  try {
+    await exerciseService.deleteFile(exercise.value.id, s.id, file.id)
+    await loadSubmissions()
+  } catch (err) {
+    editError.value = err.message || 'La suppression du fichier a échoué.'
+  } finally {
+    editBusy.value = false
+  }
+}
+
+function triggerAddFile(s) {
+  editFileTargetId.value = s.id
+  editFileInput.value?.click()
+}
+
+async function onEditFileSelected(event) {
+  const file = (event.target.files || [])[0]
+  event.target.value = ''
+  if (!file) {
+    return
+  }
+  const validationError = validateUploadFile(file)
+  if (validationError) {
+    editError.value = `${file.name} : ${validationError}`
+    return
+  }
+  editError.value = ''
+  editBusy.value = true
+  try {
+    await exerciseService.uploadFile(exercise.value.id, editFileTargetId.value, file)
+    await loadSubmissions()
+  } catch (err) {
+    editError.value = err.message || "L'ajout du fichier a échoué."
+  } finally {
+    editBusy.value = false
+  }
 }
 
 // Soumission
@@ -255,6 +338,14 @@ onMounted(load)
         <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
           <h3 class="text-[17px] font-semibold text-ink mb-4">Historique des soumissions</h3>
 
+          <input
+            ref="editFileInput"
+            type="file"
+            :accept="ALLOWED_UPLOAD_ACCEPT"
+            class="hidden"
+            @change="onEditFileSelected"
+          />
+
           <p v-if="sortedSubmissions.length === 0" class="text-[14px] text-muted">Aucune soumission pour le moment.</p>
 
           <div v-else class="flex flex-col gap-5">
@@ -266,24 +357,88 @@ onMounted(load)
                 <StatusChip v-bind="statusChip(s.status)"/>
               </div>
 
-              <p v-if="s.content" class="text-[14px] text-ink-soft mb-2 whitespace-pre-wrap break-words">{{
+              <!-- Contenu : édition en place si la soumission est en attente -->
+              <template v-if="editingId === s.id">
+                <textarea
+                  v-model="editContent"
+                  rows="3"
+                  class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-2 resize-none"
+                ></textarea>
+                <div class="flex gap-2 mb-2">
+                  <button
+                    type="button"
+                    :disabled="editSaving"
+                    class="h-9 px-4 rounded-[10px] bg-primary text-white text-[13px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                    @click="saveEdit(s)"
+                  >
+                    {{ editSaving ? 'Enregistrement...' : 'Enregistrer' }}
+                  </button>
+                  <button
+                    type="button"
+                    :disabled="editSaving"
+                    class="h-9 px-4 rounded-[10px] border border-input text-ink text-[13px] font-semibold hover:bg-surface-tint transition-colors disabled:opacity-60"
+                    @click="cancelEdit"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </template>
+              <p v-else-if="s.content" class="text-[14px] text-ink-soft mb-2 whitespace-pre-wrap break-words">{{
                   s.content
                 }}</p>
 
               <!-- Fichiers joints -->
               <div v-if="s.files && s.files.length" class="flex flex-col gap-1.5 mb-2">
-                <button
+                <div
                   v-for="file in s.files"
                   :key="file.id"
-                  type="button"
-                  class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tint hover:bg-surface-hover transition-colors text-left"
-                  @click="download(s, file)"
+                  class="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-tint"
                 >
-                  <Icon name="download" :size="18" class="text-primary shrink-0"/>
-                  <span class="text-[14px] text-ink flex-1 truncate">{{ file.originalFilename }}</span>
-                  <span class="text-[13px] text-muted">{{ formatFileSize(file.sizeBytes) }}</span>
+                  <button
+                    type="button"
+                    class="flex items-center gap-2 flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
+                    @click="download(s, file)"
+                  >
+                    <Icon name="download" :size="18" class="text-primary shrink-0"/>
+                    <span class="text-[14px] text-ink flex-1 truncate">{{ file.originalFilename }}</span>
+                    <span class="text-[13px] text-muted">{{ formatFileSize(file.sizeBytes) }}</span>
+                  </button>
+                  <button
+                    v-if="canEdit(s)"
+                    type="button"
+                    :disabled="editBusy"
+                    class="text-muted hover:text-danger transition-colors shrink-0 disabled:opacity-60"
+                    title="Retirer ce fichier"
+                    @click="removeSubmissionFile(s, file)"
+                  >
+                    <Icon name="delete" :size="18"/>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Actions d'édition (soumission en attente) -->
+              <div v-if="canEdit(s)" class="flex flex-wrap gap-3 mb-2">
+                <button
+                  v-if="editingId !== s.id"
+                  type="button"
+                  class="text-[13px] text-primary font-medium hover:underline flex items-center gap-1"
+                  @click="startEdit(s)"
+                >
+                  <Icon name="edit" :size="16"/>
+                  Modifier le commentaire
+                </button>
+                <button
+                  type="button"
+                  :disabled="editBusy"
+                  class="text-[13px] text-primary font-medium hover:underline flex items-center gap-1 disabled:opacity-60"
+                  @click="triggerAddFile(s)"
+                >
+                  <Icon name="attach_file" :size="16"/>
+                  Ajouter un fichier
                 </button>
               </div>
+
+              <p v-if="canEdit(s) && editError" class="text-[13px] text-danger mb-2">{{ editError }}</p>
 
               <!-- Note attribuée -->
               <p v-if="s.grade != null" class="text-[14px] text-ink mb-1">Note : {{ s.grade }} / 20</p>
