@@ -42,6 +42,8 @@ const actionError = ref('')
 // Seul l'onglet À corriger autorise les actions de correction.
 const isPending = computed(() => currentTab.value === 'SUBMITTED')
 
+const canReview = computed(() => currentTab.value === 'SUBMITTED' || currentTab.value === 'VALIDATED')
+
 function studentName(userId) {
   return usersMap.value.get(userId) || `Apprenant #${userId}`
 }
@@ -92,7 +94,7 @@ async function changeTab(key) {
 
 async function select(item) {
   selected.value = item
-  grade.value = null
+  grade.value = currentTab.value === 'VALIDATED' ? item.grade : null
   feedback.value = ''
   actionError.value = ''
   detailError.value = ''
@@ -101,6 +103,10 @@ async function select(item) {
   try {
     const page = await correctionService.getUserSubmissions(item.exerciseId, item.userId)
     submissions.value = page.items
+    // Onglet Validés : on pré-remplit le feedback existant pour permettre sa réédition.
+    if (currentTab.value === 'VALIDATED') {
+      feedback.value = reviewedSubmission.value?.feedback || ''
+    }
   } catch (err) {
     detailError.value = err.message || 'Impossible de charger les soumissions.'
   } finally {
@@ -131,6 +137,13 @@ function finishReview(verb) {
   submissions.value = []
 }
 
+async function refreshAfterUpdate(message) {
+  reviewSuccess.value = message
+  selected.value = null
+  submissions.value = []
+  await load()
+}
+
 async function validate() {
   actionError.value = ''
   if (grade.value === null || grade.value === '') {
@@ -148,7 +161,11 @@ async function validate() {
       grade: numericGrade,
       feedback: feedback.value.trim() || null
     })
-    finishReview('validé')
+    if (currentTab.value === 'VALIDATED') {
+      await refreshAfterUpdate(`Note mise à jour pour ${studentName(selected.value.userId)}.`)
+    } else {
+      finishReview('validé')
+    }
   } catch (err) {
     actionError.value = err.message || 'La validation a échoué.'
   } finally {
@@ -318,7 +335,13 @@ onMounted(load)
 
         <!-- Droite : correction (À corriger) ou bilan en lecture seule (historique) -->
         <div class="flex flex-col gap-4">
-          <template v-if="isPending">
+          <template v-if="canReview">
+            <p v-if="currentTab === 'VALIDATED'"
+               class="text-[13px] text-muted bg-surface-tint rounded-[10px] px-3 py-2">
+              Cet exercice est déjà validé. Vous pouvez réajuster la note ou le feedback,
+              ou le rejeter (les XP de validation sera alors annulé).
+            </p>
+
             <div>
               <p class="text-[12px] font-semibold text-muted uppercase tracking-wide mb-2">
                 Feedback pour l'apprenant (facultatif)
@@ -363,7 +386,7 @@ onMounted(load)
                 @click="validate"
               >
                 <Icon name="check" :size="18"/>
-                Valider
+                {{ isPending ? 'Valider' : 'Mettre à jour' }}
               </button>
             </div>
           </template>
