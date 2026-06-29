@@ -15,13 +15,38 @@ const route = useRoute()
 const loading = ref(true)
 const error = ref('')
 const module = ref(null)
-const tab = ref('courses')
+const tab = ref('all')
 
 const courses = computed(() => module.value?.courses || [])
 const exercises = computed(() => module.value?.exercises || [])
 const quiz = computed(() => module.value?.quiz || null)
 
+// Liste unifiée pour l'onglet "Tous" : cours et exercices triés par position, quiz à la fin.
+const combined = computed(() => {
+  const items = [
+    ...courses.value.map((c) => ({...c, _type: 'course'})),
+    ...exercises.value.map((e) => ({...e, _type: 'exercise'}))
+  ].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+  if (quiz.value) {
+    items.push({...quiz.value, _type: 'quiz'})
+  }
+  return items
+})
+
+function itemRoute(item) {
+  if (item._type === 'course') return `/cours/${item.id}`
+  if (item._type === 'exercise') return `/exercices/${item.id}`
+  return `/quiz/${item.id}`
+}
+
+function itemKindLabel(item) {
+  if (item._type === 'course') return 'Cours'
+  if (item._type === 'exercise') return 'Exercice'
+  return 'Quiz'
+}
+
 const tabs = computed(() => [
+  {key: 'all', label: `Tous (${combined.value.length})`},
   {key: 'courses', label: `Cours (${courses.value.length})`},
   {key: 'exercises', label: `Exercices (${exercises.value.length})`},
   {key: 'quiz', label: `Quiz (${quiz.value ? 1 : 0})`}
@@ -108,8 +133,45 @@ onMounted(load)
       </button>
     </div>
 
+    <!-- Tous -->
+    <div v-if="tab === 'all'" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
+      <p v-if="combined.length === 0" class="px-5 py-6 text-[15px] text-muted">Ce module ne contient encore aucun contenu.</p>
+      <component
+        :is="item.locked ? 'div' : 'RouterLink'"
+        v-for="(item, i) in combined"
+        :key="`${item._type}-${item.id}`"
+        :to="item.locked ? undefined : itemRoute(item)"
+        class="flex items-center gap-3 px-5 py-4 transition-colors"
+        :class="[
+          i > 0 ? 'border-t border-line-soft' : '',
+          item.locked ? 'opacity-60 cursor-not-allowed' : 'hover:bg-surface-hover'
+        ]"
+      >
+        <div class="w-9 h-9 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
+          <Icon
+            :name="item.locked ? 'lock' : (item._type === 'course' ? 'menu_book' : item._type === 'exercise' ? 'terminal' : 'quiz')"
+            :size="18"/>
+        </div>
+        <div class="flex-1 min-w-0">
+          <span class="text-[15px] block truncate" :class="item.completed ? 'text-muted' : 'text-ink'">{{ item.name }}</span>
+          <span class="text-[12px] text-muted">{{ itemKindLabel(item) }}</span>
+        </div>
+        <StatusChip
+          v-if="item.locked"
+          label="Verrouillé"
+          variant="neutral"
+        />
+        <StatusChip
+          v-else
+          :label="item.completed ? 'Terminé' : 'À faire'"
+          :variant="item.completed ? 'success' : 'neutral'"
+        />
+        <Icon v-if="!item.locked" name="chevron_right" :size="20" class="text-muted"/>
+      </component>
+    </div>
+
     <!-- Cours -->
-    <div v-if="tab === 'courses'" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
+    <div v-else-if="tab === 'courses'" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
       <p v-if="courses.length === 0" class="px-5 py-6 text-[15px] text-muted">Aucun cours dans ce module.</p>
       <RouterLink
         v-for="(c, i) in courses"
@@ -133,28 +195,49 @@ onMounted(load)
     <!-- Exercices -->
     <div v-else-if="tab === 'exercises'" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
       <p v-if="exercises.length === 0" class="px-5 py-6 text-[15px] text-muted">Aucun exercice dans ce module.</p>
-      <RouterLink
+      <component
+        :is="e.locked ? 'div' : 'RouterLink'"
         v-for="(e, i) in exercises"
         :key="e.id"
-        :to="`/exercices/${e.id}`"
-        class="flex items-center gap-3 px-5 py-4 hover:bg-surface-hover transition-colors"
-        :class="{ 'border-t border-line-soft': i > 0 }"
+        :to="e.locked ? undefined : `/exercices/${e.id}`"
+        class="flex items-center gap-3 px-5 py-4 transition-colors"
+        :class="[
+          i > 0 ? 'border-t border-line-soft' : '',
+          e.locked ? 'opacity-60 cursor-not-allowed' : 'hover:bg-surface-hover'
+        ]"
       >
         <div class="w-9 h-9 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
-          <Icon name="terminal" :size="18"/>
+          <Icon :name="e.locked ? 'lock' : 'terminal'" :size="18"/>
         </div>
         <span class="flex-1 text-[15px] text-ink">{{ e.name }}</span>
         <StatusChip
+          v-if="e.locked"
+          label="Verrouillé"
+          variant="neutral"
+        />
+        <StatusChip
+          v-else
           :label="e.completed ? 'Terminé' : 'À faire'"
           :variant="e.completed ? 'success' : 'neutral'"
         />
-        <Icon name="chevron_right" :size="20" class="text-muted"/>
-      </RouterLink>
+        <Icon v-if="!e.locked" name="chevron_right" :size="20" class="text-muted"/>
+      </component>
     </div>
 
     <!-- Quiz -->
     <div v-else class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
       <p v-if="!quiz" class="px-5 py-6 text-[15px] text-muted">Aucun quiz dans ce module.</p>
+      <div v-else-if="quiz.locked"
+           class="flex items-center gap-3 px-5 py-4 opacity-60 cursor-not-allowed">
+        <div class="w-9 h-9 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
+          <Icon name="lock" :size="18"/>
+        </div>
+        <div class="flex-1">
+          <span class="text-[15px] text-ink block">{{ quiz.name }}</span>
+          <span class="text-[13px] text-muted">Terminez d'abord tous les cours du module</span>
+        </div>
+        <StatusChip label="Verrouillé" variant="neutral"/>
+      </div>
       <RouterLink v-else :to="`/quiz/${quiz.id}`"
                   class="flex items-center gap-3 px-5 py-4 hover:bg-surface-hover transition-colors">
         <div class="w-9 h-9 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">

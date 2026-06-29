@@ -14,7 +14,7 @@
 */
 
 import http from './http'
-import {buildPageParams, normalizePage} from '@/utils/pagination'
+import {buildPageParams, normalizePage} from '@/utils/pagination.js'
 
 export const moduleService = {
     /**
@@ -74,5 +74,14 @@ export const moduleService = {
     async updatePrerequisites(id, prerequisiteIds) {
         const envelope = await http.put(`/modules/${id}/prerequisites`, {prerequisiteIds})
         return envelope.data
+    },
+
+    /**
+     * Réordonne les cours et exercices d'un module.
+     * @param {number} id identifiant du module
+     * @param {Array<{type: 'COURSE'|'EXERCISE', id: number}>} items ordre souhaité (la position suit l'index)
+     */
+    async reorderContent(id, items) {
+        await http.put(`/modules/${id}/content-order`, {items})
     }
 }

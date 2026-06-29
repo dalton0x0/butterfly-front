@@ -3,7 +3,7 @@
 // Les cours et exercices s'éditent sur des pages dédiées (contenu Markdown long).
 // Le quiz (métadonnées courtes) reste géré dans une modale ; ses questions ont
 // leur propre éditeur. GET /api/modules/{id} fournit cours, exercices et quiz.
-import {computed, onMounted, reactive, ref} from 'vue'
+import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {useRoute} from 'vue-router'
 import {moduleService} from '@/services/moduleService'
 import {courseService} from '@/services/courseService'
@@ -30,8 +30,62 @@ const quiz = computed(() => module.value?.quiz || null)
 const tabs = computed(() => [
   {key: 'courses', label: `Cours (${courses.value.length})`},
   {key: 'exercises', label: `Exercices (${exercises.value.length})`},
-  {key: 'quiz', label: `Quiz (${quiz.value ? 1 : 0})`}
+  {key: 'quiz', label: `Quiz (${quiz.value ? 1 : 0})`},
+  {key: 'order', label: 'Ordre'}
 ])
+
+// Réordonnancement : liste unifiée cours + exercices (le quiz reste en fin de module).
+const orderItems = ref([])
+const orderDirty = ref(false)
+const savingOrder = ref(false)
+const orderError = ref('')
+
+function buildOrderItems() {
+  const merged = [
+    ...courses.value.map((c) => ({type: 'COURSE', id: c.id, name: c.name})),
+    ...exercises.value.map((e) => ({type: 'EXERCISE', id: e.id, name: e.name}))
+  ]
+  // Tri par position pour refléter l'ordre actuel, puis on travaille sur une copie locale.
+  const byId = (item) => (item.type === 'COURSE' ? courses.value : exercises.value)
+    .find((x) => x.id === item.id)?.position ?? 0
+  merged.sort((a, b) => byId(a) - byId(b))
+  orderItems.value = merged
+  orderDirty.value = false
+  orderError.value = ''
+}
+
+watch(tab, (value) => {
+  if (value === 'order') {
+    buildOrderItems()
+  }
+})
+
+function moveItem(index, delta) {
+  const target = index + delta
+  if (target < 0 || target >= orderItems.value.length) {
+    return
+  }
+  const copy = [...orderItems.value]
+  const [moved] = copy.splice(index, 1)
+  copy.splice(target, 0, moved)
+  orderItems.value = copy
+  orderDirty.value = true
+}
+
+async function saveOrder() {
+  orderError.value = ''
+  savingOrder.value = true
+  try {
+    await moduleService.reorderContent(moduleId, orderItems.value.map(({type, id}) => ({type, id})))
+    success.value = 'Ordre du contenu mis à jour.'
+    await load()
+    buildOrderItems()
+  } catch (err) {
+    orderError.value = err.message || 'La mise à jour de l\'ordre a échoué.'
+  } finally {
+    savingOrder.value = false
+  }
+}
 
 const breadcrumb = computed(() => {
   const items = [{label: 'Contenus', to: '/formateur/contenus'}]
@@ -253,7 +307,7 @@ onMounted(load)
     </div>
 
     <!-- Quiz (un seul par module) -->
-    <div v-else>
+    <div v-else-if="tab === 'quiz'">
       <div v-if="quiz"
            class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col sm:flex-row sm:items-center gap-4">
         <div class="w-10 h-10 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
@@ -290,6 +344,58 @@ onMounted(load)
           @click="openCreateQuiz">
           <Icon name="add" :size="18"/>
           Créer le quiz
+        </button>
+      </div>
+    </div>
+
+    <!-- Ordre : réorganiser cours et exercices (le quiz reste en fin de module) -->
+    <div v-else-if="tab === 'order'">
+      <p class="text-[14px] text-ink-soft mb-4">
+        Glissez l'ordre avec les flèches. Un exercice reste verrouillé pour l'apprenant tant que les cours situés avant
+        lui ne sont pas terminés.
+      </p>
+      <p v-if="orderItems.length === 0" class="px-5 py-6 text-[15px] text-muted bg-surface rounded-2xl">
+        Ce module ne contient encore ni cours ni exercice à ordonner.
+      </p>
+      <div v-else class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
+        <div
+          v-for="(item, i) in orderItems"
+          :key="`${item.type}-${item.id}`"
+          class="flex items-center gap-3 px-5 py-3"
+          :class="{ 'border-t border-line-soft': i > 0 }"
+        >
+          <span class="w-7 text-[13px] text-muted tabular-nums">{{ i + 1 }}</span>
+          <div class="w-9 h-9 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
+            <Icon :name="item.type === 'COURSE' ? 'menu_book' : 'terminal'" :size="18"/>
+          </div>
+          <div class="flex-1 min-w-0">
+            <span class="text-[15px] text-ink block truncate">{{ item.name }}</span>
+            <span class="text-[12px] text-muted">{{ item.type === 'COURSE' ? 'Cours' : 'Exercice' }}</span>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            <button
+              class="h-8 w-8 rounded-[8px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors disabled:opacity-40"
+              aria-label="Monter" :disabled="i === 0" @click="moveItem(i, -1)">
+              <Icon name="keyboard_arrow_up" :size="18"/>
+            </button>
+            <button
+              class="h-8 w-8 rounded-[8px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors disabled:opacity-40"
+              aria-label="Descendre" :disabled="i === orderItems.length - 1" @click="moveItem(i, 1)">
+              <Icon name="keyboard_arrow_down" :size="18"/>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p v-if="orderError" class="text-[13px] text-danger mt-3">{{ orderError }}</p>
+
+      <div v-if="orderItems.length > 0" class="flex justify-end mt-4">
+        <button
+          type="button"
+          :disabled="!orderDirty || savingOrder"
+          class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          @click="saveOrder">
+          {{ savingOrder ? 'Enregistrement...' : 'Enregistrer l\'ordre' }}
         </button>
       </div>
     </div>
