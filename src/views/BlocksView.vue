@@ -41,6 +41,9 @@ function progressOf(block) {
 }
 
 function statusChip(block) {
+  if (block.locked) {
+    return {label: 'Verrouillé', variant: 'neutral', icon: 'lock'}
+  }
   const status = blockStatus(block)
   if (status === 'done') {
     return {label: 'Terminé', variant: 'success', icon: 'check_circle'}
@@ -52,6 +55,9 @@ function statusChip(block) {
 }
 
 function actionLabel(block) {
+  if (block.locked) {
+    return 'Verrouillé'
+  }
   const status = blockStatus(block)
   if (status === 'done') {
     return 'Revoir'
@@ -138,8 +144,16 @@ onMounted(load)
       class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden flex flex-col transition-all hover:shadow-md"
     >
       <div class="relative">
-        <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name" class="w-full h-[200px] object-cover"/>
-        <BlockCover v-else :theme="coverTheme(block.id)"/>
+        <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name"
+             class="w-full h-[200px] object-cover" :class="{ 'opacity-60': block.locked }"/>
+        <BlockCover v-else :theme="coverTheme(block.id)" :class="{ 'opacity-60': block.locked }"/>
+        <div v-if="block.locked"
+             class="absolute inset-0 flex items-center justify-center bg-navy/25">
+          <div class="flex items-center gap-1.5 px-3 h-9 rounded-full bg-surface/95 text-ink-soft shadow-sm">
+            <Icon name="lock" :size="18"/>
+            <span class="text-[13px] font-semibold">Verrouillé</span>
+          </div>
+        </div>
       </div>
       <div class="p-5 flex flex-col gap-3 flex-1">
         <h3 class="text-[17px] font-semibold text-navy">{{ block.name }}</h3>
@@ -157,7 +171,9 @@ onMounted(load)
           <div v-if="statusChip(block)">
             <StatusChip v-bind="statusChip(block)"/>
           </div>
-          <span class="h-9 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center">
+          <span class="h-9 px-4 rounded-[10px] text-white text-sm font-semibold flex items-center gap-1.5"
+                :class="block.locked ? 'bg-muted' : 'bg-primary'">
+            <Icon v-if="block.locked" name="lock" :size="15"/>
             {{ actionLabel(block) }}
           </span>
         </div>

@@ -150,19 +150,30 @@ onMounted(load)
         :to="`/blocs/${block.blockId}`"
         class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
       >
-        <div class="w-30 h-16 rounded-xl overflow-hidden shrink-0">
-          <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.blockName" class="w-30 h-16 object-cover"/>
+        <div class="w-30 h-16 rounded-xl overflow-hidden shrink-0 relative">
+          <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.blockName"
+               class="w-30 h-16 object-cover" :class="{ 'opacity-60': block.locked }"/>
           <BlockCover v-else :theme="coverTheme(block.blockId)" :height="64"/>
+          <div v-if="block.locked" class="absolute inset-0 flex items-center justify-center bg-navy/30">
+            <Icon name="lock" :size="20" class="text-white"/>
+          </div>
         </div>
         <div class="flex-1 min-w-0">
-          <h3 class="text-[17px] font-semibold text-ink truncate">{{ block.blockName }}</h3>
+          <div class="flex items-center gap-2">
+            <h3 class="text-[17px] font-semibold text-ink truncate">{{ block.blockName }}</h3>
+            <span v-if="block.locked"
+                  class="shrink-0 inline-flex items-center gap-1 px-2 h-6 rounded-full bg-surface-tint text-ink-soft text-[12px] font-semibold">
+              <Icon name="lock" :size="13"/> Verrouillé
+            </span>
+          </div>
           <p class="text-[13px] text-ink-soft mb-2">{{ block.completedCourses }}/{{ block.totalCourses }} cours
             terminés</p>
           <ProgressBar :value="Math.round(block.overallPercent || 0)" show-label/>
         </div>
         <button
-          class="shrink-0 h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity hidden sm:block">
-          Continuer
+          class="shrink-0 h-10 px-4 rounded-[10px] text-white text-sm font-semibold hover:opacity-90 transition-opacity hidden sm:block"
+          :class="block.locked ? 'bg-muted' : 'bg-primary'">
+          {{ block.locked ? 'Verrouillé' : 'Continuer' }}
         </button>
       </RouterLink>
     </div>
