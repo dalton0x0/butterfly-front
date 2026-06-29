@@ -148,6 +148,58 @@ async function confirmDelete() {
   }
 }
 
+// Prérequis de bloc : un bloc peut exiger que d'autres blocs soient entièrement terminés.
+const showPrereq = ref(false)
+const prereqBlock = ref(null)
+const prereqSelected = ref(new Set())
+const prereqError = ref('')
+const loadingPrereq = ref(false)
+const savingPrereq = ref(false)
+
+const prereqCandidates = computed(() =>
+  blocks.value.filter((b) => b.id !== prereqBlock.value?.id)
+)
+
+async function openPrereq(block) {
+  prereqBlock.value = block
+  prereqError.value = ''
+  prereqSelected.value = new Set()
+  showPrereq.value = true
+  loadingPrereq.value = true
+  try {
+    const current = await blockService.getPrerequisites(block.id)
+    prereqSelected.value = new Set(current.map((p) => p.id))
+  } catch (err) {
+    prereqError.value = err.message || 'Impossible de charger les prérequis.'
+  } finally {
+    loadingPrereq.value = false
+  }
+}
+
+function togglePrereq(id) {
+  const set = new Set(prereqSelected.value)
+  if (set.has(id)) {
+    set.delete(id)
+  } else {
+    set.add(id)
+  }
+  prereqSelected.value = set
+}
+
+async function savePrereq() {
+  prereqError.value = ''
+  savingPrereq.value = true
+  try {
+    await blockService.updatePrerequisites(prereqBlock.value.id, [...prereqSelected.value])
+    success.value = 'Prérequis mis à jour.'
+    showPrereq.value = false
+  } catch (err) {
+    prereqError.value = err.message || 'La mise à jour des prérequis a échoué.'
+  } finally {
+    savingPrereq.value = false
+  }
+}
+
 async function load() {
   loading.value = true
   error.value = ''
@@ -211,6 +263,14 @@ onMounted(load)
             @click="openEdit(block)"
           >
             <Icon name="edit" :size="16"/>
+          </button>
+          <button
+            class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
+            aria-label="Prérequis"
+            title="Blocs prérequis"
+            @click="openPrereq(block)"
+          >
+            <Icon name="lock" :size="16"/>
           </button>
           <button
             class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
@@ -307,6 +367,55 @@ onMounted(load)
           </button>
         </div>
       </div>
+    </div>
+  </Modal>
+
+  <!-- Modale prérequis -->
+  <Modal v-if="showPrereq" @close="showPrereq = false">
+    <div class="px-6 pt-6 pb-6 w-full max-w-[480px]">
+      <h3 class="text-[20px] font-semibold text-navy mb-1">Blocs prérequis</h3>
+      <p class="text-[14px] text-ink-soft mb-1">{{ prereqBlock?.name }}</p>
+      <p class="text-[13px] text-muted mb-4">
+        Les blocs sélectionnés devront être entièrement terminés pour débloquer ce bloc.
+      </p>
+
+      <div v-if="loadingPrereq" class="text-[14px] text-muted py-4 text-center">Chargement...</div>
+      <template v-else>
+        <p v-if="prereqCandidates.length === 0" class="text-[14px] text-muted mb-4">
+          Aucun autre bloc disponible comme prérequis.
+        </p>
+        <div v-else class="flex flex-col gap-2 mb-4 max-h-[320px] overflow-y-auto">
+          <label
+            v-for="candidate in prereqCandidates"
+            :key="candidate.id"
+            class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
+            :class="prereqSelected.has(candidate.id) ? 'bg-accent/15' : 'bg-background hover:bg-surface-tint'"
+          >
+            <input
+              type="checkbox"
+              class="w-4 h-4 accent-[var(--color-primary)]"
+              :checked="prereqSelected.has(candidate.id)"
+              @change="togglePrereq(candidate.id)"
+            />
+            <span class="text-[14px] text-ink">{{ candidate.name }}</span>
+          </label>
+        </div>
+
+        <p v-if="prereqError" class="text-[13px] text-danger mb-3">{{ prereqError }}</p>
+
+        <div class="flex justify-end gap-3">
+          <button type="button"
+                  class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
+                  @click="showPrereq = false">
+            Annuler
+          </button>
+          <button type="button" :disabled="savingPrereq"
+                  class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                  @click="savePrereq">
+            {{ savingPrereq ? 'Enregistrement...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </template>
     </div>
   </Modal>
 

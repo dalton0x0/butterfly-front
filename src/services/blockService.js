@@ -7,13 +7,15 @@
   - POST /api/blocks vers BlockResponse (création, ADMIN/TEACHER)
   - PUT /api/blocks/{id} vers BlockResponse (modification, ADMIN/TEACHER)
   - DELETE /api/blocks/{id} (suppression, refusée si le bloc contient des modules)
+  - GET /api/blocks/{id}/prerequisites vers List<BlockPrerequisiteResponse>
+  - PUT /api/blocks/{id}/prerequisites vers List<BlockPrerequisiteResponse> (graphe vérifié sans cycle)
 
   Pour un USER, l'API ne renvoie que les blocs qui lui sont assignés.
   Pour un TEACHER, la liste ne contient que ses blocs assignés.
 */
 
 import http from './http'
-import {buildPageParams, normalizePage} from '@/utils/pagination'
+import {buildPageParams, normalizePage} from '@/utils/pagination.js'
 
 export const blockService = {
     /**
@@ -56,5 +58,25 @@ export const blockService = {
      */
     async deleteBlock(id) {
         await http.delete(`/blocks/${id}`)
+    },
+
+    /**
+     * Récupère les blocs prérequis d'un bloc.
+     * @returns {Promise<object[]>} List<BlockPrerequisiteResponse> { id, name }
+     */
+    async getPrerequisites(id) {
+        const envelope = await http.get(`/blocks/${id}/prerequisites`)
+        return envelope.data
+    },
+
+    /**
+     * Remplace l'ensemble des blocs prérequis d'un bloc.
+     * @param id
+     * @param {number[]} prerequisiteIds liste (éventuellement vide) des identifiants de blocs prérequis
+     * @returns {Promise<object[]>} List<BlockPrerequisiteResponse>
+     */
+    async updatePrerequisites(id, prerequisiteIds) {
+        const envelope = await http.put(`/blocks/${id}/prerequisites`, {prerequisiteIds})
+        return envelope.data
     }
 }
