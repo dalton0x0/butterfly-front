@@ -27,12 +27,6 @@ const streak = computed(() => dashboard.value?.streak || {})
 const assignedBlocks = computed(() => dashboard.value?.assignedBlocks || [])
 const latestBadges = computed(() => (dashboard.value?.latestBadges || []).slice(0, 3))
 
-const COVER_THEMES = ['system', 'network', 'cloud']
-
-function coverTheme(id) {
-  return COVER_THEMES[((id || 1) - 1) % COVER_THEMES.length]
-}
-
 // Niveaux de badge : couleur de l'anneau.
 const LEVEL_COLORS = {BRONZE: '#b45309', SILVER: '#94a3b8', GOLD: '#f59e0b', PLATINUM: '#7c3aed'}
 
@@ -153,7 +147,7 @@ onMounted(load)
         <div class="w-30 h-16 rounded-xl overflow-hidden shrink-0 relative">
           <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.blockName"
                class="w-30 h-16 object-cover" :class="{ 'opacity-60': block.locked }"/>
-          <BlockCover v-else :theme="coverTheme(block.blockId)" :height="64"/>
+          <BlockCover v-else :height="64"/>
           <div v-if="block.locked" class="absolute inset-0 flex items-center justify-center bg-navy/30">
             <Icon name="lock" :size="20" class="text-white"/>
           </div>

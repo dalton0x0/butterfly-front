@@ -4,7 +4,7 @@
 // GET /api/blocks (liste), POST/PUT/DELETE /api/blocks (CRUD, ADMIN/TEACHER).
 import {computed, onMounted, reactive, ref} from 'vue'
 import {blockService} from '@/services/blockService'
-import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
+import {mediaService} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import BlockCover from '@/components/BlockCover.vue'
@@ -27,12 +27,6 @@ const showDelete = ref(false)
 const deleting = ref(null)
 const deleteError = ref('')
 const removing = ref(false)
-
-const COVER_THEMES = ['system', 'network', 'cloud']
-
-function coverTheme(id) {
-  return COVER_THEMES[((id || 1) - 1) % COVER_THEMES.length]
-}
 
 // Upload de la cover
 const coverInput = ref(null)
@@ -57,7 +51,7 @@ async function onCoverSelected(event) {
   coverError.value = ''
   uploadingCover.value = true
   try {
-    const media = await mediaService.uploadImage(file, MEDIA_USAGE.COVER)
+    const media = await mediaService.uploadImage(file)
     form.cover = media.url
   } catch (err) {
     coverError.value = err.message || "L'envoi de l'image a échoué."
@@ -244,7 +238,7 @@ onMounted(load)
     >
       <div class="h-[200px]">
         <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name" class="w-full h-[200px] object-cover"/>
-        <BlockCover v-else :theme="coverTheme(block.id)" :height="200"/>
+        <BlockCover v-else :height="200"/>
       </div>
       <div class="p-5 flex flex-col gap-2 flex-1">
         <h3 class="text-[17px] font-semibold text-navy">{{ block.name }}</h3>

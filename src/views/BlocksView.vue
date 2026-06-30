@@ -17,13 +17,6 @@ const loading = ref(true)
 const error = ref('')
 const blocks = ref([])
 
-// En l'absence de champ "theme" côté back, on dérive une cover stable depuis l'id.
-const COVER_THEMES = ['system', 'network', 'cloud']
-
-function coverTheme(id) {
-  return COVER_THEMES[(id - 1) % COVER_THEMES.length]
-}
-
 // Statut dérivé de la progression : terminé, en cours, ou à commencer.
 function blockStatus(block) {
   const percent = block.summary?.overallPercent
@@ -146,7 +139,7 @@ onMounted(load)
       <div class="relative">
         <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name"
              class="w-full h-[200px] object-cover" :class="{ 'opacity-60': block.locked }"/>
-        <BlockCover v-else :theme="coverTheme(block.id)" :class="{ 'opacity-60': block.locked }"/>
+        <BlockCover v-else :class="{ 'opacity-60': block.locked }"/>
         <div v-if="block.locked"
              class="absolute inset-0 flex items-center justify-center bg-navy/25">
           <div class="flex items-center gap-1.5 px-3 h-9 rounded-full bg-surface/95 text-ink-soft shadow-sm">

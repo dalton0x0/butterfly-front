@@ -20,9 +20,6 @@ const error = ref('')
 const block = ref(null)
 const summary = ref(null)
 
-const COVER_THEMES = ['system', 'network', 'cloud']
-const coverTheme = computed(() => COVER_THEMES[((block.value?.id || 1) - 1) % COVER_THEMES.length])
-
 // Modules triés par position.
 const sortedModules = computed(() =>
   [...(block.value?.modules || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
@@ -79,7 +76,7 @@ onMounted(load)
       class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col md:flex-row gap-6 items-start mb-8">
       <div class="w-50 h-30 rounded-xl overflow-hidden shrink-0">
         <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name" class="w-50 h-30 p-3 object-cover"/>
-        <BlockCover v-else :theme="coverTheme" :height="96"/>
+        <BlockCover v-else :height="96"/>
       </div>
       <div class="flex-1">
         <h1 class="text-[30px] font-semibold text-navy mb-2">{{ block.name }}</h1>
