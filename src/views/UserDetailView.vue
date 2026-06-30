@@ -42,6 +42,32 @@ const savingBlocks = ref(false)
 const roleChip = computed(() => roleChipFor(user.value?.role))
 const fullName = computed(() => (user.value ? `${user.value.firstName} ${user.value.lastName}` : ''))
 
+const displayedBlocks = computed(() => {
+  const byId = new Map()
+  for (const b of blocks.value) {
+    byId.set(b.id, b)
+  }
+  for (const b of (user.value?.blocks || [])) {
+    if (!byId.has(b.id)) {
+      byId.set(b.id, b)
+    }
+  }
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name))
+})
+
+const assignedCount = computed(() => selectedBlockIds.value.length)
+
+// État "modifié mais non enregistré" : compare la sélection courante à l'état sauvegardé.
+const savedBlockIds = computed(() => new Set((user.value?.blocks || []).map((b) => b.id)))
+const blocksDirty = computed(() => {
+  const current = selectedBlockIds.value
+  const saved = savedBlockIds.value
+  if (current.length !== saved.size) {
+    return true
+  }
+  return current.some((id) => !saved.has(id))
+})
+
 function flashMessage(text) {
   message.value = text
   setTimeout(() => {
@@ -265,20 +291,25 @@ onMounted(load)
       <!-- Blocs assignés -->
       <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
         <h2 class="text-[17px] font-semibold text-ink mb-1">Blocs assignés</h2>
-        <p class="text-[13px] text-muted mb-4">Pour un formateur, définit sa portée pédagogique. Pour un apprenant, son
+        <p class="text-[13px] text-muted mb-1">Pour un formateur, définit sa portée pédagogique. Pour un apprenant, son
           inscription.</p>
-        <p v-if="blocks.length === 0" class="text-[14px] text-muted">Aucun bloc disponible.</p>
+        <p class="text-[13px] text-muted mb-4">
+          {{ assignedCount }} bloc(s) assigné(s). Cochez pour assigner, décochez pour retirer, puis enregistrez.
+        </p>
+        <p v-if="displayedBlocks.length === 0" class="text-[14px] text-muted">Aucun bloc disponible.</p>
         <div v-else class="flex flex-col gap-1 max-h-64 overflow-auto mb-4">
-          <label v-for="b in blocks" :key="b.id"
-                 class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-surface-tint cursor-pointer">
+          <label v-for="b in displayedBlocks" :key="b.id"
+                 class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
+                 :class="selectedBlockIds.includes(b.id) ? 'bg-accent/10 hover:bg-accent/15' : 'hover:bg-surface-tint'">
             <input type="checkbox" class="w-4 h-4 rounded accent-[#0047ab]" :checked="selectedBlockIds.includes(b.id)"
                    @change="toggleBlock(b.id)"/>
             <span class="text-[14px] text-ink">{{ b.name }}</span>
           </label>
         </div>
-        <div class="flex justify-end">
-          <button :disabled="savingBlocks"
-                  class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+        <div class="flex items-center justify-end gap-3">
+          <span v-if="blocksDirty" class="text-[13px] text-[#b45309]">Modifications non enregistrées</span>
+          <button :disabled="savingBlocks || !blocksDirty"
+                  class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
                   @click="saveBlocks">
             Enregistrer les blocs
           </button>
