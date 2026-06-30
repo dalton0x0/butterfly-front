@@ -12,7 +12,7 @@ import {
   validatePassword,
   validateRequired
 } from '@/utils/validators'
-import {mediaService} from '@/services/mediaService'
+import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
@@ -70,7 +70,7 @@ async function onAvatarSelected(event) {
   infoErrors.avatar = ''
   uploadingAvatar.value = true
   try {
-    const media = await mediaService.uploadImage(file)
+    const media = await mediaService.uploadImage(file, MEDIA_USAGE.AVATAR)
     infoForm.avatar = media.url
   } catch (err) {
     infoErrors.avatar = err.message || "L'envoi de l'avatar a échoué."

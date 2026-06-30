@@ -6,7 +6,7 @@
 import {nextTick, ref} from 'vue'
 import Icon from './Icon.vue'
 import MarkdownContent from './MarkdownContent.vue'
-import {mediaService} from '@/services/mediaService'
+import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, validateImageFile} from '@/utils/media'
 
 const props = defineProps({
@@ -59,7 +59,7 @@ async function onImageSelected(event) {
   imageError.value = ''
   uploadingImage.value = true
   try {
-    const media = await mediaService.uploadImage(file)
+    const media = await mediaService.uploadImage(file, MEDIA_USAGE.CONTENT)
     // On insère ![](url) et on place le curseur entre les crochets pour saisir le texte alternatif.
     insertAtCursor(`![](${media.url})`, 2)
   } catch (err) {
