@@ -243,9 +243,16 @@ onMounted(load)
             </template>
             <template v-else>
               <RouterLink
+                :to="`/admin/utilisateurs/${u.id}/apercu`"
+                class="text-ink-soft hover:bg-surface-tint p-2 rounded-full transition-colors inline-flex"
+                title="Aperçu et progression"
+              >
+                <Icon name="visibility" :size="18"/>
+              </RouterLink>
+              <RouterLink
                 :to="`/admin/utilisateurs/${u.id}`"
                 class="text-ink-soft hover:bg-surface-tint p-2 rounded-full transition-colors inline-flex"
-                title="Voir et modifier"
+                title="Modifier"
               >
                 <Icon name="edit" :size="18"/>
               </RouterLink>

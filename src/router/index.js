@@ -181,6 +181,12 @@ const routes = [
         meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
     },
     {
+        path: '/admin/utilisateurs/:id/apercu',
+        name: 'admin-user-detail',
+        component: () => import('@/views/AdminUserDetailView.vue'),
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
+    },
+    {
         path: '/admin/promotions',
         name: 'promotions',
         component: () => import('@/views/PromotionsView.vue'),
