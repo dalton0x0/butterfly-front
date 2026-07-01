@@ -4,7 +4,7 @@
 // GET /api/blocks (liste), POST/PUT/DELETE /api/blocks (CRUD, ADMIN/TEACHER).
 import {computed, onMounted, reactive, ref} from 'vue'
 import {blockService} from '@/services/blockService'
-import {mediaService} from '@/services/mediaService'
+import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import BlockCover from '@/components/BlockCover.vue'
@@ -33,6 +33,10 @@ const coverInput = ref(null)
 const uploadingCover = ref(false)
 const coverError = ref('')
 
+// URL d'une cover uploadée dans cette session mais pas encore enregistrée.
+// Permet de supprimer le fichier transitoire si on le remplace ou si on annule.
+const pendingCover = ref(null)
+
 function openCoverPicker() {
   coverInput.value?.click()
 }
@@ -51,7 +55,12 @@ async function onCoverSelected(event) {
   coverError.value = ''
   uploadingCover.value = true
   try {
-    const media = await mediaService.uploadImage(file)
+    const media = await mediaService.uploadImage(file, MEDIA_USAGE.COVER)
+    // On remplace : l'ancienne image transitoire (jamais enregistrée) devient orpheline.
+    if (pendingCover.value) {
+      await mediaService.deleteMedia(pendingCover.value)
+    }
+    pendingCover.value = media.url
     form.cover = media.url
   } catch (err) {
     coverError.value = err.message || "L'envoi de l'image a échoué."
@@ -61,6 +70,11 @@ async function onCoverSelected(event) {
 }
 
 function removeCover() {
+  // Si la cover affichée est une image transitoire de cette session, on supprime son fichier.
+  if (pendingCover.value && form.cover === pendingCover.value) {
+    mediaService.deleteMedia(pendingCover.value)
+    pendingCover.value = null
+  }
   form.cover = ''
 }
 
@@ -71,6 +85,7 @@ function openCreate() {
   form.name = ''
   form.description = ''
   form.cover = ''
+  pendingCover.value = null
   formError.value = ''
   coverError.value = ''
   showForm.value = true
@@ -81,9 +96,19 @@ function openEdit(block) {
   form.name = block.name || ''
   form.description = block.description || ''
   form.cover = block.cover || ''
+  pendingCover.value = null
   formError.value = ''
   coverError.value = ''
   showForm.value = true
+}
+
+function closeForm() {
+  // Annulation : on supprime la cover transitoire qui n'a jamais été enregistrée.
+  if (pendingCover.value) {
+    mediaService.deleteMedia(pendingCover.value)
+    pendingCover.value = null
+  }
+  showForm.value = false
 }
 
 async function save() {
@@ -111,6 +136,8 @@ async function save() {
       await blockService.createBlock(payload)
       success.value = 'Bloc créé avec succès.'
     }
+    // La cover est désormais persistée (ou retirée) : plus un fichier transitoire.
+    pendingCover.value = null
     showForm.value = false
     await load()
   } catch (err) {
@@ -279,7 +306,7 @@ onMounted(load)
   </div>
 
   <!-- Modale formulaire (création / modification) -->
-  <Modal v-if="showForm" @close="showForm = false">
+  <Modal v-if="showForm" @close="closeForm">
     <div class="px-6 pt-6 pb-6 w-full max-w-[480px]">
       <h3 class="text-[20px] font-semibold text-navy mb-5">{{ formTitle }}</h3>
 
@@ -347,7 +374,7 @@ onMounted(load)
           <button
             type="button"
             class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
-            @click="showForm = false"
+            @click="closeForm"
           >
             Annuler
           </button>

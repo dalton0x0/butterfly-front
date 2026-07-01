@@ -1,6 +1,6 @@
 <script setup>
 // Mon profil : informations personnelles et sécurité.
-import {computed, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {profileService} from '@/services/profileService'
@@ -51,6 +51,8 @@ const infoLoading = ref(false)
 // Upload de l'avatar
 const avatarInput = ref(null)
 const uploadingAvatar = ref(false)
+// URL d'un avatar uploadé dans cette session mais pas encore enregistré.
+const pendingAvatar = ref(null)
 
 function openAvatarPicker() {
   avatarInput.value?.click()
@@ -71,6 +73,11 @@ async function onAvatarSelected(event) {
   uploadingAvatar.value = true
   try {
     const media = await mediaService.uploadImage(file, MEDIA_USAGE.AVATAR)
+    // On remplace : l'ancien avatar transitoire (jamais enregistré) devient orphelin.
+    if (pendingAvatar.value) {
+      await mediaService.deleteMedia(pendingAvatar.value)
+    }
+    pendingAvatar.value = media.url
     infoForm.avatar = media.url
   } catch (err) {
     infoErrors.avatar = err.message || "L'envoi de l'avatar a échoué."
@@ -80,8 +87,20 @@ async function onAvatarSelected(event) {
 }
 
 function removeAvatar() {
+  // Si l'avatar affiché est une image transitoire de cette session, on supprime son fichier.
+  if (pendingAvatar.value && infoForm.avatar === pendingAvatar.value) {
+    mediaService.deleteMedia(pendingAvatar.value)
+    pendingAvatar.value = null
+  }
   infoForm.avatar = ''
 }
+
+// Si on quitte la page avec un avatar uploadé mais jamais enregistré, on le nettoie.
+onBeforeUnmount(() => {
+  if (pendingAvatar.value) {
+    mediaService.deleteMedia(pendingAvatar.value)
+  }
+})
 
 function clearInfoError(field) {
   infoErrors[field] = ''
@@ -112,6 +131,8 @@ async function submitInfo() {
       avatar: infoForm.avatar.trim() ? infoForm.avatar.trim() : null
     })
     auth.setProfile(updated)
+    // L'avatar est désormais persisté (ou retiré)
+    pendingAvatar.value = null
     infoSuccess.value = 'Profil mis à jour avec succès.'
   } catch (err) {
     const {fieldErrors, globalError} = mapBackendError(err, {

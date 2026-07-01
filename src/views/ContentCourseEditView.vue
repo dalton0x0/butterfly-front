@@ -3,11 +3,11 @@
 // Le contenu se rédige en Markdown via un éditeur à onglets Écrire / Aperçu.
 // Création : /formateur/contenus/modules/:moduleId/cours/nouveau
 // Édition : /formateur/contenus/cours/:id
-import {computed, onMounted, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {courseService} from '@/services/courseService'
 import {moduleService} from '@/services/moduleService'
-import {mediaService} from '@/services/mediaService'
+import {mediaService, extractMediaImageUrls} from '@/services/mediaService'
 import {ALLOWED_VIDEO_ACCEPT, resolveVideoSource, validateVideoFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -36,6 +36,11 @@ const uploadingVideo = ref(false)
 const videoError = ref('')
 const videoSource = computed(() => resolveVideoSource(form.videoUrl))
 
+// URL d'une vidéo uploadée dans cette session mais pas encore enregistrée.
+const pendingVideo = ref(null)
+// Référence à l'éditeur Markdown, pour récupérer ses images uploadées en session.
+const editorRef = ref(null)
+
 function openVideoPicker() {
   videoInput.value?.click()
 }
@@ -55,6 +60,11 @@ async function onVideoSelected(event) {
   uploadingVideo.value = true
   try {
     const media = await mediaService.uploadVideo(file)
+    // On remplace : l'ancienne vidéo transitoire (jamais enregistrée) devient orpheline.
+    if (pendingVideo.value) {
+      await mediaService.deleteMedia(pendingVideo.value)
+    }
+    pendingVideo.value = media.url
     form.videoUrl = media.url
   } catch (err) {
     videoError.value = err.message || "L'envoi de la vidéo a échoué."
@@ -64,6 +74,11 @@ async function onVideoSelected(event) {
 }
 
 function removeVideo() {
+  // Si la vidéo affichée est un fichier transitoire de cette session, on le supprime.
+  if (pendingVideo.value && form.videoUrl === pendingVideo.value) {
+    mediaService.deleteMedia(pendingVideo.value)
+    pendingVideo.value = null
+  }
   form.videoUrl = ''
   videoError.value = ''
 }
@@ -126,12 +141,41 @@ async function save() {
     } else {
       await courseService.createCourse(payload)
     }
+    // Nettoyage des images de contenu uploadées cette session mais absentes du contenu final.
+    await cleanupUnusedSessionMedia(content)
+    pendingVideo.value = null
     router.push(backTo.value)
   } catch (err) {
     formError.value = err.message || "L'enregistrement a échoué."
     saving.value = false
   }
 }
+
+/**
+ * Supprime les images de contenu uploadées pendant la session mais absentes du
+ * contenu final enregistré. Complète le diff côté back (qui ne voit que l'ancien
+ * et le nouveau contenu persistés), pour le cas "ajoutée puis retirée avant sauvegarde".
+ */
+async function cleanupUnusedSessionMedia(finalContent) {
+  const uploaded = editorRef.value?.getSessionUploads?.() || []
+  const keptImages = extractMediaImageUrls(finalContent)
+  for (const url of uploaded) {
+    if (!keptImages.includes(url)) {
+      await mediaService.deleteMedia(url)
+    }
+  }
+  editorRef.value?.clearSessionUploads?.()
+}
+
+// Si on quitte la page sans enregistrer, on nettoie les fichiers uploadés cette session
+// qui n'ont jamais été persistés (vidéo et images de contenu).
+onBeforeUnmount(() => {
+  if (pendingVideo.value) {
+    mediaService.deleteMedia(pendingVideo.value)
+  }
+  const uploaded = editorRef.value?.getSessionUploads?.() || []
+  uploaded.forEach((url) => mediaService.deleteMedia(url))
+})
 
 onMounted(load)
 </script>
@@ -227,7 +271,7 @@ onMounted(load)
 
       <div>
         <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Contenu du cours</label>
-        <MarkdownEditor v-model="form.content" :rows="20"/>
+        <MarkdownEditor ref="editorRef" v-model="form.content" :rows="20"/>
       </div>
 
       <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>

@@ -21,6 +21,17 @@ const imageInput = ref(null)
 const uploadingImage = ref(false)
 const imageError = ref('')
 
+// URLs des images uploadées pendant cette session d'édition. Le parent s'en sert
+// après un enregistrement réussi pour supprimer celles absentes du contenu final.
+const sessionUploads = ref([])
+
+defineExpose({
+  getSessionUploads: () => sessionUploads.value,
+  clearSessionUploads: () => {
+    sessionUploads.value = []
+  }
+})
+
 function onInput(event) {
   emit('update:modelValue', event.target.value)
 }
@@ -60,6 +71,7 @@ async function onImageSelected(event) {
   uploadingImage.value = true
   try {
     const media = await mediaService.uploadImage(file, MEDIA_USAGE.CONTENT)
+    sessionUploads.value.push(media.url)
     // On insère ![](url) et on place le curseur entre les crochets pour saisir le texte alternatif.
     insertAtCursor(`![](${media.url})`, 2)
   } catch (err) {

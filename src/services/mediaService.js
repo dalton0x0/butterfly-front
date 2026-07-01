@@ -7,8 +7,8 @@
   Axios détecte le FormData et pose lui-même l'en-tête multipart.
   La réponse contient l'URL relative à stocker (cover, avatar, videoUrl).
 
-  L'usage d'une image (avatar, couverture, image de contenu) est transmis au back
-  qui range le fichier dans le sous-dossier correspondant. Les valeurs doivent
+  L'usage d'une image (avatar, couverture, image de contenu) est transmis au back, qui
+  range alors le fichier dans le sous-dossier correspondant. Les valeurs doivent
   correspondre exactement à l'enum MediaUsage côté back (en majuscules).
 */
 
@@ -45,5 +45,33 @@ export const mediaService = {
         formData.append('file', file)
         const envelope = await http.post('/media/videos', formData)
         return envelope.data
+    },
+
+    /**
+     * Supprime un média à partir de son URL (nettoyage des fichiers transitoires).
+     * Tolérant : on ignore les erreurs et les URLs vides ou externes car un échec
+     * de nettoyage ne doit jamais bloquer l'utilisateur.
+     * @param {string} url l'URL relative du média (ex : /api/media/images/covers/uuid.png)
+     */
+    async deleteMedia(url) {
+        if (!url || /^https?:\/\//i.test(url)) {
+            return
+        }
+        try {
+            await http.delete('/media', {params: {url}})
+        } catch (err) {
+            // Nettoyage best-effort : on n'interrompt pas le flux en cas d'échec.
+            console.warn('Suppression de média ignorée :', err?.message || err)
+        }
     }
+}
+
+// Extrait les URLs d'images de média référencées dans un contenu Markdown.
+const MEDIA_IMAGE_URL_PATTERN = /\/api\/media\/images\/[^\s)"'<>]+/g
+
+export function extractMediaImageUrls(content) {
+    if (!content) {
+        return []
+    }
+    return [...new Set(content.match(MEDIA_IMAGE_URL_PATTERN) || [])]
 }
