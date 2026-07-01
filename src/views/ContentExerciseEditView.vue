@@ -3,10 +3,11 @@
 // L'énoncé se rédige en Markdown (peut contenir du code, des images...).
 // Création : /formateur/contenus/modules/:moduleId/exercices/nouveau
 // Édition : /formateur/contenus/exercices/:id
-import {computed, onMounted, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {exerciseService} from '@/services/exerciseService'
 import {moduleService} from '@/services/moduleService'
+import {mediaService, extractMediaImageUrls} from '@/services/mediaService'
 import Icon from '@/components/Icon.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
@@ -24,6 +25,9 @@ const formError = ref('')
 const moduleId = ref(null)
 const moduleName = ref('')
 const form = reactive({name: '', content: ''})
+
+// Référence à l'éditeur Markdown, pour récupérer ses images uploadées en session.
+const editorRef = ref(null)
 
 const title = computed(() => (isEdit.value ? "Modifier l'exercice" : 'Nouvel exercice'))
 const backTo = computed(() => `/formateur/contenus/modules/${moduleId.value}`)
@@ -74,12 +78,35 @@ async function save() {
     } else {
       await exerciseService.createExercise(payload)
     }
+    // Nettoyage des images de contenu uploadées cette session mais absentes du contenu final.
+    await cleanupUnusedSessionMedia(content)
     router.push(backTo.value)
   } catch (err) {
     formError.value = err.message || "L'enregistrement a échoué."
     saving.value = false
   }
 }
+
+/**
+ * Supprime les images de contenu uploadées pendant la session mais absentes de
+ * l'énoncé final enregistré (cas "ajoutée puis retirée avant sauvegarde").
+ */
+async function cleanupUnusedSessionMedia(finalContent) {
+  const uploaded = editorRef.value?.getSessionUploads?.() || []
+  const keptImages = extractMediaImageUrls(finalContent)
+  for (const url of uploaded) {
+    if (!keptImages.includes(url)) {
+      await mediaService.deleteMedia(url)
+    }
+  }
+  editorRef.value?.clearSessionUploads?.()
+}
+
+// Si on quitte la page sans enregistrer, on nettoie les images uploadées cette session.
+onBeforeUnmount(() => {
+  const uploaded = editorRef.value?.getSessionUploads?.() || []
+  uploaded.forEach((url) => mediaService.deleteMedia(url))
+})
 
 onMounted(load)
 </script>
@@ -112,7 +139,7 @@ onMounted(load)
 
       <div>
         <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Énoncé de l'exercice</label>
-        <MarkdownEditor v-model="form.content" :rows="20"/>
+        <MarkdownEditor ref="editorRef" v-model="form.content" :rows="20"/>
       </div>
 
       <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>
