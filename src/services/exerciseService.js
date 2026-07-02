@@ -43,8 +43,18 @@ export const exerciseService = {
      * Crée une soumission avec son contenu (obligatoire, 10000 caractères max).
      * @returns {Promise<object>} ExerciseSubmissionResponse (dont l'id de la soumission)
      */
-    async submit(exerciseId, content) {
-        const envelope = await http.post(`/progress/exercises/${exerciseId}/submissions`, {content})
+    /**
+     * Soumet un exercice de façon atomique : le contenu et au moins un fichier sont
+     * envoyés dans une seule requête multipart. Le contenu part dans la partie JSON 'data'.
+     * @returns {Promise<object>} ExerciseSubmissionResponse (dont l'id de la soumission)
+     */
+    async submit(exerciseId, content, files) {
+        const formData = new FormData()
+        formData.append('data', new Blob([JSON.stringify({content})], {type: 'application/json'}))
+        for (const file of files) {
+            formData.append('files', file)
+        }
+        const envelope = await http.post(`/progress/exercises/${exerciseId}/submissions`, formData)
         return envelope.data
     },
 

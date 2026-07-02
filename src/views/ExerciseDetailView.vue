@@ -142,6 +142,11 @@ async function saveEdit(s) {
 
 async function removeSubmissionFile(s, file) {
   editError.value = ''
+  // Une soumission doit conserver au moins un fichier à corriger.
+  if ((s.files || []).length <= 1) {
+    editError.value = 'Une soumission doit conserver au moins un fichier.'
+    return
+  }
   editBusy.value = true
   try {
     await exerciseService.deleteFile(exercise.value.id, s.id, file.id)
@@ -192,13 +197,14 @@ async function handleSubmit() {
     submitError.value = 'Le contenu de la soumission est obligatoire.'
     return
   }
+  if (selectedFiles.value.length === 0) {
+    submitError.value = 'Ajoutez au moins un fichier à votre soumission.'
+    return
+  }
   submitting.value = true
   try {
-    const submission = await exerciseService.submit(exercise.value.id, content.value.trim())
-    // On joint les fichiers à la soumission qui vient d'être créée.
-    for (const file of selectedFiles.value) {
-      await exerciseService.uploadFile(exercise.value.id, submission.id, file)
-    }
+    // Envoi atomique : le contenu et les fichiers partent dans une seule requête.
+    await exerciseService.submit(exercise.value.id, content.value.trim(), selectedFiles.value)
     submitSuccess.value = 'Soumission envoyée avec succès.'
     content.value = ''
     selectedFiles.value = []
