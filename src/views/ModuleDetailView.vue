@@ -163,7 +163,7 @@ onMounted(load)
         />
         <StatusChip
           v-else
-          :label="item.completed ? 'Terminé' : 'À faire'"
+          :label="item.completed ? 'Terminé' : 'À commencer'"
           :variant="item.completed ? 'success' : 'neutral'"
         />
         <Icon v-if="!item.locked" name="chevron_right" :size="20" class="text-muted"/>
