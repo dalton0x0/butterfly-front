@@ -59,9 +59,10 @@ export const mediaService = {
         }
         try {
             await http.delete('/media', {params: {url}})
-        } catch (err) {
-            // Nettoyage best-effort : on n'interrompt pas le flux en cas d'échec.
-            console.warn('Suppression de média ignorée :', err?.message || err)
+        } catch {
+            // Nettoyage best-effort : un échec de suppression n'interrompt pas
+            // le flux utilisateur. Le fichier éventuellement orphelin sera
+            // récupéré par le nettoyage côté back.
         }
     }
 }

@@ -60,7 +60,6 @@ export const useAuthStore = defineStore('auth', () => {
             enabled: userResponse.enabled,
             promotionId: userResponse.promotionId,
             promotionName: userResponse.promotionName,
-            promotion: userResponse.promotionName,
             lastLogin: userResponse.lastLogin,
             createdAt: userResponse.createdAt
         }
