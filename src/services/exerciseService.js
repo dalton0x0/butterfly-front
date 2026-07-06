@@ -9,8 +9,9 @@
   - GET /api/progress/me/exercises/{exerciseId}/submissions vers Page<ExerciseSubmissionResponse>
   - GET /api/progress/submissions/{submissionId}/files/{fileId} vers fichier binaire
 
-  On crée d'abord la soumission (contenu obligatoire),
-  puis on joint les éventuels fichiers à la soumission créée.
+  La soumission initiale est atomique : le contenu (partie JSON 'data') et au moins un
+  fichier partent dans une seule requête multipart. L'endpoint .../files sert ensuite à
+  joindre un fichier à une soumission déjà créée (édition tant qu'elle est en attente).
 */
 
 import http from './http'
@@ -39,10 +40,6 @@ export const exerciseService = {
         return normalizePage(envelope.data)
     },
 
-    /**
-     * Crée une soumission avec son contenu (obligatoire, 10000 caractères max).
-     * @returns {Promise<object>} ExerciseSubmissionResponse (dont l'id de la soumission)
-     */
     /**
      * Soumet un exercice de façon atomique : le contenu et au moins un fichier sont
      * envoyés dans une seule requête multipart. Le contenu part dans la partie JSON 'data'.

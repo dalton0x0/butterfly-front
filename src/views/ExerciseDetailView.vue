@@ -1,7 +1,7 @@
 <script setup>
 // Détail d'un exercice : énoncé à gauche, dépôt et historique à droite.
-// GET /api/exercises/{id} pour l'énoncé. Soumission en deux temps côté back :
-// POST .../submissions (contenu) puis POST .../submissions/{id}/files (fichiers).
+// GET /api/exercises/{id} pour l'énoncé. La soumission est atomique : contenu et
+// fichiers partent ensemble via POST .../submissions en une seule requête multipart.
 // Historique via GET /api/progress/me/exercises/{exerciseId}/submissions.
 import {computed, onMounted, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
