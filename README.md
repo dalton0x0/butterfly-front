@@ -4,7 +4,7 @@ Interface web de la plateforme de gestion de l'apprentissage (LMS) InfraDev. App
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
-Version : 1.0.0
+Version : 1.0.1
 
 ---
 
@@ -242,10 +242,13 @@ valide est présent, sinon elle redirige vers la page de connexion.
   accents).
 - Les vues passent toujours par un service pour parler à l'API, jamais par Axios directement.
 - Les couleurs passent exclusivement par les tokens de thème.
-- Commits au format Conventional Commits, en français.
+  - Commits au format Conventional Commits en français.
 
 ## Historique des versions
 
+- v1.0.1 : alignement de la version du paquet npm sur celle du projet et corrections de
+  documentation. Aucune modification fonctionnelle : le contrat de pagination stabilisé côté
+  backend (v1.0.1) conserve exactement la structure JSON déjà consommée par `normalizePage`.
 - v1.0.0 : première version stable et complète alignée sur le backend v1.0.0. Couvre les trois
   espaces (apprenant, formateur, administrateur), l'authentification avec rafraîchissement
   transparent, la navigation guidée par les prérequis, l'évaluation par exercices et quiz, la
