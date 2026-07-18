@@ -5,7 +5,7 @@ import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import Icon from './Icon.vue'
 import Avatar from './Avatar.vue'
-import config from "../utils/config.js";
+import config from "@/utils/config.js";
 
 const auth = useAuthStore()
 const router = useRouter()

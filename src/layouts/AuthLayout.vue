@@ -1,7 +1,7 @@
 <script setup>
 // Layout des pages d'authentification
 import Icon from '@/components/Icon.vue'
-import config from "../utils/config.js";
+import config from "@/utils/config.js";
 </script>
 
 <template>

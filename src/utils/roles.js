@@ -11,7 +11,7 @@ export const ROLES = {
 }
 
 // Présentation par défaut d'un rôle : libellé court et variante de couleur du chip.
-export const ROLE_CHIP = {
+const ROLE_CHIP = {
     [ROLES.ADMIN]: {label: 'Admin', variant: 'primary'},
     [ROLES.TEACHER]: {label: 'Formateur', variant: 'primary'},
     [ROLES.USER]: {label: 'Apprenant', variant: 'neutral'}

@@ -8,10 +8,10 @@
 */
 
 // Email : partie locale, arobase, domaine d'au moins 2 caractères, point, extension d'au moins 2 lettres.
-export const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]{2,}\.[a-zA-Z]{2,}$/
+const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]{2,}\.[a-zA-Z]{2,}$/
 
 // Mot de passe : 10 caractères minimum, 1 minuscule, 1 majuscule, 1 chiffre, 1 caractère spécial, sans espace.
-export const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{10,}$/
+const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{10,}$/
 
 const PASSWORD_MESSAGE =
     'Le mot de passe doit contenir au minimum 10 caractères avec au moins 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial.'

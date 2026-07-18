@@ -5,7 +5,7 @@
   Le champ multipart attendu par le back s'appelle "file".
 */
 
-export const ALLOWED_UPLOAD_TYPES = [
+const ALLOWED_UPLOAD_TYPES = [
     'application/pdf',
     'image/png',
     'image/jpeg',
@@ -17,7 +17,7 @@ export const ALLOWED_UPLOAD_TYPES = [
 export const ALLOWED_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.txt,.zip'
 
 // 5 Mo, comme STORAGE_MAX_FILE_SIZE_BYTES côté back.
-export const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024
+const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024
 
 const TYPES_LABEL = 'PDF, PNG, JPEG, TXT, ZIP'
 

@@ -30,9 +30,9 @@ export function mediaUrl(value) {
 }
 
 // Types d'image autorisés, alignés sur le back (MediaStorageProperties).
-export const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 export const ALLOWED_IMAGE_ACCEPT = '.png,.jpg,.jpeg,.webp,.gif'
-export const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 
 /**
  * Valide une image avant envoi.
@@ -49,9 +49,9 @@ export function validateImageFile(file) {
 }
 
 // Types de vidéo autorisés, alignés sur le back (MediaStorageProperties).
-export const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
 export const ALLOWED_VIDEO_ACCEPT = '.mp4,.webm'
-export const MAX_VIDEO_SIZE_BYTES = 200 * 1024 * 1024
+const MAX_VIDEO_SIZE_BYTES = 200 * 1024 * 1024
 
 /**
  * Valide une vidéo avant envoi.

@@ -1,7 +1,7 @@
 <script setup>
 // Footer identique sur toutes les pages (sauf authentification).
 import Icon from './Icon.vue'
-import config from "../utils/config.js";
+import config from "@/utils/config.js";
 </script>
 
 <template>

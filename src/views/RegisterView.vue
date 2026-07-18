@@ -12,7 +12,7 @@ import {
   validateRequired
 } from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
-import config from "../utils/config.js";
+import config from "@/utils/config.js";
 
 const router = useRouter()
 const auth = useAuthStore()
