@@ -1,6 +1,6 @@
 <script setup>
 // Footer identique sur toutes les pages (sauf authentification).
-import Icon from './Icon.vue'
+import LogoIcon from './LogoIcon.vue'
 import config from "@/utils/config.js";
 </script>
 
@@ -9,7 +9,7 @@ import config from "@/utils/config.js";
     <div class="max-w-300 mx-auto grid grid-cols-1 md:grid-cols-[1fr_auto_auto] gap-x-12 gap-y-8">
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-2 text-white text-[17px] font-semibold">
-          <Icon name="verified" filled :size="20"/>
+          <LogoIcon/>
           {{ config.appName }}
         </div>
         <p class="text-[13px] text-accent-soft">

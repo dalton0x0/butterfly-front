@@ -5,6 +5,7 @@ import {useRoute, useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {mapBackendError, validateEmail, validateRequired} from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
+import LogoIcon from '@/components/LogoIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -49,8 +50,8 @@ async function handleLogin() {
 
 <template>
   <div class="bg-surface w-full max-w-[440px] rounded-2xl p-10 shadow-[var(--shadow-card)] flex flex-col items-center">
-    <div class="w-12 h-12 rounded-full bg-surface-tint flex items-center justify-center mb-4 text-primary">
-      <Icon name="verified" :size="28"/>
+    <div class="w-15 h-15 rounded-full bg-surface-tint flex items-center justify-center mb-4 text-primary">
+      <LogoIcon/>
     </div>
     <h2 class="text-[22px] font-semibold text-navy mb-1">Connexion</h2>
     <p class="text-[13px] text-muted mb-6">Heureux de vous revoir</p>

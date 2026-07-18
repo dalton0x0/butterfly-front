@@ -4,6 +4,7 @@ import {computed, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import Icon from './Icon.vue'
+import LogoIcon from './LogoIcon.vue'
 import Avatar from './Avatar.vue'
 import config from "@/utils/config.js";
 
@@ -69,7 +70,7 @@ async function logout() {
   <header class="fixed top-0 left-0 w-full z-50 bg-primary-dark shadow-sm h-16">
     <div class="flex items-center justify-between px-6 max-w-[1200px] mx-auto w-full h-full">
       <RouterLink :to="homeLink" class="flex items-center gap-2 text-white font-bold text-[17px] tracking-tight">
-        <Icon name="verified" filled/>
+        <LogoIcon/>
         {{ config.appName }}
       </RouterLink>
 
