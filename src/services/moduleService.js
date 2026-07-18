@@ -14,7 +14,6 @@
 */
 
 import http from './http'
-import {buildPageParams, normalizePage} from '@/utils/pagination.js'
 
 export const moduleService = {
     /**
@@ -23,14 +22,6 @@ export const moduleService = {
     async getModule(id) {
         const envelope = await http.get(`/modules/${id}`)
         return envelope.data
-    },
-
-    /**
-     * Récupère les modules d'un bloc, triés par position.
-     */
-    async getModulesByBlock(blockId, pageable = {size: 100, sort: 'position'}) {
-        const envelope = await http.get(`/modules/block/${blockId}`, {params: buildPageParams(pageable)})
-        return normalizePage(envelope.data)
     },
 
     /**
