@@ -5,10 +5,42 @@
 
 import {marked} from 'marked'
 import {markedHighlight} from 'marked-highlight'
-import hljs from 'highlight.js'
+// Import du noyau seul plutôt que du paquet complet.
+// On n'enregistre que les langages susceptibles d'apparaître dans les cours.
+import hljs from 'highlight.js/lib/core'
+import plaintext from 'highlight.js/lib/languages/plaintext'
+import bash from 'highlight.js/lib/languages/bash'
+import shell from 'highlight.js/lib/languages/shell'
+import xml from 'highlight.js/lib/languages/xml'
+import css from 'highlight.js/lib/languages/css'
+import javascript from 'highlight.js/lib/languages/javascript'
+import typescript from 'highlight.js/lib/languages/typescript'
+import json from 'highlight.js/lib/languages/json'
+import java from 'highlight.js/lib/languages/java'
+import php from 'highlight.js/lib/languages/php'
+import python from 'highlight.js/lib/languages/python'
+import sql from 'highlight.js/lib/languages/sql'
+import yaml from 'highlight.js/lib/languages/yaml'
+import dockerfile from 'highlight.js/lib/languages/dockerfile'
 import 'highlight.js/styles/atom-one-dark.css'
 import DOMPurify from 'dompurify'
 import {mediaUrl} from './media'
+
+// Enregistrement des langages (le nom sert d'identifiant dans les blocs ```lang).
+hljs.registerLanguage('plaintext', plaintext)
+hljs.registerLanguage('bash', bash)
+hljs.registerLanguage('shell', shell)
+hljs.registerLanguage('xml', xml)
+hljs.registerLanguage('css', css)
+hljs.registerLanguage('javascript', javascript)
+hljs.registerLanguage('typescript', typescript)
+hljs.registerLanguage('json', json)
+hljs.registerLanguage('java', java)
+hljs.registerLanguage('php', php)
+hljs.registerLanguage('python', python)
+hljs.registerLanguage('sql', sql)
+hljs.registerLanguage('yaml', yaml)
+hljs.registerLanguage('dockerfile', dockerfile)
 
 // Coloration syntaxique :
 marked.use(
