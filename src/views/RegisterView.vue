@@ -12,6 +12,7 @@ import {
   validateRequired
 } from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
+import config from "../utils/config.js";
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -101,7 +102,7 @@ async function handleRegister() {
         <Icon name="person_add" :size="28"/>
       </div>
       <h2 class="text-[22px] font-semibold text-navy mb-1">Créer un compte</h2>
-      <p class="text-[13px] text-muted">Rejoignez la plateforme InfraDev</p>
+      <p class="text-[13px] text-muted">Rejoignez la plateforme {{ config.appName }}</p>
     </div>
 
     <form class="flex flex-col gap-5" @submit.prevent="handleRegister" novalidate>
@@ -146,7 +147,7 @@ async function handleRegister() {
             v-model="form.email"
             @input="clearError('email')"
             type="email"
-            placeholder="jean.dupont@infradev.fr"
+            placeholder="jean.dupont@butterfly.fr"
             class="flex-1 outline-none text-[15px] bg-transparent"
           />
         </div>

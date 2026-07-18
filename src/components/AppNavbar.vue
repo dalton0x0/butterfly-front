@@ -5,6 +5,7 @@ import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import Icon from './Icon.vue'
 import Avatar from './Avatar.vue'
+import config from "../utils/config.js";
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -69,7 +70,7 @@ async function logout() {
     <div class="flex items-center justify-between px-6 max-w-[1200px] mx-auto w-full h-full">
       <RouterLink :to="homeLink" class="flex items-center gap-2 text-white font-bold text-[17px] tracking-tight">
         <Icon name="verified" filled/>
-        InfraDev
+        {{ config.appName }}
       </RouterLink>
 
       <!-- Liens (desktop) -->

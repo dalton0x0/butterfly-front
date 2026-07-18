@@ -72,7 +72,7 @@ async function handleLogin() {
             v-model="form.email"
             @input="clearError('email')"
             type="email"
-            placeholder="exemple@infradev.fr"
+            placeholder="exemple@butterfly.fr"
             class="flex-1 outline-none text-[15px] bg-transparent"
           />
         </div>

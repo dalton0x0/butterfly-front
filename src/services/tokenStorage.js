@@ -13,8 +13,8 @@
   cherche d'abord dans le localStorage, puis dans le sessionStorage.
 */
 
-const ACCESS_KEY = 'infradev.accessToken'
-const REFRESH_KEY = 'infradev.refreshToken'
+const ACCESS_KEY = 'butterfly.accessToken'
+const REFRESH_KEY = 'butterfly.refreshToken'
 
 // Détermine le support où vivent actuellement les jetons (utile lors d'un
 // refresh, où le choix initial "Se souvenir de moi" doit être conservé).

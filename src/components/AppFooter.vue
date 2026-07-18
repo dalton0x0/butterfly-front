@@ -1,6 +1,7 @@
 <script setup>
 // Footer identique sur toutes les pages (sauf authentification).
 import Icon from './Icon.vue'
+import config from "../utils/config.js";
 </script>
 
 <template>
@@ -9,14 +10,14 @@ import Icon from './Icon.vue'
       <div class="flex flex-col gap-3">
         <div class="flex items-center gap-2 text-white text-[17px] font-semibold">
           <Icon name="verified" filled :size="20"/>
-          InfraDev LMS
+          {{ config.appName }}
         </div>
         <p class="text-[13px] text-accent-soft">
           Plateforme d'apprentissage d'administration d'infrastructures,<br>
           du développement web et mobile<br>
           et de la cybersécurité !
         </p>
-        <p class="text-[13px] text-accent-soft">© 2026 InfraDev LMS. Tous droits réservés.</p>
+        <p class="text-[13px] text-accent-soft">© 2026 {{ config.appName }}. Tous droits réservés.</p>
       </div>
       <div class="flex flex-col gap-2">
         <span class="text-white text-sm font-semibold mb-1">Ressources</span>

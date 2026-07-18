@@ -1,6 +1,6 @@
-# InfraDev - Frontend
+# Butterfly - Frontend
 
-Interface web de la plateforme de gestion de l'apprentissage (LMS) InfraDev. Application monopage
+Interface web de la plateforme de gestion de l'apprentissage (LMS) Butterfly. Application monopage
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
@@ -208,7 +208,7 @@ src/
 
 - Node.js 18 ou supérieur
 - npm
-- Le backend InfraDev démarré et accessible
+- Le backend Butterfly démarré et accessible
 
 ## Installation et configuration
 
