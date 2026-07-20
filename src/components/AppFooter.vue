@@ -13,9 +13,9 @@ import config from "@/utils/config.js";
           {{ config.appName }}
         </div>
         <p class="text-[13px] text-accent-soft">
-          Plateforme d'apprentissage d'administration d'infrastructures,<br>
-          du développement web et mobile<br>
-          et de la cybersécurité !
+          <template v-for="(line, index) in config.taglineLines" :key="index">
+            {{ line }}<br v-if="index < config.taglineLines.length - 1">
+          </template>
         </p>
         <p class="text-[13px] text-accent-soft">© 2026 {{ config.appName }}. Tous droits réservés.</p>
       </div>
