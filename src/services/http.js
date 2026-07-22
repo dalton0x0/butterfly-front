@@ -48,6 +48,15 @@ http.interceptors.request.use((config) => {
     return config
 })
 
+// Les endpoints d'authentification ne déclenchent jamais de refresh : un 401 y est
+// une réponse définitive (identifiants invalides, jeton révoqué), pas le signe d'un
+// access token expiré. Sans cette exclusion, un logout présentant un jeton déjà révoqué
+// relancerait un refresh avec ce même jeton, que le back interpréterait comme un rejeu
+// (détection de réutilisation) et sanctionnerait en révoquant toutes les sessions.
+function isAuthEndpoint(config) {
+    return typeof config?.url === 'string' && config.url.startsWith('/auth/')
+}
+
 // File d'attente pendant un refresh en cours
 // Si plusieurs requêtes tombent en 401 en même temps, on ne lance qu'un seul
 // refresh. Les autres attendent ici puis sont rejouées avec le nouveau jeton.
@@ -75,10 +84,11 @@ http.interceptors.response.use(
         const original = error.config
         const status = error.response?.status
 
-        // On ne tente un refresh que sur un 401 une seule fois par requête
-        // et seulement si on dispose encore d'un refresh token.
+        // On ne tente un refresh que sur un 401 une seule fois par requête,
+        // seulement si on dispose encore d'un refresh token, et jamais pour les
+        // endpoints d'authentification eux-mêmes.
         const refreshToken = tokenStorage.getRefresh()
-        if (status !== 401 || original?._retry || !refreshToken) {
+        if (status !== 401 || original?._retry || !refreshToken || isAuthEndpoint(original)) {
             return Promise.reject(normalizeError(error))
         }
 
@@ -111,9 +121,11 @@ http.interceptors.response.use(
             flushQueue(refreshError, null)
             tokenStorage.clear()
             // Redirection vers la page de connexion (rechargement complet volontaire
-            // pour repartir d'un état propre).
+            // pour repartir d'un état propre). Le motif transmis dans l'URL permet à la
+            // vue de connexion d'expliquer la situation : session expirée naturellement
+            // ou révoquée par mesure de sécurité (rotation, détection de réutilisation).
             if (window.location.pathname !== '/connexion') {
-                window.location.href = '/connexion'
+                window.location.href = '/connexion?motif=session-invalide'
             }
             return Promise.reject(normalizeError(refreshError))
         } finally {
