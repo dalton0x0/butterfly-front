@@ -68,7 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Enregistre les jetons (selon le choix "Se souvenir de moi") puis
     // charge le profil complet.
     async function establishSession(authResponse, remember = true) {
-        tokenStorage.set(authResponse.accessToken, authResponse.refreshToken, remember)
+        tokenStorage.set(authResponse.accessToken, authResponse.refreshToken, remember, authResponse.sessionId)
         // Profil minimal immédiat au cas où l'appel profil échouerait.
         user.value = mapAuthResponse(authResponse)
         try {
