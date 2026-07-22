@@ -1,6 +1,6 @@
 <script setup>
 // Connexion.
-import {reactive, ref} from 'vue'
+import {computed, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {mapBackendError, validateEmail, validateRequired} from '@/utils/validators'
@@ -17,6 +17,15 @@ const showForgotInfo = ref(false)
 
 const form = reactive({email: '', password: ''})
 const errors = reactive({email: '', password: '', global: ''})
+
+// Message d'information affiché quand l'utilisateur a été redirigé ici par
+// l'intercepteur HTTP (session expirée ou révoquée par mesure de sécurité).
+// Ton neutre volontaire : on n'alarme pas, on explique pourquoi il faut se reconnecter.
+const sessionNotice = computed(() =>
+    route.query.motif === 'session-invalide'
+        ? "Votre session n'est plus valide. Par mesure de sécurité, veuillez vous reconnecter."
+        : ''
+)
 
 // Efface l'erreur d'un champ dès que l'utilisateur le modifie.
 function clearError(field) {
@@ -57,6 +66,12 @@ async function handleLogin() {
     <p class="text-[13px] text-muted mb-6">Heureux de vous revoir</p>
 
     <form class="w-full flex flex-col gap-5" @submit.prevent="handleLogin" novalidate>
+      <!-- Information de redirection : session expirée ou révoquée. Masquée dès
+           qu'une erreur de connexion prend le relais pour ne pas empiler les messages. -->
+      <p v-if="sessionNotice && !errors.global" class="text-[13px] text-primary bg-surface-tint rounded-[10px] px-3 py-2">{{
+          sessionNotice
+        }}</p>
+
       <!-- Erreur globale (identifiants invalides, compte désactivé, etc.) -->
       <p v-if="errors.global" class="text-[13px] text-danger bg-danger/8 rounded-[10px] px-3 py-2">{{
           errors.global
