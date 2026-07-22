@@ -14,9 +14,12 @@ import {
 } from '@/utils/validators'
 import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
+import {tokenStorage} from '@/services/tokenStorage'
+import {formatDate} from '@/utils/date'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
+import Modal from '@/components/Modal.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -208,6 +211,75 @@ async function submitPwd() {
     pwdLoading.value = false
   }
 }
+
+// Sessions actives (appareils connectés)
+const sessions = ref([])
+const sessionsLoading = ref(true)
+const sessionsError = ref('')
+const sessionActionId = ref(null)
+const revokingOthers = ref(false)
+const confirmRevokeOthers = ref(false)
+
+// Identifiant de la session courante : sert à l'étiqueter et à la protéger de la
+// révocation groupée.
+const currentSessionId = tokenStorage.getSessionId()
+
+const otherSessionsCount = computed(
+  () => sessions.value.filter((session) => session.id !== currentSessionId).length
+)
+
+function formatSessionDate(value) {
+  return formatDate(value, {
+    fallback: 'Date inconnue',
+    options: {day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'}
+  })
+}
+
+async function loadSessions() {
+  sessionsLoading.value = true
+  sessionsError.value = ''
+  try {
+    sessions.value = await profileService.listSessions()
+  } catch (err) {
+    sessionsError.value = mapBackendError(err).globalError
+  } finally {
+    sessionsLoading.value = false
+  }
+}
+
+async function revokeSession(sessionId) {
+  sessionActionId.value = sessionId
+  sessionsError.value = ''
+  try {
+    await profileService.revokeSession(sessionId)
+    // Révoquer sa propre session revient à se déconnecter de cet appareil.
+    if (sessionId === currentSessionId) {
+      await reconnect()
+      return
+    }
+    await loadSessions()
+  } catch (err) {
+    sessionsError.value = mapBackendError(err).globalError
+  } finally {
+    sessionActionId.value = null
+  }
+}
+
+async function revokeOtherSessions() {
+  confirmRevokeOthers.value = false
+  revokingOthers.value = true
+  sessionsError.value = ''
+  try {
+    await profileService.revokeOtherSessions(currentSessionId)
+    await loadSessions()
+  } catch (err) {
+    sessionsError.value = mapBackendError(err).globalError
+  } finally {
+    revokingOthers.value = false
+  }
+}
+
+loadSessions()
 
 async function reconnect() {
   await auth.logout()
@@ -420,6 +492,89 @@ async function reconnect() {
           </div>
         </template>
       </div>
+
+      <!-- Sessions actives (appareils connectés) -->
+      <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+        <div class="flex items-center justify-between mb-4 gap-3 flex-wrap">
+          <h3 class="text-[17px] font-semibold text-ink">Appareils connectés</h3>
+          <button
+            v-if="otherSessionsCount > 0"
+            type="button"
+            :disabled="revokingOthers"
+            class="h-9 px-4 rounded-[10px] border border-danger text-danger text-[13px] font-semibold hover:bg-danger/8 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            @click="confirmRevokeOthers = true"
+          >
+            {{ revokingOthers ? 'Déconnexion...' : 'Déconnecter les autres appareils' }}
+          </button>
+        </div>
+
+        <p class="text-[13px] text-muted mb-4">Chaque appareil ou navigateur connecté à votre compte
+          apparaît ici. Révoquez une session pour en déconnecter l'appareil correspondant.</p>
+
+        <p v-if="sessionsError" class="text-[13px] text-danger bg-danger/8 rounded-[10px] px-3 py-2 mb-4">
+          {{ sessionsError }}</p>
+
+        <p v-if="sessionsLoading" class="text-[13px] text-muted">Chargement des sessions...</p>
+
+        <ul v-else class="flex flex-col gap-2">
+          <li
+            v-for="session in sessions"
+            :key="session.id"
+            class="flex items-center justify-between gap-3 border border-input rounded-[10px] px-4 py-3"
+          >
+            <div class="flex items-center gap-3 min-w-0">
+              <Icon name="devices" :size="20" class="text-muted shrink-0"/>
+              <div class="min-w-0">
+                <p class="text-[14px] text-ink flex items-center gap-2 flex-wrap">
+                  Session ouverte le {{ formatSessionDate(session.createdAt) }}
+                  <StatusChip v-if="session.id === currentSessionId" label="Cet appareil" variant="success"/>
+                </p>
+                <p class="text-[12px] text-muted">Expire le {{ formatSessionDate(session.expiresAt) }}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              :disabled="sessionActionId === session.id"
+              class="h-9 px-4 rounded-[10px] text-[13px] font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0"
+              :class="session.id === currentSessionId
+                ? 'border border-input text-ink-soft hover:bg-surface-tint'
+                : 'border border-danger text-danger hover:bg-danger/8'"
+              @click="revokeSession(session.id)"
+            >
+              {{
+                sessionActionId === session.id
+                  ? '...'
+                  : (session.id === currentSessionId ? 'Se déconnecter' : 'Révoquer')
+              }}
+            </button>
+          </li>
+        </ul>
+      </div>
     </div>
   </div>
+
+  <!-- Confirmation de la déconnexion des autres appareils -->
+  <Modal v-if="confirmRevokeOthers" @close="confirmRevokeOthers = false">
+    <div class="px-6 pt-6 pb-6">
+      <h3 class="text-[20px] font-semibold text-navy mb-3">Déconnecter les autres appareils ?</h3>
+      <p class="text-[14px] text-ink-soft mb-6">Toutes vos sessions seront révoquées sauf celle de cet
+        appareil. Les autres appareils devront se reconnecter.</p>
+      <div class="flex justify-end gap-3">
+        <button
+          type="button"
+          class="h-10 px-5 rounded-[10px] border border-input text-ink-soft text-sm font-semibold hover:bg-surface-tint transition-colors"
+          @click="confirmRevokeOthers = false"
+        >
+          Annuler
+        </button>
+        <button
+          type="button"
+          class="h-10 px-5 rounded-[10px] bg-danger text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+          @click="revokeOtherSessions"
+        >
+          Déconnecter
+        </button>
+      </div>
+    </div>
+  </Modal>
 </template>
