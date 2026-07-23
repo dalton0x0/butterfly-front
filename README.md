@@ -4,7 +4,7 @@ Interface web de la plateforme de gestion de l'apprentissage (LMS) Butterfly. Ap
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
-Version : 1.0.1
+Version : 1.2.0
 
 ---
 
@@ -246,6 +246,15 @@ valide est présent, sinon elle redirige vers la page de connexion.
 
 ## Historique des versions
 
+- v1.2.0 : sécurité et gestion des sessions. Le rafraîchissement de jeton n'est plus déclenché sur
+  les endpoints d'authentification (un 401 y est une réponse définitive, et non un jeton expiré),
+  ce qui évite de rejouer un refresh token déjà révoqué. La page de connexion informe l'utilisateur
+  redirigé après invalidation de sa session, et le profil expose un écran des appareils connectés
+  permettant de révoquer une session ou de se déconnecter de tous les autres appareils.
+- v1.1.0 : passage à l'identité Butterfly (renommage de l'application, logo et favicon dédiés,
+  slogan de pied de page configurable), chargement optimisé de Highlight.js, simplification des
+  exports avec l'alias `@` pour les imports de configuration et suppression des utilitaires et
+  imports devenus inutiles.
 - v1.0.1 : alignement de la version du paquet npm sur celle du projet et corrections de
   documentation. Aucune modification fonctionnelle : le contrat de pagination stabilisé côté
   backend (v1.0.1) conserve exactement la structure JSON déjà consommée par `normalizePage`.
