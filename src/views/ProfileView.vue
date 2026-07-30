@@ -220,12 +220,16 @@ const sessionActionId = ref(null)
 const revokingOthers = ref(false)
 const confirmRevokeOthers = ref(false)
 
-// Identifiant de la session courante : sert à l'étiqueter et à la protéger de la
-// révocation groupée.
-const currentSessionId = tokenStorage.getSessionId()
+// Identifiant de la session courante : sert à l'étiqueter dans la liste et à la
+// protéger de la révocation groupée.
+// Référence réactive et non simple constante : le rafraîchissement automatique des
+// jetons remplace le refresh token courant par un nouveau, donc l'identifiant de
+// session change pendant que la page reste ouverte. Une valeur figée au montage
+// désignerait une session révoquée au bout de quelques minutes.
+const currentSessionId = ref(tokenStorage.getSessionId())
 
 const otherSessionsCount = computed(
-  () => sessions.value.filter((session) => session.id !== currentSessionId).length
+  () => sessions.value.filter((session) => session.id !== currentSessionId.value).length
 )
 
 function formatSessionDate(value) {
@@ -240,6 +244,10 @@ async function loadSessions() {
   sessionsError.value = ''
   try {
     sessions.value = await profileService.listSessions()
+    // Cet appel a pu déclencher une rotation de jetons (401 puis refresh transparent),
+    // qui attribue un nouvel identifiant à la session courante. On le relit après coup
+    // pour que l'étiquette "Cet appareil" et la révocation groupée restent justes.
+    currentSessionId.value = tokenStorage.getSessionId()
   } catch (err) {
     sessionsError.value = mapBackendError(err).globalError
   } finally {
@@ -253,7 +261,7 @@ async function revokeSession(sessionId) {
   try {
     await profileService.revokeSession(sessionId)
     // Révoquer sa propre session revient à se déconnecter de cet appareil.
-    if (sessionId === currentSessionId) {
+    if (sessionId === currentSessionId.value) {
       await reconnect()
       return
     }
@@ -270,7 +278,13 @@ async function revokeOtherSessions() {
   revokingOthers.value = true
   sessionsError.value = ''
   try {
-    await profileService.revokeOtherSessions(currentSessionId)
+    // On rafraîchit la liste avant d'agir : cet appel réauthentifie la requête si le
+    // jeton d'accès a expiré et met à jour l'identifiant de la session courante. Sans
+    // cette précaution, la révocation groupée pourrait partir avec un identifiant
+    // périmé que le back ne reconnaîtrait pas et qui ne serait donc pas préservé :
+    // l'utilisateur se déconnecterait lui-même en croyant protéger son compte.
+    await loadSessions()
+    await profileService.revokeOtherSessions(currentSessionId.value)
     await loadSessions()
   } catch (err) {
     sessionsError.value = mapBackendError(err).globalError

@@ -14,7 +14,7 @@ const DEFAULT_TAGLINE =
     '|Chaque parcours est une métamorphose :' +
     '|formez-vous à votre rythme dans tous les domaines.'
 
-const tagLine = import.meta.env.VITE_APP_TAG_LINE || DEFAULT_TAGLINE
+const tagLine = import.meta.env.VITE_APP_TAGLINE || DEFAULT_TAGLINE
 
 // Découpage en lignes (espaces superflus et lignes vides retirés).
 const taglineLines = (tagLine)

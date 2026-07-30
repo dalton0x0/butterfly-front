@@ -61,8 +61,9 @@ export const tokenStorage = {
      *   false : persistance de session (sessionStorage) ;
      *   undefined : on conserve le support actuel (cas d'une rotation de refresh).
      * @param {number|undefined} sessionId
-     *   identifiant de la session courante (fourni au login/register uniquement
-     *   lors d'une rotation, l'identifiant déjà mémorisé est conservé).
+     *   identifiant de la session courante, renvoyé par le back à la connexion,
+     *   à l'inscription et à chaque rotation de refresh token. S'il est omis,
+     *   l'identifiant déjà mémorisé est conservé.
      */
     set(accessToken, refreshToken, remember, sessionId) {
         let store
@@ -71,8 +72,10 @@ export const tokenStorage = {
         } else {
             store = remember ? localStorage : sessionStorage
         }
-        // Lors d'une rotation, le back ne renvoie pas de sessionId. On conserve celui
-        // déjà mémorisé pour ne pas perdre l'identité de la session courante.
+        // Si l'appelant omet le sessionId, on conserve celui déjà
+        // mémorisé plutôt que de perdre l'identité de la session courante. Tous les
+        // appelants doivent cependant transmettre celui renvoyé par le back, sous peine
+        // de garder un identifiant périmé après une rotation.
         const preservedSessionId = sessionId ?? this.getSessionId()
         clearBoth()
         store.setItem(ACCESS_KEY, accessToken)

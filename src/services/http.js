@@ -110,8 +110,18 @@ http.interceptors.response.use(
             const {data: envelope} = await refreshClient.post('/auth/refresh', {refreshToken})
             const payload = envelope.data
 
-            // Rotation : on enregistre bien le nouveau couple (access + refresh).
-            tokenStorage.set(payload.accessToken, payload.refreshToken)
+            // Rotation : on enregistre le nouveau couple (access + refresh) ainsi que le
+            // nouvel identifiant de session. La rotation révoque l'ancien refresh token et
+            // en crée un nouveau : l'identifiant renvoyé ici remplace donc le précédent,
+            // qui ne correspond plus à aucune session active. Sans cette mise à jour, la
+            // vue profil cesse de reconnaître l'appareil courant après le premier refresh,
+            // et la déconnexion des autres appareils révoque aussi la session en cours.
+            tokenStorage.set(
+                payload.accessToken,
+                payload.refreshToken,
+                undefined,
+                payload.sessionId
+            )
 
             flushQueue(null, payload.accessToken)
             original.headers.Authorization = `Bearer ${payload.accessToken}`
