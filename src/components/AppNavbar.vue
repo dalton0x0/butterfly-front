@@ -97,7 +97,9 @@ async function logout() {
               class="flex items-center gap-2 h-9 px-3 mr-1 rounded-full bg-white/15 backdrop-blur-sm"
             >
               <Icon name="search" :size="20" class="text-white/80"/>
+              <label for="navbar-search" class="sr-only">Rechercher dans la plateforme</label>
               <input
+                id="navbar-search"
                 ref="searchInput"
                 type="text"
                 placeholder="Rechercher..."

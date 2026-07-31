@@ -196,8 +196,8 @@ onMounted(load)
 
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col gap-5">
       <div>
-        <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom du cours</label>
-        <input
+        <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="course-edit-name">Nom du cours</label>
+        <input id="course-edit-name"
           v-model="form.name"
           type="text"
           maxlength="255"
@@ -207,8 +207,8 @@ onMounted(load)
       </div>
 
       <div>
-        <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Description (facultative)</label>
-        <textarea
+        <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="course-edit-description">Description (facultative)</label>
+        <textarea id="course-edit-description"
           v-model="form.description"
           rows="2"
           maxlength="500"
@@ -218,8 +218,12 @@ onMounted(load)
       </div>
 
       <div>
-        <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Vidéo (facultative)</label>
+        <!-- L'étiquette désigne le champ d'URL, seul contrôle visible. -->
+        <label for="course-edit-video-url" class="block text-[13px] font-medium text-ink-soft mb-1.5">Vidéo
+          (facultative)</label>
+        <label for="course-edit-video-file" class="sr-only">Fichier vidéo à envoyer</label>
         <input
+          id="course-edit-video-file"
           ref="videoInput"
           type="file"
           :accept="ALLOWED_VIDEO_ACCEPT"
@@ -228,6 +232,7 @@ onMounted(load)
         />
         <div class="flex items-center gap-2">
           <input
+            id="course-edit-video-url"
             v-model="form.videoUrl"
             type="text"
             placeholder="Collez un lien YouTube, Vimeo ou une URL de vidéo"
@@ -270,8 +275,9 @@ onMounted(load)
       </div>
 
       <div>
-        <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Contenu du cours</label>
-        <MarkdownEditor ref="editorRef" v-model="form.content" :rows="20"/>
+        <label for="course-edit-content" class="block text-[13px] font-medium text-ink-soft mb-1.5">Contenu du
+          cours</label>
+        <MarkdownEditor ref="editorRef" v-model="form.content" input-id="course-edit-content" :rows="20"/>
       </div>
 
       <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>

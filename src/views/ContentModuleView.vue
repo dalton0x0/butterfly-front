@@ -407,13 +407,13 @@ onMounted(load)
       <h3 class="text-[20px] font-semibold text-navy mb-5">{{ quizEditing ? 'Modifier le quiz' : 'Nouveau quiz' }}</h3>
       <div class="flex flex-col gap-4">
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom du quiz</label>
-          <input v-model="quizForm.name" type="text" maxlength="255"
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="module-name">Nom du quiz</label>
+          <input id="module-name" v-model="quizForm.name" type="text" maxlength="255"
                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"/>
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Consigne du quiz</label>
-          <textarea v-model="quizForm.content" rows="4" maxlength="50000"
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="module-content">Consigne du quiz</label>
+          <textarea id="module-content" v-model="quizForm.content" rows="4" maxlength="50000"
                     placeholder="Instructions affichées avant le quiz"
                     class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"></textarea>
         </div>

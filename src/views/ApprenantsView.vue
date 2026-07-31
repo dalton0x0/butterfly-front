@@ -59,7 +59,8 @@ onMounted(load)
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex mb-6">
       <div class="flex items-center gap-2 flex-1 h-10 px-3 border border-input rounded-[10px] bg-white">
         <Icon name="search" :size="20" class="text-muted"/>
-        <input v-model="search" placeholder="Rechercher un apprenant"
+        <label for="learners-search" class="sr-only">Rechercher un apprenant</label>
+        <input id="learners-search" v-model="search" placeholder="Rechercher un apprenant"
                class="flex-1 outline-none text-[14px] bg-transparent"/>
       </div>
     </div>

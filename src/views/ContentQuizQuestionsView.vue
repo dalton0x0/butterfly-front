@@ -213,8 +213,12 @@ onMounted(load)
 
         <div class="flex flex-col gap-4">
           <div>
-            <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Énoncé</label>
+            <!-- Identifiants dérivés de l'index de la question : les champs sont produits
+                 en boucle, un identifiant fixe créerait autant de doublons que de questions. -->
+            <label :for="`quiz-question-${qi}-statement`"
+                   class="block text-[13px] font-medium text-ink-soft mb-1.5">Énoncé</label>
             <textarea
+              :id="`quiz-question-${qi}-statement`"
               v-model="question.statement"
               rows="2"
               maxlength="2000"
@@ -224,8 +228,10 @@ onMounted(load)
 
           <div class="flex flex-wrap gap-4">
             <div class="flex-1 min-w-[160px]">
-              <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Type</label>
+              <label :for="`quiz-question-${qi}-type`"
+                     class="block text-[13px] font-medium text-ink-soft mb-1.5">Type</label>
               <select
+                :id="`quiz-question-${qi}-type`"
                 v-model="question.type"
                 class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
                 @change="onTypeChange(question)"
@@ -234,8 +240,10 @@ onMounted(load)
               </select>
             </div>
             <div class="w-28">
-              <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Points</label>
+              <label :for="`quiz-question-${qi}-points`"
+                     class="block text-[13px] font-medium text-ink-soft mb-1.5">Points</label>
               <input
+                :id="`quiz-question-${qi}-points`"
                 v-model="question.points"
                 type="number"
                 min="1"
@@ -243,8 +251,10 @@ onMounted(load)
               />
             </div>
             <div class="w-40">
-              <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Durée (secondes)</label>
+              <label :for="`quiz-question-${qi}-duration`"
+                     class="block text-[13px] font-medium text-ink-soft mb-1.5">Durée (secondes)</label>
               <input
+                :id="`quiz-question-${qi}-duration`"
                 v-model="question.timeLimitSeconds"
                 type="number"
                 min="5"
@@ -257,14 +267,15 @@ onMounted(load)
 
           <div>
             <div class="flex items-center justify-between mb-2">
-              <label class="block text-[13px] font-medium text-ink-soft">
+              <!-- Intitulé de groupe et non étiquette de champ -->
+              <p class="block text-[13px] font-medium text-ink-soft">
                 Options
                 <span class="text-muted font-normal">
                   ({{
                     question.type === 'MULTIPLE_CHOICE' ? 'plusieurs bonnes réponses possibles' : 'une seule bonne réponse'
                   }})
                 </span>
-              </label>
+              </p>
               <button class="text-primary text-[13px] font-semibold hover:underline flex items-center gap-1"
                       @click="addOption(question)">
                 <Icon name="add" :size="16"/>
@@ -288,7 +299,11 @@ onMounted(load)
                   <Icon v-if="option.correct" name="check" :size="16" class="text-[#16a34a]"/>
                 </button>
 
+                <label :for="`quiz-question-${qi}-option-${oi}`" class="sr-only">
+                  Texte de l'option {{ oi + 1 }} de la question {{ qi + 1 }}
+                </label>
                 <input
+                  :id="`quiz-question-${qi}-option-${oi}`"
                   v-model="option.text"
                   type="text"
                   maxlength="1000"

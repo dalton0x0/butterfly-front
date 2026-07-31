@@ -242,7 +242,9 @@ onMounted(load)
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex flex-wrap gap-3 mb-6">
       <div class="flex items-center gap-2 flex-1 min-w-[200px] h-10 px-3 border border-input rounded-[10px] bg-white">
         <Icon name="search" :size="20" class="text-muted"/>
-        <input v-model="search" placeholder="Rechercher un apprenant ou un exercice"
+        <label for="corrections-search" class="sr-only">Rechercher un apprenant ou un exercice</label>
+        <input id="corrections-search" v-model="search"
+               placeholder="Rechercher un apprenant ou un exercice"
                class="flex-1 outline-none text-[14px] bg-transparent"/>
       </div>
     </div>
@@ -343,10 +345,12 @@ onMounted(load)
             </p>
 
             <div>
-              <p class="text-[12px] font-semibold text-muted uppercase tracking-wide mb-2">
+              <label for="corrections-feedback"
+                     class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-2">
                 Feedback pour l'apprenant (facultatif)
-              </p>
+              </label>
               <textarea
+                id="corrections-feedback"
                 v-model="feedback"
                 rows="5"
                 placeholder="Saisissez votre commentaire constructif ici..."
@@ -355,9 +359,9 @@ onMounted(load)
             </div>
 
             <div>
-              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Note (sur
+              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="corrections-grade">Note (sur
                 20)</label>
-              <input
+              <input id="corrections-grade"
                 v-model="grade"
                 type="number"
                 min="0"

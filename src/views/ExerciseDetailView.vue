@@ -281,7 +281,9 @@ onMounted(load)
             </p>
           </div>
 
+          <label for="exercise-submission-files" class="sr-only">Fichiers à joindre à la soumission</label>
           <input
+            id="exercise-submission-files"
             ref="fileInput"
             type="file"
             multiple
@@ -319,7 +321,9 @@ onMounted(load)
             </div>
           </div>
 
+          <label for="exercise-submission-content" class="sr-only">Description de votre solution</label>
           <textarea
+            id="exercise-submission-content"
             v-model="content"
             rows="3"
             :disabled="isValidated"
@@ -344,7 +348,9 @@ onMounted(load)
         <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
           <h3 class="text-[17px] font-semibold text-ink mb-4">Historique des soumissions</h3>
 
+          <label for="exercise-submission-edit-file" class="sr-only">Fichier à ajouter à la soumission</label>
           <input
+            id="exercise-submission-edit-file"
             ref="editFileInput"
             type="file"
             :accept="ALLOWED_UPLOAD_ACCEPT"
@@ -365,7 +371,12 @@ onMounted(load)
 
               <!-- Contenu : édition en place si la soumission est en attente -->
               <template v-if="editingId === s.id">
+                <!-- Une seule soumission est éditable à la fois : l'identifiant peut donc
+                     rester fixe malgré la boucle. -->
+                <label for="exercise-submission-edit-content" class="sr-only">Modifier la description de la
+                  soumission</label>
                 <textarea
+                  id="exercise-submission-edit-content"
                   v-model="editContent"
                   rows="3"
                   class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-2 resize-none"

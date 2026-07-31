@@ -127,8 +127,8 @@ onMounted(load)
 
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col gap-5">
       <div>
-        <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom de l'exercice</label>
-        <input
+        <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="exercise-edit-name">Nom de l'exercice</label>
+        <input id="exercise-edit-name"
           v-model="form.name"
           type="text"
           maxlength="255"
@@ -138,8 +138,9 @@ onMounted(load)
       </div>
 
       <div>
-        <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Énoncé de l'exercice</label>
-        <MarkdownEditor ref="editorRef" v-model="form.content" :rows="20"/>
+        <label for="exercise-edit-content" class="block text-[13px] font-medium text-ink-soft mb-1.5">Énoncé de
+          l'exercice</label>
+        <MarkdownEditor ref="editorRef" v-model="form.content" input-id="exercise-edit-content" :rows="20"/>
       </div>
 
       <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>

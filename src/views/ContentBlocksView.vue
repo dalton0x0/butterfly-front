@@ -312,8 +312,8 @@ onMounted(load)
 
       <div class="flex flex-col gap-4">
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom du bloc</label>
-          <input
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="content-blocks-name">Nom du bloc</label>
+          <input id="content-blocks-name"
             v-model="form.name"
             type="text"
             maxlength="100"
@@ -323,8 +323,8 @@ onMounted(load)
         </div>
 
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Description (facultative)</label>
-          <textarea
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="content-blocks-description">Description (facultative)</label>
+          <textarea id="content-blocks-description"
             v-model="form.description"
             rows="3"
             maxlength="500"
@@ -334,8 +334,10 @@ onMounted(load)
         </div>
 
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Image de couverture (facultative)</label>
+          <label for="content-blocks-cover" class="block text-[13px] font-medium text-ink-soft mb-1.5">Image de
+            couverture (facultative)</label>
           <input
+            id="content-blocks-cover"
             ref="coverInput"
             type="file"
             :accept="ALLOWED_IMAGE_ACCEPT"
@@ -409,10 +411,12 @@ onMounted(load)
           <label
             v-for="candidate in prereqCandidates"
             :key="candidate.id"
+            :for="`content-blocks-prereq-${candidate.id}`"
             class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
             :class="prereqSelected.has(candidate.id) ? 'bg-accent/15' : 'bg-background hover:bg-surface-tint'"
           >
             <input
+              :id="`content-blocks-prereq-${candidate.id}`"
               type="checkbox"
               class="w-4 h-4 accent-[var(--color-primary)]"
               :checked="prereqSelected.has(candidate.id)"

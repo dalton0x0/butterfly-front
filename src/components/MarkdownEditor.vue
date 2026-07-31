@@ -3,7 +3,7 @@
 // Écrire (zone de saisie) et Aperçu (rendu formaté).
 // Un bouton permet de téléverser une image, elle est envoyée au back
 // puis la syntaxe ![](url) est insérée à l'endroit du curseur.
-import {nextTick, ref} from 'vue'
+import {computed, nextTick, ref, useId} from 'vue'
 import Icon from './Icon.vue'
 import MarkdownContent from './MarkdownContent.vue'
 import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
@@ -11,8 +11,16 @@ import {ALLOWED_IMAGE_ACCEPT, validateImageFile} from '@/utils/media'
 
 const props = defineProps({
   modelValue: {type: String, default: ''},
-  rows: {type: Number, default: 16}
+  rows: {type: Number, default: 16},
+  // Identifiant de la zone de saisie, pour qu'une étiquette placée par le parent
+  // puisse s'y rattacher. Laissé libre, il est généré automatiquement.
+  inputId: {type: String, default: null}
 })
+
+// useId fournit un identifiant unique par instance du composant, stable entre les rendus.
+const generatedId = useId()
+const textareaId = computed(() => props.inputId || `markdown-editor-${generatedId}`)
+const imageInputId = computed(() => `${textareaId.value}-image`)
 const emit = defineEmits(['update:modelValue'])
 
 const mode = ref('write')
@@ -107,7 +115,9 @@ async function onImageSelected(event) {
         </button>
       </div>
 
+      <label :for="imageInputId" class="sr-only">Image à insérer dans le contenu</label>
       <input
+        :id="imageInputId"
         ref="imageInput"
         type="file"
         :accept="ALLOWED_IMAGE_ACCEPT"
@@ -129,6 +139,7 @@ async function onImageSelected(event) {
     <!-- Saisie -->
     <textarea
       v-if="mode === 'write'"
+      :id="textareaId"
       ref="textarea"
       :value="modelValue"
       :rows="rows"

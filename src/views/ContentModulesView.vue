@@ -270,8 +270,8 @@ onMounted(load)
       <h3 class="text-[20px] font-semibold text-navy mb-5">{{ formTitle }}</h3>
       <div class="flex flex-col gap-4">
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom du module</label>
-          <input
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="modules-name">Nom du module</label>
+          <input id="modules-name"
             v-model="form.name"
             type="text"
             maxlength="255"
@@ -280,8 +280,8 @@ onMounted(load)
           />
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Description (facultative)</label>
-          <textarea
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="modules-description">Description (facultative)</label>
+          <textarea id="modules-description"
             v-model="form.description"
             rows="3"
             maxlength="500"
@@ -290,8 +290,8 @@ onMounted(load)
           ></textarea>
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Position (ordre dans le bloc)</label>
-          <input
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="modules-position">Position (ordre dans le bloc)</label>
+          <input id="modules-position"
             v-model="form.position"
             type="number"
             min="0"
@@ -330,10 +330,12 @@ onMounted(load)
           <label
             v-for="candidate in prereqCandidates"
             :key="candidate.id"
+            :for="`modules-prereq-${candidate.id}`"
             class="flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors"
             :class="prereqSelected.has(candidate.id) ? 'bg-accent/15' : 'bg-background hover:bg-surface-tint'"
           >
             <input
+              :id="`modules-prereq-${candidate.id}`"
               type="checkbox"
               class="w-4 h-4 accent-[var(--color-primary)]"
               :checked="prereqSelected.has(candidate.id)"
