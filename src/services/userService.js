@@ -16,8 +16,8 @@ export const userService = {
     /**
      * Liste paginée des utilisateurs (triée par nom côté back).
      */
-    async getUsers(pageable = {size: 200, sort: 'lastName'}) {
-        const envelope = await http.get('/users', {params: buildPageParams(pageable)})
+    async getUsers({page = 0, size = 200, sort = 'lastName'} = {}) {
+        const envelope = await http.get('/users', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },
 
@@ -33,8 +33,8 @@ export const userService = {
     /**
      * Liste paginée des utilisateurs supprimés logiquement (ADMIN).
      */
-    async getDeletedUsers(pageable = {size: 200}) {
-        const envelope = await http.get('/users/deleted', {params: buildPageParams(pageable)})
+    async getDeletedUsers({page = 0, size = 200, sort} = {}) {
+        const envelope = await http.get('/users/deleted', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },
 

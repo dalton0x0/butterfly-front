@@ -14,6 +14,7 @@
 */
 
 import axios from 'axios'
+import {ApiError} from './apiError'
 import {tokenStorage} from './tokenStorage'
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
@@ -89,7 +90,10 @@ http.interceptors.response.use(
         // endpoints d'authentification eux-mêmes.
         const refreshToken = tokenStorage.getRefresh()
         if (status !== 401 || original?._retry || !refreshToken || isAuthEndpoint(original)) {
-            return Promise.reject(normalizeError(error))
+            // throw plutôt que Promise.reject : dans une fonction async, la valeur levée
+            // est déjà enveloppée dans une promesse rejetée. Le résultat est identique
+            // pour l'appelant, avec une intention plus lisible.
+            throw normalizeError(error)
         }
 
         // Un refresh est déjà en cours : on patiente puis on rejoue la requête.
@@ -137,7 +141,7 @@ http.interceptors.response.use(
             if (window.location.pathname !== '/connexion') {
                 window.location.href = '/connexion?motif=session-invalide'
             }
-            return Promise.reject(normalizeError(refreshError))
+            throw normalizeError(refreshError)
         } finally {
             isRefreshing = false
         }
@@ -145,18 +149,18 @@ http.interceptors.response.use(
 )
 
 /**
- * Normalise une erreur Axios en un objet simple et prévisible pour l'UI.
+ * Normalise une erreur Axios en {@link ApiError}, forme unique et prévisible pour l'UI.
  * Récupère le message et les erreurs de validation renvoyés par le back
  * (ErrorResponse) avec un repli générique.
  */
 function normalizeError(error) {
     const body = error.response?.data
-    return {
+    return new ApiError({
         status: error.response?.status ?? 0,
         message: body?.message || 'Une erreur est survenue. Veuillez réessayer.',
         validationErrors: body?.validationErrors || null,
-        raw: error
-    }
+        cause: error
+    })
 }
 
 export default http

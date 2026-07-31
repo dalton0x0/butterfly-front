@@ -30,7 +30,7 @@ export function mediaUrl(value) {
 }
 
 // Types d'image autorisés, alignés sur le back (MediaStorageProperties).
-const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+const ALLOWED_IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
 export const ALLOWED_IMAGE_ACCEPT = '.png,.jpg,.jpeg,.webp,.gif'
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
 
@@ -39,7 +39,7 @@ const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
  * @returns {string} message d'erreur, ou chaîne vide si valide.
  */
 export function validateImageFile(file) {
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
         return 'Format non autorisé (PNG, JPEG, WebP ou GIF).'
     }
     if (file.size > MAX_IMAGE_SIZE_BYTES) {
@@ -49,7 +49,7 @@ export function validateImageFile(file) {
 }
 
 // Types de vidéo autorisés, alignés sur le back (MediaStorageProperties).
-const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/webm']
+const ALLOWED_VIDEO_TYPES = new Set(['video/mp4', 'video/webm'])
 export const ALLOWED_VIDEO_ACCEPT = '.mp4,.webm'
 const MAX_VIDEO_SIZE_BYTES = 200 * 1024 * 1024
 
@@ -58,7 +58,7 @@ const MAX_VIDEO_SIZE_BYTES = 200 * 1024 * 1024
  * @returns {string} message d'erreur, ou chaîne vide si valide.
  */
 export function validateVideoFile(file) {
-    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+    if (!ALLOWED_VIDEO_TYPES.has(file.type)) {
         return 'Format non autorisé (MP4 ou WebM).'
     }
     if (file.size > MAX_VIDEO_SIZE_BYTES) {
@@ -66,6 +66,10 @@ export function validateVideoFile(file) {
     }
     return ''
 }
+
+// Motifs d'extraction de l'identifiant d'une vidéo hébergée. Sans le drapeau global,
+const YOUTUBE_ID_PATTERN = /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/
+const VIMEO_ID_PATTERN = /vimeo\.com\/(?:video\/)?(\d+)/
 
 /**
  * Détermine comment afficher une vidéo selon sa source.
@@ -78,11 +82,11 @@ export function resolveVideoSource(value) {
     if (!value) {
         return null
     }
-    const youtube = value.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/)
+    const youtube = YOUTUBE_ID_PATTERN.exec(value)
     if (youtube) {
         return {type: 'iframe', src: `https://www.youtube.com/embed/${youtube[1]}`}
     }
-    const vimeo = value.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+    const vimeo = VIMEO_ID_PATTERN.exec(value)
     if (vimeo) {
         return {type: 'iframe', src: `https://player.vimeo.com/video/${vimeo[1]}`}
     }

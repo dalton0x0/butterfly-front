@@ -21,14 +21,14 @@ const PASSWORD_MESSAGE =
  * @returns {string} message d'erreur, ou chaîne vide si valide.
  */
 export function validateRequired(value, message = 'Ce champ est obligatoire.') {
-    return value && value.trim() ? '' : message
+    return value?.trim() ? '' : message
 }
 
 /**
  * Valide une adresse e-mail selon la même règle que le back.
  */
 export function validateEmail(value) {
-    if (!value || !value.trim()) {
+    if (!value?.trim()) {
         return "L'adresse e-mail est obligatoire."
     }
     return EMAIL_PATTERN.test(value.trim()) ? '' : "L'adresse e-mail n'est pas valide."

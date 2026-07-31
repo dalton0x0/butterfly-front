@@ -31,8 +31,8 @@ export const exerciseService = {
      * Catalogue des exercices de l'utilisateur avec leur statut (incluant NOT_STARTED).
      * Filtres facultatifs : status, moduleId, blockId.
      */
-    async getMyExercises(filters = {}, pageable = {size: 100}) {
-        const params = {...buildPageParams(pageable)}
+    async getMyExercises(filters = {}, {page = 0, size = 100, sort} = {}) {
+        const params = {...buildPageParams({page, size, sort})}
         if (filters.status) params.status = filters.status
         if (filters.moduleId) params.moduleId = filters.moduleId
         if (filters.blockId) params.blockId = filters.blockId
@@ -96,9 +96,9 @@ export const exerciseService = {
     /**
      * Historique des soumissions de l'utilisateur pour un exercice.
      */
-    async getMySubmissions(exerciseId, pageable = {size: 50}) {
+    async getMySubmissions(exerciseId, {page = 0, size = 50, sort} = {}) {
         const envelope = await http.get(`/progress/me/exercises/${exerciseId}/submissions`, {
-            params: buildPageParams(pageable)
+            params: buildPageParams({page, size, sort})
         })
         return normalizePage(envelope.data)
     },

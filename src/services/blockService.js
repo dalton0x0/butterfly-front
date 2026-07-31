@@ -21,8 +21,8 @@ export const blockService = {
     /**
      * Récupère la liste paginée des blocs.
      */
-    async getBlocks(pageable = {size: 100}) {
-        const envelope = await http.get('/blocks', {params: buildPageParams(pageable)})
+    async getBlocks({page = 0, size = 100, sort} = {}) {
+        const envelope = await http.get('/blocks', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },
 

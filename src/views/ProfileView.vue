@@ -1,6 +1,6 @@
 <script setup>
 // Mon profil : informations personnelles et sécurité.
-import {computed, onBeforeUnmount, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {profileService} from '@/services/profileService'
@@ -49,6 +49,7 @@ const infoForm = reactive({
 })
 const infoErrors = reactive({firstName: '', lastName: '', email: '', avatar: '', global: ''})
 const infoSuccess = ref('')
+const emailChanged = ref(false)
 const infoLoading = ref(false)
 
 // Upload de l'avatar
@@ -126,6 +127,7 @@ async function submitInfo() {
     return
   }
   infoLoading.value = true
+  const previousEmail = auth.user?.email
   try {
     const updated = await profileService.updateProfile({
       firstName: infoForm.firstName,
@@ -136,7 +138,15 @@ async function submitInfo() {
     auth.setProfile(updated)
     // L'avatar est désormais persisté (ou retiré)
     pendingAvatar.value = null
-    infoSuccess.value = 'Profil mis à jour avec succès.'
+
+    if (previousEmail && previousEmail.toLowerCase() !== updated.email.toLowerCase()) {
+      auth.clearTokens()
+      emailChanged.value = true
+      infoSuccess.value = 'Adresse e-mail mise à jour. Pour des raisons de sécurité, '
+          + 'toutes vos sessions ont été déconnectées.'
+    } else {
+      infoSuccess.value = 'Profil mis à jour avec succès.'
+    }
   } catch (err) {
     const {fieldErrors, globalError} = mapBackendError(err, {
       knownFields: ['firstName', 'lastName', 'email', 'avatar']
@@ -278,13 +288,9 @@ async function revokeOtherSessions() {
   revokingOthers.value = true
   sessionsError.value = ''
   try {
-    // On rafraîchit la liste avant d'agir : cet appel réauthentifie la requête si le
-    // jeton d'accès a expiré et met à jour l'identifiant de la session courante. Sans
-    // cette précaution, la révocation groupée pourrait partir avec un identifiant
-    // périmé que le back ne reconnaîtrait pas et qui ne serait donc pas préservé :
-    // l'utilisateur se déconnecterait lui-même en croyant protéger son compte.
-    await loadSessions()
-    await profileService.revokeOtherSessions(currentSessionId.value)
+    // Aucun identifiant n'est transmis : le serveur détermine lui-même la session à
+    // préserver à partir du jeton présenté.
+    await profileService.revokeOtherSessions()
     await loadSessions()
   } catch (err) {
     sessionsError.value = mapBackendError(err).globalError
@@ -293,7 +299,8 @@ async function revokeOtherSessions() {
   }
 }
 
-loadSessions()
+// Chargement au montage plutôt qu'à l'exécution du script de configuration.
+onMounted(loadSessions)
 
 async function reconnect() {
   await auth.logout()
@@ -404,6 +411,16 @@ async function reconnect() {
           {{ infoErrors.global }}</p>
         <p v-if="infoSuccess" class="text-[13px] text-success bg-success/10 rounded-[10px] px-3 py-2 mb-4">
           {{ infoSuccess }}</p>
+
+        <div v-if="emailChanged" class="mb-4">
+          <button
+            type="button"
+            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            @click="reconnect"
+          >
+            Se reconnecter
+          </button>
+        </div>
 
         <div class="flex justify-end">
           <button

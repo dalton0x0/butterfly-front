@@ -52,9 +52,12 @@ export const profileService = {
 
     /**
      * Révoque toutes les sessions sauf la session courante.
-     * @param {number} currentSessionId identifiant de la session à conserver
+     * <p>
+     * La session à conserver n'est pas transmise : le serveur la déduit du jeton présenté.
+     * C'est la seule source fiable, un identifiant mémorisé côté client devenant périmé
+     * dès la première rotation de jetons.
      */
-    async revokeOtherSessions(currentSessionId) {
-        await http.delete('/profile/sessions/others', {params: {currentSessionId}})
+    async revokeOtherSessions() {
+        await http.delete('/profile/sessions/others')
     }
 }

@@ -18,6 +18,45 @@ import {tokenStorage} from '@/services/tokenStorage'
   Axios à chaque requête. Le store lui, garde surtout le profil utilisateur
   pour la réactivité de l'interface.
 */
+
+// AuthResponse ne porte pas l'id, l'avatar ni la promotion (profil minimal).
+function mapAuthResponse(auth) {
+    return {
+        firstName: auth.firstName,
+        lastName: auth.lastName,
+        email: auth.email,
+        role: auth.role
+    }
+}
+
+// UserResponse (profil complet renvoyé par GET /api/profile).
+function mapUser(userResponse) {
+    return {
+        id: userResponse.id,
+        firstName: userResponse.firstName,
+        lastName: userResponse.lastName,
+        email: userResponse.email,
+        role: userResponse.role,
+        avatar: userResponse.avatar,
+        enabled: userResponse.enabled,
+        promotionId: userResponse.promotionId,
+        promotionName: userResponse.promotionName,
+        lastLogin: userResponse.lastLogin,
+        createdAt: userResponse.createdAt
+    }
+}
+
+/**
+ * Vide les jetons locaux sans appeler le back ni effacer le profil affiché.
+ * Utilisé après un changement de mot de passe ou d'adresse e-mail : le serveur vient
+ * de révoquer toutes les sessions, on cesse donc immédiatement d'utiliser celle-ci
+ * côté client (un rechargement de page renverra alors vers la connexion), tout en
+ * laissant l'écran courant intact jusqu'à ce que l'utilisateur se reconnecte.
+ */
+function clearTokens() {
+    tokenStorage.clear()
+}
+
 export const useAuthStore = defineStore('auth', () => {
     // Profil de l'utilisateur connecté (null tant qu'on n'est pas authentifié).
     const user = ref(null)
@@ -36,34 +75,6 @@ export const useAuthStore = defineStore('auth', () => {
     const fullName = computed(() =>
         user.value ? `${user.value.firstName} ${user.value.lastName}` : ''
     )
-
-    // Helpers de mapping
-    // AuthResponse ne porte pas l'id, l'avatar ni la promotion (profil minimal).
-    function mapAuthResponse(auth) {
-        return {
-            firstName: auth.firstName,
-            lastName: auth.lastName,
-            email: auth.email,
-            role: auth.role
-        }
-    }
-
-    // UserResponse (profil complet renvoyé par GET /api/profile).
-    function mapUser(userResponse) {
-        return {
-            id: userResponse.id,
-            firstName: userResponse.firstName,
-            lastName: userResponse.lastName,
-            email: userResponse.email,
-            role: userResponse.role,
-            avatar: userResponse.avatar,
-            enabled: userResponse.enabled,
-            promotionId: userResponse.promotionId,
-            promotionName: userResponse.promotionName,
-            lastLogin: userResponse.lastLogin,
-            createdAt: userResponse.createdAt
-        }
-    }
 
     // Enregistre les jetons (selon le choix "Se souvenir de moi") puis
     // charge le profil complet.
@@ -159,17 +170,6 @@ export const useAuthStore = defineStore('auth', () => {
      */
     function setProfile(userResponse) {
         user.value = mapUser(userResponse)
-    }
-
-    /**
-     * Vide les jetons locaux sans appeler le back ni effacer le profil affiché.
-     * Utilisé après un changement de mot de passe : le serveur vient de révoquer
-     * toutes les sessions, on cesse donc immédiatement d'utiliser celle-ci côté
-     * client (un rechargement de page renverra alors vers la connexion), tout en
-     * laissant l'écran courant intact jusqu'à ce que l'utilisateur se reconnecte.
-     */
-    function clearTokens() {
-        tokenStorage.clear()
     }
 
     return {

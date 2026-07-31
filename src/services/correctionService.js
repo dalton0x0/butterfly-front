@@ -18,8 +18,8 @@ export const correctionService = {
     /**
      * File des progressions d'exercices, filtrable par statut (par défaut SUBMITTED).
      */
-    async listProgress(filters = {}, pageable = {size: 100, sort: 'updatedAt'}) {
-        const params = {...buildPageParams(pageable)}
+    async listProgress(filters = {}, {page = 0, size = 100, sort = 'updatedAt'} = {}) {
+        const params = {...buildPageParams({page, size, sort})}
         if (filters.status) params.status = filters.status
         if (filters.userId) params.userId = filters.userId
         if (filters.promotionId) params.promotionId = filters.promotionId
@@ -30,9 +30,9 @@ export const correctionService = {
     /**
      * Soumissions d'un apprenant pour un exercice donné.
      */
-    async getUserSubmissions(exerciseId, userId, pageable = {size: 50}) {
+    async getUserSubmissions(exerciseId, userId, {page = 0, size = 50, sort} = {}) {
         const envelope = await http.get(`/progress/exercises/${exerciseId}/users/${userId}/submissions`, {
-            params: buildPageParams(pageable)
+            params: buildPageParams({page, size, sort})
         })
         return normalizePage(envelope.data)
     },

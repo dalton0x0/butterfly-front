@@ -20,8 +20,8 @@ export const promotionService = {
     /**
      * Liste paginée des promotions.
      */
-    async getPromotions(pageable = {size: 200}) {
-        const envelope = await http.get('/promos', {params: buildPageParams(pageable)})
+    async getPromotions({page = 0, size = 200, sort} = {}) {
+        const envelope = await http.get('/promos', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },
 

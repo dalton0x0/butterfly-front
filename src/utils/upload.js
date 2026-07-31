@@ -5,13 +5,13 @@
   Le champ multipart attendu par le back s'appelle "file".
 */
 
-const ALLOWED_UPLOAD_TYPES = [
+const ALLOWED_UPLOAD_TYPES = new Set([
     'application/pdf',
     'image/png',
     'image/jpeg',
     'text/plain',
     'application/zip'
-]
+])
 
 // Valeur de l'attribut accept de l'input fichier.
 export const ALLOWED_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.txt,.zip'
@@ -26,7 +26,7 @@ const TYPES_LABEL = 'PDF, PNG, JPEG, TXT, ZIP'
  * @returns {string} message d'erreur, ou chaîne vide si valide.
  */
 export function validateUploadFile(file) {
-    if (!ALLOWED_UPLOAD_TYPES.includes(file.type)) {
+    if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
         return `type non autorisé (${TYPES_LABEL} uniquement).`
     }
     if (file.size > MAX_UPLOAD_SIZE_BYTES) {

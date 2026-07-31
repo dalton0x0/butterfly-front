@@ -18,8 +18,8 @@ export const quizService = {
     /**
      * Liste des quiz visibles par l'utilisateur, avec son état (tenté, réussi, meilleur score).
      */
-    async getMyQuizzes(filters = {}, pageable = {size: 100}) {
-        const params = {...buildPageParams(pageable)}
+    async getMyQuizzes(filters = {}, {page = 0, size = 100, sort} = {}) {
+        const params = {...buildPageParams({page, size, sort})}
         if (filters.moduleId) params.moduleId = filters.moduleId
         if (filters.blockId) params.blockId = filters.blockId
         if (filters.attempted != null) params.attempted = filters.attempted
@@ -50,8 +50,8 @@ export const quizService = {
     /**
      * Historique des tentatives de l'utilisateur, tous quiz confondus.
      */
-    async getMyAttempts(pageable = {size: 50}) {
-        const envelope = await http.get('/progress/me/quizzes', {params: buildPageParams(pageable)})
+    async getMyAttempts({page = 0, size = 50, sort} = {}) {
+        const envelope = await http.get('/progress/me/quizzes', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },
 
