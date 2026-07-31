@@ -265,8 +265,8 @@ onMounted(load)
           <iframe
             v-if="videoSource.type === 'iframe'"
             :src="videoSource.src"
-            class="w-full aspect-video"
-            frameborder="0"
+            class="w-full aspect-video border-0"
+            title="Aperçu de la vidéo du cours"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
           ></iframe>

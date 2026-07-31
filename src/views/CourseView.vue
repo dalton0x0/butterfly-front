@@ -84,12 +84,13 @@ onMounted(load)
       <div class="px-8 py-8 text-ink-soft leading-relaxed">
         <!-- Vidéo en tête du cours (lien embarqué ou fichier téléversé) -->
         <div v-if="videoSource" class="aspect-video w-full rounded-xl overflow-hidden mb-8 bg-black">
+          <!-- La bordure est retirée par la classe utilitaire border-0 et non par l'attribut
+               frameborder, supprimé en HTML5 : la présentation relève de la feuille de style. -->
           <iframe
             v-if="videoSource.type === 'iframe'"
             :src="videoSource.src"
-            class="w-full h-full"
+            class="w-full h-full border-0"
             title="Vidéo du cours"
-            frameborder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowfullscreen
           ></iframe>

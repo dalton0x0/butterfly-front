@@ -53,7 +53,10 @@ body {
 
 /* Icônes Material Symbols : réglage par défaut */
 .material-symbols-outlined {
-    font-family: 'Material Symbols Outlined';
+    /* Une famille générique de repli est indispensable : sans elle, l'échec de
+       chargement de la police d'icônes laisse le navigateur sans instruction et le
+       rendu devient imprévisible d'un environnement à l'autre. */
+    font-family: 'Material Symbols Outlined', sans-serif;
     font-weight: normal;
     font-style: normal;
     line-height: 1;

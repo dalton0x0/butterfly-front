@@ -81,35 +81,68 @@ function onTypeChange(question) {
   }
 }
 
+/**
+ * Vérifie le nombre de bonnes réponses cochées, selon le type de question.
+ */
+function validateCorrectAnswers(question, qi) {
+  const correctCount = question.options.filter((option) => option.correct).length
+
+  if (question.type === 'SINGLE_CHOICE' && correctCount !== 1) {
+    return `Question ${qi + 1} : sélectionnez exactement une bonne réponse.`
+  }
+  if (question.type === 'MULTIPLE_CHOICE' && correctCount < 1) {
+    return `Question ${qi + 1} : sélectionnez au moins une bonne réponse.`
+  }
+  return ''
+}
+
+/**
+ * Vérifie les options d'une question : nombre, texte, puis bonnes réponses.
+ */
+function validateOptions(question, qi) {
+  if (question.options.length < 2) {
+    return `Question ${qi + 1} : au moins deux options sont requises.`
+  }
+
+  for (const [oi, option] of question.options.entries()) {
+    if (!option.text.trim()) {
+      return `Question ${qi + 1}, option ${oi + 1} : le texte est obligatoire.`
+    }
+    if (option.text.length > 1000) {
+      return `Question ${qi + 1}, option ${oi + 1} : le texte dépasse 1000 caractères.`
+    }
+  }
+
+  return validateCorrectAnswers(question, qi)
+}
+
+/**
+ * Vérifie une question : énoncé, points, puis options.
+ */
+function validateQuestion(question, qi) {
+  const statement = question.statement.trim()
+
+  if (!statement) {
+    return `Question ${qi + 1} : l'énoncé est obligatoire.`
+  }
+  if (statement.length > 2000) {
+    return `Question ${qi + 1} : l'énoncé dépasse 2000 caractères.`
+  }
+  if (!question.points || Number(question.points) < 1) {
+    return `Question ${qi + 1} : les points doivent être strictement positifs.`
+  }
+
+  return validateOptions(question, qi)
+}
+
+/**
+ * Vérifie l'ensemble des questions et renvoie la première erreur rencontrée.
+ */
 function validate() {
-  for (const [qi, q] of questions.value.entries()) {
-    const statement = q.statement.trim()
-    if (!statement) {
-      return `Question ${qi + 1} : l'énoncé est obligatoire.`
-    }
-    if (statement.length > 2000) {
-      return `Question ${qi + 1} : l'énoncé dépasse 2000 caractères.`
-    }
-    if (!q.points || Number(q.points) < 1) {
-      return `Question ${qi + 1} : les points doivent être strictement positifs.`
-    }
-    if (q.options.length < 2) {
-      return `Question ${qi + 1} : au moins deux options sont requises.`
-    }
-    for (const [oi, o] of q.options.entries()) {
-      if (!o.text.trim()) {
-        return `Question ${qi + 1}, option ${oi + 1} : le texte est obligatoire.`
-      }
-      if (o.text.length > 1000) {
-        return `Question ${qi + 1}, option ${oi + 1} : le texte dépasse 1000 caractères.`
-      }
-    }
-    const correctCount = q.options.filter((o) => o.correct).length
-    if (q.type === 'SINGLE_CHOICE' && correctCount !== 1) {
-      return `Question ${qi + 1} : sélectionnez exactement une bonne réponse.`
-    }
-    if (q.type === 'MULTIPLE_CHOICE' && correctCount < 1) {
-      return `Question ${qi + 1} : sélectionnez au moins une bonne réponse.`
+  for (const [qi, question] of questions.value.entries()) {
+    const error = validateQuestion(question, qi)
+    if (error) {
+      return error
     }
   }
   return ''
