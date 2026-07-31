@@ -203,7 +203,8 @@ onMounted(load)
   <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex mb-6">
     <div class="flex items-center gap-2 flex-1 h-10 px-3 border border-input rounded-[10px] bg-white">
       <Icon name="search" :size="20" class="text-muted"/>
-      <input v-model="search" placeholder="Rechercher une promotion"
+      <label for="promotions-search" class="sr-only">Rechercher une promotion</label>
+      <input id="promotions-search" v-model="search" placeholder="Rechercher une promotion"
              class="flex-1 outline-none text-[14px] bg-transparent"/>
     </div>
   </div>
@@ -267,24 +268,27 @@ onMounted(load)
       <h3 class="text-[20px] font-semibold text-navy mb-5">{{ formTitle }}</h3>
       <div class="flex flex-col gap-4">
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom de la promotion</label>
-          <input
-            v-model="form.name"
-            type="text"
-            maxlength="100"
-            placeholder="Ex : Promotion 2026"
-            class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="promotions-name">Nom de la
+            promotion</label>
+          <input id="promotions-name"
+                 v-model="form.name"
+                 type="text"
+                 maxlength="100"
+                 placeholder="Ex : Promotion 2026"
+                 class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
           />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Début (facultatif)</label>
-            <input v-model="form.startDate" type="date"
+            <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="promotions-start-date">Début
+              (facultatif)</label>
+            <input id="promotions-start-date" v-model="form.startDate" type="date"
                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"/>
           </div>
           <div>
-            <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Fin (facultatif)</label>
-            <input v-model="form.endDate" type="date"
+            <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="promotions-end-date">Fin
+              (facultatif)</label>
+            <input id="promotions-end-date" v-model="form.endDate" type="date"
                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"/>
           </div>
         </div>

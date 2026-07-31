@@ -206,19 +206,22 @@ onMounted(load)
         <div class="flex flex-col gap-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Prénom</label>
-              <input v-model="identity.firstName"
+              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
+                     for="user-detail-first-name">Prénom</label>
+              <input id="user-detail-first-name" v-model="identity.firstName"
                      class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
             </div>
             <div>
-              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Nom</label>
-              <input v-model="identity.lastName"
+              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
+                     for="user-detail-last-name">Nom</label>
+              <input id="user-detail-last-name" v-model="identity.lastName"
                      class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
             </div>
           </div>
           <div>
-            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">E-mail</label>
-            <input v-model="identity.email" type="email"
+            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
+                   for="user-detail-email">E-mail</label>
+            <input id="user-detail-email" v-model="identity.email" type="email"
                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
           </div>
           <div class="flex justify-end">
@@ -236,9 +239,10 @@ onMounted(load)
         <h2 class="text-[17px] font-semibold text-ink mb-4">Rôle et statut</h2>
         <div class="flex flex-col gap-4">
           <div>
-            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Rôle</label>
+            <label for="user-detail-role"
+                   class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Rôle</label>
             <div class="flex gap-2">
-              <select v-model="selectedRole" :disabled="isSelf"
+              <select id="user-detail-role" v-model="selectedRole" :disabled="isSelf"
                       class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white disabled:bg-surface-tint disabled:text-muted">
                 <option value="USER">Apprenant</option>
                 <option value="TEACHER">Formateur</option>
@@ -254,8 +258,9 @@ onMounted(load)
           </div>
 
           <div class="border-t border-line-soft pt-4">
-            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Statut du
-              compte</label>
+            <!-- Intitulé et non étiquette de formulaire -->
+            <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Statut du
+              compte</p>
             <button
               :disabled="savingStatus || isSelf"
               class="h-10 px-4 rounded-[10px] text-sm font-semibold border transition-colors flex items-center gap-2 disabled:opacity-50"
@@ -274,8 +279,9 @@ onMounted(load)
       <!-- Promotion (apprenant) -->
       <div v-if="user.role === ROLES.USER" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
         <h2 class="text-[17px] font-semibold text-ink mb-4">Promotion</h2>
+        <label for="user-detail-promotion" class="sr-only">Promotion de l'apprenant</label>
         <div class="flex gap-2">
-          <select v-model="selectedPromotionId"
+          <select id="user-detail-promotion" v-model="selectedPromotionId"
                   class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
             <option value="">Aucune promotion</option>
             <option v-for="p in promotions" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -298,10 +304,13 @@ onMounted(load)
         </p>
         <p v-if="displayedBlocks.length === 0" class="text-[14px] text-muted">Aucun bloc disponible.</p>
         <div v-else class="flex flex-col gap-1 max-h-64 overflow-auto mb-4">
-          <label v-for="b in displayedBlocks" :key="b.id"
+          <!-- Identifiants dérivés de l'identifiant du bloc : ils doivent rester uniques
+               dans le document alors que la liste est construite dynamiquement. -->
+          <label v-for="b in displayedBlocks" :key="b.id" :for="`user-detail-block-${b.id}`"
                  class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
                  :class="selectedBlockIds.includes(b.id) ? 'bg-accent/10 hover:bg-accent/15' : 'hover:bg-surface-tint'">
-            <input type="checkbox" class="w-4 h-4 rounded accent-[#0047ab]" :checked="selectedBlockIds.includes(b.id)"
+            <input :id="`user-detail-block-${b.id}`" type="checkbox" class="w-4 h-4 rounded accent-[#0047ab]"
+                   :checked="selectedBlockIds.includes(b.id)"
                    @change="toggleBlock(b.id)"/>
             <span class="text-[14px] text-ink">{{ b.name }}</span>
           </label>

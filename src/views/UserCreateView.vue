@@ -75,33 +75,33 @@ onMounted(loadPromotions)
     <div class="flex flex-col gap-4">
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Prénom</label>
-          <input v-model="form.firstName"
+          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-first-name">Prénom</label>
+          <input id="user-create-first-name" v-model="form.firstName"
                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
         </div>
         <div>
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Nom</label>
-          <input v-model="form.lastName"
+          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-last-name">Nom</label>
+          <input id="user-create-last-name" v-model="form.lastName"
                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
         </div>
       </div>
 
       <div>
-        <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">E-mail</label>
-        <input v-model="form.email" type="email"
+        <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-email">E-mail</label>
+        <input id="user-create-email" v-model="form.email" type="email"
                class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
       </div>
 
       <div>
-        <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Mot de passe</label>
-        <input v-model="form.password" type="password"
+        <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-password">Mot de passe</label>
+        <input id="user-create-password" v-model="form.password" type="password"
                class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
       </div>
 
       <div class="grid grid-cols-2 gap-3">
         <div>
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Rôle</label>
-          <select v-model="form.role"
+          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-role">Rôle</label>
+          <select id="user-create-role" v-model="form.role"
                   class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
             <option value="USER">Apprenant</option>
             <option value="TEACHER">Formateur</option>
@@ -109,9 +109,9 @@ onMounted(loadPromotions)
           </select>
         </div>
         <div v-if="isLearner">
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Promotion
+          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-promotion-id">Promotion
             (facultatif)</label>
-          <select v-model="form.promotionId"
+          <select id="user-create-promotion-id" v-model="form.promotionId"
                   class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
             <option value="">Aucune</option>
             <option v-for="p in promotions" :key="p.id" :value="p.id">{{ p.name }}</option>

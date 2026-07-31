@@ -175,16 +175,23 @@ onMounted(load)
   <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex flex-wrap items-center gap-3 mb-6">
     <div class="flex items-center gap-2 flex-1 min-w-[200px] h-10 px-3 border border-input rounded-[10px] bg-white">
       <Icon name="search" :size="20" class="text-muted"/>
-      <input v-model="search" placeholder="Rechercher par nom ou e-mail"
+      <!-- Étiquette réservée aux outils d'assistance : le champ est identifiable
+           visuellement par son icône, mais un lecteur d'écran n'a rien à énoncer sans
+           elle. sr-only la retire de l'affichage sans la retirer du DOM. -->
+      <label for="users-search" class="sr-only">Rechercher un utilisateur</label>
+      <input id="users-search" v-model="search" placeholder="Rechercher par nom ou e-mail"
              class="flex-1 outline-none text-[14px] bg-transparent"/>
     </div>
-    <select v-model="roleFilter" class="h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
+    <label for="users-role-filter" class="sr-only">Filtrer par rôle</label>
+    <select id="users-role-filter" v-model="roleFilter"
+            class="h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
       <option value="ALL">Rôle : tous</option>
       <option value="ADMIN">Admin</option>
       <option value="TEACHER">Formateur</option>
       <option value="USER">Apprenant</option>
     </select>
-    <select v-if="!showDeleted" v-model="statusFilter"
+    <label v-if="!showDeleted" for="users-status-filter" class="sr-only">Filtrer par statut</label>
+    <select v-if="!showDeleted" id="users-status-filter" v-model="statusFilter"
             class="h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
       <option value="ALL">Statut : tous</option>
       <option value="ACTIVE">Actifs</option>

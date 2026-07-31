@@ -126,7 +126,8 @@ async function recompute() {
   try {
     await badgeService.recompute(recomputeUserId.value)
     const learner = learners.value.find((u) => u.id === recomputeUserId.value)
-    recomputeMessage.value = `Badges recalculés pour ${learner ? `${learner.firstName} ${learner.lastName}` : "l'apprenant"}.`
+    const learnerName = learner ? `${learner.firstName} ${learner.lastName}` : "l'apprenant"
+    recomputeMessage.value = `Badges recalculés pour ${learnerName}.`
   } catch (err) {
     recomputeMessage.value = err.message || 'Le recalcul a échoué.'
   } finally {
@@ -156,7 +157,8 @@ onMounted(load)
       <p class="text-[13px] text-muted mb-3">Réévalue et attribue les badges mérités, utile après un ajustement de
         seuil.</p>
       <div class="flex flex-wrap items-center gap-3">
-        <select v-model="recomputeUserId"
+        <label for="badges-admin-recompute-user" class="sr-only">Apprenant dont les badges seront recalculés</label>
+        <select id="badges-admin-recompute-user" v-model="recomputeUserId"
                 class="h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white min-w-[240px]">
           <option value="">Choisir un apprenant</option>
           <option v-for="u in learners" :key="u.id" :value="u.id">{{ u.firstName }} {{ u.lastName }}</option>
@@ -219,22 +221,25 @@ onMounted(load)
 
       <div class="flex flex-col gap-4">
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Nom</label>
-          <input v-model="form.name" type="text" maxlength="100"
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="badges-admin-name">Nom</label>
+          <input id="badges-admin-name" v-model="form.name" type="text" maxlength="100"
                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Description</label>
-          <textarea v-model="form.description" rows="2" maxlength="255"
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5"
+                 for="badges-admin-description">Description</label>
+          <textarea id="badges-admin-description" v-model="form.description" rows="2" maxlength="255"
                     class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"></textarea>
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Icône du badge</label>
+          <label for="badges-admin-icon" class="block text-[13px] font-medium text-ink-soft mb-1.5">Icône du
+            badge</label>
           <div class="flex items-center gap-2">
             <span
               class="w-10 h-10 rounded-[10px] bg-surface-tint text-primary flex items-center justify-center shrink-0"><Icon
               :name="badgeIcon(form.icon)" :size="22"/></span>
-            <input v-model="form.icon" type="text" maxlength="100" placeholder="ex : flame, star, rocket"
+            <input id="badges-admin-icon" v-model="form.icon" type="text" maxlength="100"
+                   placeholder="ex : flame, star, rocket"
                    class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
           </div>
           <p class="text-[12px] text-muted mt-1.5">Code d'icône du badge (convention Lucide). L'aperçu à gauche montre
@@ -242,13 +247,15 @@ onMounted(load)
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Bonus XP</label>
-            <input v-model.number="form.xpReward" type="number" min="0"
+            <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="badges-admin-xp-reward">Bonus
+              XP</label>
+            <input id="badges-admin-xp-reward" v-model.number="form.xpReward" type="number" min="0"
                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
           </div>
           <div>
-            <label class="block text-[13px] font-medium text-ink-soft mb-1.5">Seuil</label>
-            <input v-model.number="form.thresholdValue" type="number" min="1"
+            <label class="block text-[13px] font-medium text-ink-soft mb-1.5"
+                   for="badges-admin-threshold-value">Seuil</label>
+            <input id="badges-admin-threshold-value" v-model.number="form.thresholdValue" type="number" min="1"
                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
           </div>
         </div>
@@ -256,8 +263,9 @@ onMounted(load)
           Badge événementiel : son obtention dépend d'un événement précis, le seuil y a un effet limité.
         </p>
 
-        <label class="flex items-center gap-2.5 cursor-pointer">
-          <input type="checkbox" v-model="form.active" class="w-4 h-4 rounded accent-[#0047ab]"/>
+        <label for="badges-admin-active" class="flex items-center gap-2.5 cursor-pointer">
+          <input id="badges-admin-active" type="checkbox" v-model="form.active"
+                 class="w-4 h-4 rounded accent-[#0047ab]"/>
           <span class="text-[14px] text-ink">Badge actif (attribuable)</span>
         </label>
 
