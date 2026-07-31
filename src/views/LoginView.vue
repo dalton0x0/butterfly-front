@@ -78,13 +78,14 @@ async function handleLogin() {
         }}</p>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-[13px] text-ink-soft font-medium">Adresse e-mail</label>
+        <label for="login-email" class="text-[13px] text-ink-soft font-medium">Adresse e-mail</label>
         <div
           class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
           :class="errors.email ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="mail" :size="20" class="text-muted mr-2"/>
           <input
+            id="login-email"
             v-model="form.email"
             @input="clearError('email')"
             type="email"
@@ -96,13 +97,14 @@ async function handleLogin() {
       </div>
 
       <div class="flex flex-col gap-1.5">
-        <label class="text-[13px] text-ink-soft font-medium">Mot de passe</label>
+        <label for="login-password" class="text-[13px] text-ink-soft font-medium">Mot de passe</label>
         <div
           class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
           :class="errors.password ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="lock" :size="20" class="text-muted mr-2"/>
           <input
+            id="login-password"
             v-model="form.password"
             @input="clearError('password')"
             :type="showPassword ? 'text' : 'password'"
@@ -118,8 +120,9 @@ async function handleLogin() {
       </div>
 
       <div class="flex items-center justify-between">
-        <label class="flex items-center gap-2 cursor-pointer text-[13px] text-ink-soft">
-          <input v-model="rememberMe" type="checkbox" class="w-4 h-4 rounded accent-[#0047ab]"/> Se souvenir de moi
+        <label for="login-remember" class="flex items-center gap-2 cursor-pointer text-[13px] text-ink-soft">
+          <input id="login-remember" v-model="rememberMe" type="checkbox"
+                 class="w-4 h-4 rounded accent-[#0047ab]"/> Se souvenir de moi
         </label>
         <button type="button" class="text-[13px] text-primary font-semibold hover:underline"
                 @click="showForgotInfo = true">

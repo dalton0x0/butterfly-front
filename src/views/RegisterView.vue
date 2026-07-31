@@ -113,8 +113,9 @@ async function handleRegister() {
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-[13px] text-ink-soft mb-1">Prénom</label>
+          <label for="register-first-name" class="block text-[13px] text-ink-soft mb-1">Prénom</label>
           <input
+            id="register-first-name"
             v-model="form.firstName"
             @input="clearError('firstName')"
             placeholder="Jean"
@@ -124,8 +125,9 @@ async function handleRegister() {
           <p v-if="errors.firstName" class="text-[12px] text-danger mt-1">{{ errors.firstName }}</p>
         </div>
         <div>
-          <label class="block text-[13px] text-ink-soft mb-1">Nom</label>
+          <label for="register-last-name" class="block text-[13px] text-ink-soft mb-1">Nom</label>
           <input
+            id="register-last-name"
             v-model="form.lastName"
             @input="clearError('lastName')"
             placeholder="Dupont"
@@ -137,13 +139,14 @@ async function handleRegister() {
       </div>
 
       <div>
-        <label class="block text-[13px] text-ink-soft mb-1">Adresse e-mail</label>
+        <label for="register-email" class="block text-[13px] text-ink-soft mb-1">Adresse e-mail</label>
         <div
           class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
           :class="errors.email ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="mail" :size="20" class="text-muted mr-2"/>
           <input
+            id="register-email"
             v-model="form.email"
             @input="clearError('email')"
             type="email"
@@ -155,13 +158,14 @@ async function handleRegister() {
       </div>
 
       <div>
-        <label class="block text-[13px] text-ink-soft mb-1">Mot de passe</label>
+        <label for="register-password" class="block text-[13px] text-ink-soft mb-1">Mot de passe</label>
         <div
           class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
           :class="errors.password ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="lock" :size="20" class="text-muted mr-2"/>
           <input
+            id="register-password"
             v-model="form.password"
             @input="clearError('password')"
             :type="showPassword ? 'text' : 'password'"
@@ -188,13 +192,15 @@ async function handleRegister() {
       </div>
 
       <div>
-        <label class="block text-[13px] text-ink-soft mb-1">Confirmer le mot de passe</label>
+        <label for="register-confirm-password" class="block text-[13px] text-ink-soft mb-1">Confirmer le mot de
+          passe</label>
         <div
           class="flex items-center h-10 px-3 border rounded-[10px] focus-within:ring-1 transition-colors"
           :class="errors.confirmPassword ? 'border-danger focus-within:border-danger focus-within:ring-danger' : 'border-input focus-within:border-primary focus-within:ring-primary'"
         >
           <Icon name="lock" :size="20" class="text-muted mr-2"/>
           <input
+            id="register-confirm-password"
             v-model="form.confirmPassword"
             @input="clearError('confirmPassword')"
             type="password"

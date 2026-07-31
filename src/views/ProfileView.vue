@@ -127,6 +127,8 @@ async function submitInfo() {
     return
   }
   infoLoading.value = true
+  // L'adresse actuelle est relevée avant l'appel : le store est mis à jour juste après,
+  // la comparaison ne serait plus possible ensuite.
   const previousEmail = auth.user?.email
   try {
     const updated = await profileService.updateProfile({
@@ -140,6 +142,9 @@ async function submitInfo() {
     pendingAvatar.value = null
 
     if (previousEmail && previousEmail.toLowerCase() !== updated.email.toLowerCase()) {
+      // L'adresse e-mail est un identifiant de connexion : le serveur vient de révoquer
+      // toutes les sessions. On abandonne les jetons locaux immédiatement plutôt que
+      // d'attendre le 401 de la prochaine requête, qui afficherait une erreur incompréhensible.
       auth.clearTokens()
       emailChanged.value = true
       infoSuccess.value = 'Adresse e-mail mise à jour. Pour des raisons de sécurité, '
@@ -289,7 +294,8 @@ async function revokeOtherSessions() {
   sessionsError.value = ''
   try {
     // Aucun identifiant n'est transmis : le serveur détermine lui-même la session à
-    // préserver à partir du jeton présenté.
+    // préserver à partir du jeton présenté. Un identifiant envoyé par le client serait
+    // périmé dès la première rotation de jetons.
     await profileService.revokeOtherSessions()
     await loadSessions()
   } catch (err) {
@@ -299,7 +305,10 @@ async function revokeOtherSessions() {
   }
 }
 
-// Chargement au montage plutôt qu'à l'exécution du script de configuration.
+// Chargement au montage plutôt qu'à l'exécution du script de configuration. Un await de
+// premier niveau dans un <script setup> transformerait le composant en composant
+// asynchrone, qui exige alors un <Suspense> parent pour être monté : la page profil ne
+// s'afficherait plus du tout.
 onMounted(loadSessions)
 
 async function reconnect() {
@@ -336,8 +345,9 @@ async function reconnect() {
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label class="block text-[13px] text-ink-soft mb-1">Prénom</label>
+            <label for="profile-first-name" class="block text-[13px] text-ink-soft mb-1">Prénom</label>
             <input
+              id="profile-first-name"
               v-model="infoForm.firstName"
               @input="clearInfoError('firstName')"
               class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
@@ -346,8 +356,9 @@ async function reconnect() {
             <p v-if="infoErrors.firstName" class="text-[12px] text-danger mt-1">{{ infoErrors.firstName }}</p>
           </div>
           <div>
-            <label class="block text-[13px] text-ink-soft mb-1">Nom</label>
+            <label for="profile-last-name" class="block text-[13px] text-ink-soft mb-1">Nom</label>
             <input
+              id="profile-last-name"
               v-model="infoForm.lastName"
               @input="clearInfoError('lastName')"
               class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
@@ -358,8 +369,9 @@ async function reconnect() {
         </div>
 
         <div class="mb-4">
-          <label class="block text-[13px] text-ink-soft mb-1">Adresse e-mail</label>
+          <label for="profile-email" class="block text-[13px] text-ink-soft mb-1">Adresse e-mail</label>
           <input
+            id="profile-email"
             v-model="infoForm.email"
             @input="clearInfoError('email')"
             type="email"
@@ -370,8 +382,12 @@ async function reconnect() {
         </div>
 
         <div class="mb-4">
-          <label class="block text-[13px] text-ink-soft mb-1">Avatar (facultatif)</label>
+          <label for="profile-avatar" class="block text-[13px] text-ink-soft mb-1">Avatar (facultatif)</label>
+          <!-- Champ fichier masqué, déclenché par le bouton ci-dessous. Il porte tout de même
+               un identifiant associé à l'étiquette : le contrôle reste ainsi nommé pour les
+               outils d'assistance, et l'étiquette devient cliquable pour ouvrir le sélecteur. -->
           <input
+            id="profile-avatar"
             ref="avatarInput"
             type="file"
             :accept="ALLOWED_IMAGE_ACCEPT"
@@ -455,8 +471,10 @@ async function reconnect() {
         <template v-else>
           <div class="flex flex-col gap-4 mb-4">
             <div>
-              <label class="block text-[13px] text-ink-soft mb-1">Mot de passe actuel</label>
+              <label for="profile-current-password" class="block text-[13px] text-ink-soft mb-1">Mot de passe
+                actuel</label>
               <input
+                id="profile-current-password"
                 v-model="pwdForm.currentPassword"
                 @input="clearPwdError('currentPassword')"
                 type="password"
@@ -470,8 +488,10 @@ async function reconnect() {
             </div>
 
             <div>
-              <label class="block text-[13px] text-ink-soft mb-1">Nouveau mot de passe</label>
+              <label for="profile-new-password" class="block text-[13px] text-ink-soft mb-1">Nouveau mot de
+                passe</label>
               <input
+                id="profile-new-password"
                 v-model="pwdForm.newPassword"
                 @input="clearPwdError('newPassword')"
                 type="password"
@@ -491,8 +511,10 @@ async function reconnect() {
             </div>
 
             <div>
-              <label class="block text-[13px] text-ink-soft mb-1">Confirmer le nouveau mot de passe</label>
+              <label for="profile-confirm-password" class="block text-[13px] text-ink-soft mb-1">Confirmer le
+                nouveau mot de passe</label>
               <input
+                id="profile-confirm-password"
                 v-model="pwdForm.confirmPassword"
                 @input="clearPwdError('confirmPassword')"
                 type="password"
