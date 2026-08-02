@@ -213,6 +213,25 @@ const routes = [
         meta: {layout: 'auth', guestOnly: true}
     },
 
+    {
+        path: '/mot-de-passe-oublie',
+        name: 'forgot-password',
+        component: () => import('@/views/ForgotPasswordView.vue'),
+        meta: {layout: 'auth', guestOnly: true}
+    },
+    {
+        path: '/nouveau-mot-de-passe',
+        name: 'reset-password',
+        component: () => import('@/views/ResetPasswordView.vue'),
+        meta: {layout: 'auth', guestOnly: true}
+    },
+    {
+        path: '/verification-email',
+        name: 'verify-email',
+        component: () => import('@/views/VerifyEmailView.vue'),
+        meta: {layout: 'auth'}
+    },
+
     // Redirections pour les liens de la navbar formateur/admin
     {
         path: '/formateur',

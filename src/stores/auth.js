@@ -18,6 +18,8 @@ import {tokenStorage} from '@/services/tokenStorage'
   Axios à chaque requête. Le store lui, garde surtout le profil utilisateur
   pour la réactivité de l'interface.
 */
+// Helpers de mapping, définis au niveau du module : ils ne dépendent d'aucun état du
+// store, les redéfinir à chaque instanciation n'apporterait rien.
 
 // AuthResponse ne porte pas l'id, l'avatar ni la promotion (profil minimal).
 function mapAuthResponse(auth) {
@@ -39,6 +41,9 @@ function mapUser(userResponse) {
         role: userResponse.role,
         avatar: userResponse.avatar,
         enabled: userResponse.enabled,
+        // Pilote l'affichage du bandeau de rappel : mapUser filtrant les champs, l'oublier
+        // ici rendrait le bandeau définitivement invisible sans le moindre signal.
+        emailVerified: userResponse.emailVerified,
         promotionId: userResponse.promotionId,
         promotionName: userResponse.promotionName,
         lastLogin: userResponse.lastLogin,
@@ -172,6 +177,16 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = mapUser(userResponse)
     }
 
+    /**
+     * Recharge le profil depuis le serveur.
+     * Utile après une action qui modifie l'état du compte sans passer par l'écran de profil.
+     * Par exemple la confirmation d'adresse e-mail : le profil en mémoire porte encore
+     * l'ancien état et le bandeau de rappel resterait affiché sans ce rechargement.
+     */
+    async function refreshProfile() {
+        user.value = mapUser(await authService.fetchProfile())
+    }
+
     return {
         user,
         initialized,
@@ -186,6 +201,7 @@ export const useAuthStore = defineStore('auth', () => {
         logout,
         init,
         setProfile,
+        refreshProfile,
         clearTokens
     }
 })

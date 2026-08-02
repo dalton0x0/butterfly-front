@@ -13,7 +13,9 @@ const auth = useAuthStore()
 
 const showPassword = ref(false)
 const rememberMe = ref(false)
-const showForgotInfo = ref(false)
+// Adresse non vérifiée après le délai de grâce : le serveur renvoie un 403 et le
+// message doit proposer un renvoi de lien plutôt qu'une nouvelle saisie du mot de passe.
+const emailNotVerified = ref(false)
 
 const form = reactive({email: '', password: ''})
 const errors = reactive({email: '', password: '', global: ''})
@@ -31,6 +33,7 @@ const sessionNotice = computed(() =>
 function clearError(field) {
   errors[field] = ''
   errors.global = ''
+  emailNotVerified.value = false
 }
 
 // Validation locale avant l'envoi.
@@ -42,6 +45,7 @@ function validate() {
 
 async function handleLogin() {
   errors.global = ''
+  emailNotVerified.value = false
   if (!validate()) {
     return
   }
@@ -50,6 +54,14 @@ async function handleLogin() {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : '/'
     router.push(redirect)
   } catch (err) {
+    // 403 : les identifiants sont corrects, c'est l'adresse non vérifiée qui bloque.
+    // On affiche le message du serveur et un lien de renvoi, au lieu du message
+    // d'identifiants invalides qui serait trompeur.
+    if (err?.status === 403) {
+      emailNotVerified.value = true
+      errors.global = err.message
+      return
+    }
     const {fieldErrors, globalError} = mapBackendError(err, {knownFields: ['email', 'password']})
     Object.assign(errors, fieldErrors)
     errors.global = globalError
@@ -124,16 +136,15 @@ async function handleLogin() {
           <input id="login-remember" v-model="rememberMe" type="checkbox"
                  class="w-4 h-4 rounded accent-[#0047ab]"/> Se souvenir de moi
         </label>
-        <button type="button" class="text-[13px] text-primary font-semibold hover:underline"
-                @click="showForgotInfo = true">
+        <RouterLink to="/mot-de-passe-oublie" class="text-[13px] text-primary font-semibold hover:underline">
           Mot de passe oublié ?
-        </button>
+        </RouterLink>
       </div>
 
-      <!-- Pas de réinitialisation en self-service côté back. -->
-      <p v-if="showForgotInfo" class="text-[12px] text-muted bg-surface-tint rounded-[10px] px-3 py-2">
-        Pour réinitialiser votre mot de passe, contactez un administrateur de la plateforme.
-      </p>
+      <RouterLink v-if="emailNotVerified" to="/verification-email"
+                  class="text-[13px] text-primary font-semibold hover:underline text-center">
+        Recevoir un nouveau lien de confirmation
+      </RouterLink>
 
       <button
         type="submit"
