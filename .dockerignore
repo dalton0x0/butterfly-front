@@ -1,0 +1,15 @@
+# Ce qui n'a rien à faire dans le contexte de construction.
+
+node_modules/
+dist/
+.git/
+.gitignore
+.idea/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+README.md
+Dockerfile
+.dockerignore
