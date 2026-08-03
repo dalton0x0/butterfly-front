@@ -4,7 +4,7 @@ Interface web de la plateforme de gestion de l'apprentissage (LMS) Butterfly. Ap
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
-Version : 1.2.0
+Version : 1.3.0
 
 ---
 
@@ -15,15 +15,19 @@ Version : 1.2.0
 - [Fonctionnalités](#fonctionnalités)
 - [Architecture](#architecture)
 - [Authentification](#authentification)
+- [Parcours e-mail](#parcours-e-mail)
 - [Couche services](#couche-services)
 - [Routage et espaces](#routage-et-espaces)
 - [Design system](#design-system)
+- [Accessibilité et qualité](#accessibilité-et-qualité)
 - [Structure du projet](#structure-du-projet)
 - [Prérequis](#prérequis)
 - [Installation et configuration](#installation-et-configuration)
 - [Lancement](#lancement)
+- [Déploiement conteneurisé](#déploiement-conteneurisé)
 - [Conventions](#conventions)
 - [Historique des versions](#historique-des-versions)
+- [Feuille de route](#feuille-de-route)
 
 ## Présentation
 
@@ -60,6 +64,8 @@ Les icônes (Material Symbols Outlined) et la police Inter sont chargées côté
 Communes :
 
 - Inscription, connexion et session persistée avec rafraîchissement transparent du jeton.
+- Confirmation de l'adresse e-mail avec rappel permanent tant qu'elle n'est pas faite.
+- Réinitialisation du mot de passe par lien reçu par message.
 - Consultation et édition du profil, dont l'avatar.
 - Rendu Markdown sécurisé des contenus (assaini par DOMPurify), avec coloration syntaxique.
 
@@ -130,29 +136,78 @@ un jeton de rafraîchissement de longue durée, avec rotation à chaque renouvel
   (`isAuthenticated`, `role`, `isAdmin`, `isTeacher`, `fullName`). La session est restaurée au
   rechargement de la page à partir du jeton de rafraîchissement persisté.
 
+Chaque rotation renvoie un nouvel identifiant de session enregistré au même titre que les jetons.
+Sans cette mise à jour, l'écran des appareils connectés cesserait de reconnaître l'appareil courant
+au bout de quelques minutes et une déconnexion des autres appareils fermerait la session en cours
+au lieu de la préserver.
+
+Depuis la version 1.3.0, la session à préserver n'est plus transmise par le client :
+le serveur la déduit du jeton présenté, seule source qui ne puisse pas être périmée.
+
+Les erreurs remontées par la couche HTTP sont des instances d'`ApiError`, une classe étendant
+`Error`. Elles portent donc une pile d'appels exploitable fonctionnent avec `instanceof` et
+s'affichent correctement dans la console, ce qu'un objet littéral ne permettait pas.
+
+## Parcours e-mail
+
+Trois écrans complètent l'authentification, tous servis par `AuthLayout`.
+
+| Route                   | Écran                | Rôle                                      |
+|-------------------------|----------------------|-------------------------------------------|
+| `/mot-de-passe-oublie`  | `ForgotPasswordView` | Saisie de l'adresse, confirmation neutre  |
+| `/nouveau-mot-de-passe` | `ResetPasswordView`  | Saisie du nouveau mot de passe            |
+| `/verification-email`   | `VerifyEmailView`    | Confirmation automatique, renvoi si échec |
+
+Les chemins doivent correspondre aux valeurs configurées côté backend
+(`butterfly.mail.verification-path` et `butterfly.mail.password-reset-path`) : ce sont eux qui
+composent les liens envoyés par message. Toute modification se répercute des deux côtés.
+
+### Points de conception
+
+**`/verification-email` n'est pas réservée aux visiteurs anonymes** contrairement aux deux autres.
+La politique de vérification étant souple côté serveur, un utilisateur est souvent connecté au moment
+où il ouvre le lien reçu. L'écarter le renverrait au tableau de bord sans jamais confirmer son adresse.
+
+**Le jeton est lu dans l'URL puis renvoyé dans le corps de la requête.** C'est ainsi que le lien le
+transmet, mais une URL se retrouve dans les journaux du serveur, l'historique du navigateur et
+l'en-tête `Referer` envoyé aux ressources externes de la page.
+
+**Les confirmations sont affichées quelle que soit la réponse du serveur.** Ce dernier ne dit jamais
+si un compte correspond à une adresse. Afficher un message différent selon le cas annulerait cette
+précaution côté interface.
+
+**Le code 403 renvoyé à la connexion est traité à part.** Il signale une adresse non vérifiée après
+le délai de grâce : les identifiants sont corrects, c'est l'état du compte qui bloque. L'écran
+affiche donc le message du serveur et un lien vers le renvoi de confirmation, plutôt que le message
+d'identifiants invalides qui orienterait vers la mauvaise piste.
+
+**Le bandeau de rappel vit dans le layout** et non dans une vue : il doit suivre l'utilisateur où
+qu'il aille. Il peut être masqué pour la session en cours mais réapparaît au chargement suivant,
+s'agissant d'un rappel et non d'une notification.
+
 ## Couche services
 
 Chaque domaine fonctionnel a son service, qui encapsule les appels à l'API et la normalisation des
 réponses (pagination, déballage d'enveloppe).
 
-| Service             | Domaine                                                            |
-|---------------------|--------------------------------------------------------------------|
-| `authService`       | Inscription, connexion, rafraîchissement, déconnexion              |
-| `userService`       | Utilisateurs (liste, détail, CRUD, rôle, statut, promotion, blocs) |
-| `promotionService`  | Promotions (CRUD, activation, membres)                             |
-| `blockService`      | Blocs pédagogiques                                                 |
-| `moduleService`     | Modules et prérequis                                               |
-| `courseService`     | Cours                                                              |
-| `exerciseService`   | Exercices et fichiers de soumission                                |
-| `quizService`       | Quiz, passation et barème                                          |
-| `progressService`   | Progression (cours, exercices, quiz, vues d'ensemble)              |
-| `correctionService` | File de correction et historique côté formateur                    |
-| `badgeService`      | Catalogue, progression, administration et recalcul des badges      |
-| `dashboardService`  | Tableau de bord apprenant                                          |
-| `profileService`    | Profil et mot de passe                                             |
-| `mediaService`      | Médias (couvertures, avatars, images de contenu, vidéos)           |
-| `http`              | Instance Axios et intercepteurs (transverse)                       |
-| `tokenStorage`      | Persistance des jetons (transverse)                                |
+| Service             | Domaine                                                                                         |
+|---------------------|-------------------------------------------------------------------------------------------------|
+| `authService`       | Inscription, connexion, rafraîchissement, déconnexion, vérification d'adresse, réinitialisation |
+| `userService`       | Utilisateurs (liste, détail, CRUD, rôle, statut, promotion, blocs)                              |
+| `promotionService`  | Promotions (CRUD, activation, membres)                                                          |
+| `blockService`      | Blocs pédagogiques                                                                              |
+| `moduleService`     | Modules et prérequis                                                                            |
+| `courseService`     | Cours                                                                                           |
+| `exerciseService`   | Exercices et fichiers de soumission                                                             |
+| `quizService`       | Quiz, passation et barème                                                                       |
+| `progressService`   | Progression (cours, exercices, quiz, vues d'ensemble)                                           |
+| `correctionService` | File de correction et historique côté formateur                                                 |
+| `badgeService`      | Catalogue, progression, administration et recalcul des badges                                   |
+| `dashboardService`  | Tableau de bord apprenant                                                                       |
+| `profileService`    | Profil et mot de passe                                                                          |
+| `mediaService`      | Médias (couvertures, avatars, images de contenu, vidéos)                                        |
+| `http`              | Instance Axios et intercepteurs (transverse)                                                    |
+| `tokenStorage`      | Persistance des jetons (transverse)                                                             |
 
 ## Routage et espaces
 
@@ -160,6 +215,10 @@ Le routage est protégé par des métadonnées sur chaque route : `requiresAuth`
 réservées aux utilisateurs connectés, et `roles` pour les pages réservées à certains rôles. Une
 garde globale `router.beforeEach` redirige vers la connexion si l'utilisateur n'est pas authentifié
 et bloque l'accès aux pages dont le rôle ne correspond pas.
+
+Quatre routes restent publiques : la connexion, l'inscription, la demande de réinitialisation et la
+définition d'un nouveau mot de passe. La confirmation d'adresse est accessible dans les deux états,
+connecté ou non.
 
 Les trois espaces :
 
@@ -185,6 +244,47 @@ cohérence visuelle entre les trois espaces.
 | background   | #F7F9FF | fond de page              |
 | surface      | #FFFFFF | cartes                    |
 
+## Accessibilité et qualité
+
+### Étiquettes de formulaire
+
+Tous les champs de l'application sont associés à une étiquette par `for` et `id`, selon la convention
+`<écran>-<champ>` en minuscules avec tirets : `login-email`, `profile-first-name`,
+`quiz-question-0-option-1`. Le préfixe par écran garantit l'unicité dans le document, un identifiant
+HTML étant unique pour toute la page et non par composant.
+
+Trois situations ont demandé un traitement particulier :
+
+- **champs sans étiquette visible** (recherches, filtres) : `<label class="sr-only">` plutôt
+  qu'`aria-label`, afin que le texte reste présent dans le DOM et donc relisible ;
+- **champs produits en boucle** (options de quiz, cases à cocher de prérequis) : identifiants dérivés
+  de l'index ou de la clé métier, comme pour les attributs `:key` ;
+- **composant réutilisable** (`MarkdownEditor`) : identifiant fourni par le parent, ou généré par
+  `useId()` à défaut, ce qui autorise plusieurs instances sur une même page.
+
+### Analyse statique
+
+Les signalements SonarQube ont été traités par lots :
+
+- **sous-titres des vidéos** : les vidéos sont téléversées par les formateurs et le modèle ne prévoit
+  aucun fichier associé. Ajouter une balise `track` vide ferait disparaître le signalement sans
+  rendre la moindre vidéo accessible,
+- **await de premier niveau dans une vue** : la suggestion transformerait le composant en composant
+  asynchrone qui exigerait alors un `<Suspense>` parent pour être monté. La correction retenue est
+  `onMounted` qui satisfait la règle sans casser l'écran,
+- **groupement sémantique des listes d'options** : écart relevé en revue et non signalé par l'outil,
+  reporté avec la refonte des composants de formulaire.
+
+Un signalement d'analyse statique décrit un symptôme avec justesse et propose un remède avec
+approximation : il voit le motif syntaxique, pas le contexte d'exécution. Comprendre la raison de la
+règle, puis choisir le remède adapté, vaut mieux que l'appliquer mécaniquement.
+
+### Cible de compilation
+
+`build.target` est fixé à `es2022` dans `vite.config.js`, l'attente de premier niveau utilisée dans
+le point d'entrée n'étant pas transpilable. Conséquence assumée : les navigateurs antérieurs à
+Chrome 89, Firefox 89, Safari 15 et Edge 89, tous sortis en 2021, ne sont plus pris en charge.
+
 ## Structure du projet
 
 ```
@@ -204,9 +304,11 @@ src/
 |-- main.js           Point d'entrée
 ```
 
+À la racine : `Dockerfile` et `nginx.conf` pour l'image de production.
+
 ## Prérequis
 
-- Node.js 18 ou supérieur
+- Node.js 20 ou supérieur (l'image de production utilise Node 22)
 - npm
 - Le backend Butterfly démarré et accessible
 
@@ -220,9 +322,18 @@ L'URL de l'API est configurable via une variable d'environnement Vite. Créer un
 `.env.local`) à la racine pour surcharger la valeur par défaut :
 
 ```dotenv
-# URL de base de l'API
+# URL de base de l'API (suffixe /api obligatoire)
 VITE_API_URL=http://localhost:8080/api
+
+# Nom affiché de l'application
+VITE_APP_NAME=Butterfly
+
+# Slogan de pied de page, le caractère | servant de séparateur de ligne
+VITE_APP_TAGLINE=
 ```
+
+Ces variables sont lues à la construction et non à l'exécution : un changement impose de relancer le
+serveur de développement ou de reconstruire l'image.
 
 ## Lancement
 
@@ -235,6 +346,28 @@ npm run preview  # prévisualiser le build de production
 Au lancement, l'application restaure automatiquement la session si un jeton de rafraîchissement
 valide est présent, sinon elle redirige vers la page de connexion.
 
+## Déploiement conteneurisé
+
+Le `Dockerfile` construit l'image en deux étapes : Vite produit les fichiers statiques puis seuls
+ces fichiers et nginx sont conservés. Node n'apparaît pas dans l'image finale. Une construction Vite
+ne produisant rien qui ne doive être exécuté.
+
+L'image est construite avec `VITE_API_URL=/api`, soit une adresse relative. Nginx réachemine `/api/`
+vers le backend par le réseau interne. Trois bénéfices : une seule origine donc aucune question de
+CORS, un seul port ouvert et une image indépendante du serveur sur lequel elle tourne.
+
+`nginx.conf` traite trois points qui, omis cassent le déploiement :
+
+- **réécriture des routes** : toute adresse inconnue renvoie `index.html`, à charge pour Vue Router
+  de résoudre la navigation. Sans cette règle, un rechargement sur `/profil` produit une erreur 404,
+- **en-tête `X-Forwarded-For`** : sans lui, la limitation de débit du backend verrait toutes les
+  requêtes venir de nginx et leur appliquerait un unique quota bloquant tous les utilisateurs,
+- **taille de corps de requête** portée à 210 Mo, les vidéos pouvant atteindre 200 Mo côté applicatif
+  alors que nginx rejette par défaut au-delà de 1 Mo.
+
+L'orchestration complète vit dans un dépôt de déploiement distinct, backend et frontend étant
+versionnés séparément.
+
 ## Conventions
 
 - Composants en Composition API avec `<script setup>`.
@@ -242,10 +375,23 @@ valide est présent, sinon elle redirige vers la page de connexion.
   accents).
 - Les vues passent toujours par un service pour parler à l'API, jamais par Axios directement.
 - Les couleurs passent exclusivement par les tokens de thème.
-  - Commits au format Conventional Commits en français.
+- Commits au format Conventional Commits en anglais, atomiques.
+- Versionnage sémantique (SemVer) et tags Git annotés.
 
 ## Historique des versions
 
+- v1.3.0 : parcours e-mail, accessibilité et conteneurisation. Trois écrans ajoutés (demande de
+  réinitialisation, définition d'un nouveau mot de passe, confirmation d'adresse) et un bandeau de
+  rappel tant que l'adresse n'est pas confirmée. Le code 403 renvoyé à la connexion est distingué et
+  propose un renvoi de lien. Correction d'un défaut de session : l'identifiant renvoyé à chaque
+  rotation n'était pas enregistré, ce qui faisait perdre la reconnaissance de l'appareil courant et
+  pouvait déconnecter l'utilisateur lors d'une déconnexion des autres appareils. La session à
+  préserver est désormais déduite du jeton côté serveur. Qualité : campagne SonarQube (erreurs
+  applicatives portées par une classe `ApiError`, paramètres de pagination déstructurés, `Set` pour
+  les recherches d'appartenance, `RegExp.exec`, chaînage optionnel, attributs HTML obsolètes retirés,
+  complexité cognitive réduite) et accessibilité de tous les champs de formulaire, tous associés à leur
+  étiquette. Déploiement : image Docker en deux étapes servie par nginx, cible de
+  compilation portée à `es2022`.
 - v1.2.0 : sécurité et gestion des sessions. Le rafraîchissement de jeton n'est plus déclenché sur
   les endpoints d'authentification (un 401 y est une réponse définitive, et non un jeton expiré),
   ce qui évite de rejouer un refresh token déjà révoqué. La page de connexion informe l'utilisateur
@@ -262,6 +408,20 @@ valide est présent, sinon elle redirige vers la page de connexion.
   espaces (apprenant, formateur, administrateur), l'authentification avec rafraîchissement
   transparent, la navigation guidée par les prérequis, l'évaluation par exercices et quiz, la
   gamification et la gestion des médias.
+
+## Feuille de route
+
+Prévu pour la suite du projet :
+
+- **tests de composants** (Vitest et Testing Library). Le défaut de bandeau invisible corrigé en
+  1.3.0 dû à un champ absent d'une fonction de correspondance aurait été détecté immédiatement,
+- **ESLint et `eslint-plugin-vue`** dans le projet, afin de relever localement l'essentiel de ce que
+  SonarQube signale après coup,
+- **composants de formulaire réutilisables**, portant l'association étiquette-champ et le groupement
+  sémantique par `fieldset` une fois pour toutes,
+- **titre de page par route**, complément d'accessibilité aujourd'hui absent,
+- **sous-titres des vidéos**, dès que le modèle backend acceptera un fichier associé,
+- **internationalisation**, si l'ouverture à d'autres langues est retenue.
 
 ---
 
