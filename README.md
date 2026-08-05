@@ -356,6 +356,18 @@ L'image est construite avec `VITE_API_URL=/api`, soit une adresse relative. Ngin
 vers le backend par le réseau interne. Trois bénéfices : une seule origine donc aucune question de
 CORS, un seul port ouvert et une image indépendante du serveur sur lequel elle tourne.
 
+Le nom et le slogan de l'application sont surchargeables au build, le `.env` local n'entrant pas
+dans le contexte Docker :
+
+```bash
+docker build --build-arg VITE_APP_NAME=Butterfly --build-arg "VITE_APP_TAGLINE=Apprendre|Évoluer" .
+```
+
+L'image d'exécution est la variante non privilégiée de nginx, maintenue par l'équipe nginx :
+le processus tourne sous un utilisateur sans droits et écoute sur le port 8080, un processus
+non root ne pouvant se lier aux ports inférieurs à 1024. La correspondance vers le port 80
+est faite par l'orchestration.
+
 `nginx.conf` traite trois points qui, omis cassent le déploiement :
 
 - **réécriture des routes** : toute adresse inconnue renvoie `index.html`, à charge pour Vue Router
@@ -364,6 +376,10 @@ CORS, un seul port ouvert et une image indépendante du serveur sur lequel elle 
   requêtes venir de nginx et leur appliquerait un unique quota bloquant tous les utilisateurs,
 - **taille de corps de requête** portée à 210 Mo, les vidéos pouvant atteindre 200 Mo côté applicatif
   alors que nginx rejette par défaut au-delà de 1 Mo.
+
+Nginx réachemine aussi les chemins de Swagger (`/swagger-ui.html`, `/swagger-ui/`, `/v3/api-docs`),
+que le profil docker du backend active : la documentation de l'API reste consultable à travers le
+point d'entrée unique, sans port supplémentaire ouvert.
 
 L'orchestration complète vit dans un dépôt de déploiement distinct, backend et frontend étant
 versionnés séparément.
@@ -380,6 +396,14 @@ versionnés séparément.
 
 ## Historique des versions
 
+- v1.3.1 : correctifs de conteneurisation. Passage à la variante non privilégiée de nginx sur la
+  branche stable courante (1.30, la 1.27 ne recevant plus de correctifs de sécurité) : le serveur
+  tourne sans root et écoute sur le port 8080, revalidation forcée d'`index.html` pour éviter
+  qu'un navigateur ne serve une interface périmée après un redéploiement, en-têtes de sécurité
+  rétablis sur les assets (un bloc `location` déclarant son propre `add_header` n'hérite plus de
+  ceux du serveur), envois de fichiers transmis en flux au backend sans bufferisation disque, nom
+  et slogan de l'application surchargeables au build de l'image, chemins de Swagger réacheminés
+  vers le backend pour consulter la documentation de l'API à travers le point d'entrée unique.
 - v1.3.0 : parcours e-mail, accessibilité et conteneurisation. Trois écrans ajoutés (demande de
   réinitialisation, définition d'un nouveau mot de passe, confirmation d'adresse) et un bandeau de
   rappel tant que l'adresse n'est pas confirmée. Le code 403 renvoyé à la connexion est distingué et
