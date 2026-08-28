@@ -5,6 +5,8 @@
 // raccourcis clavier usuels (gras, italique, lien).
 // La touche Entrée poursuit une liste ou une citation commencée, et la termine
 // si l'élément courant est laissé vide.
+// Un fichier .md ou .txt peut remplir le champ, pour éviter de ressaisir un
+// contenu déjà rédigé ailleurs. La lecture est locale, rien ne transite par le serveur.
 // Les images arrivent de trois façons : bouton de sélection, collage d'une
 // capture d'écran, ou glisser-déposer. Dans les trois cas le fichier est envoyé
 // au back puis la syntaxe ![](url) remplace le jeton posé à l'endroit du curseur.
@@ -34,6 +36,11 @@ const imageInput = ref(null)
 const uploadingImage = ref(false)
 const imageError = ref('')
 const dragging = ref(false)
+const fileInput = ref(null)
+
+// Taille maximale d'un fichier Markdown importé. Le back limite le contenu à
+// 50 000 caractères, on refuse donc bien avant d'atteindre cette borne.
+const MAX_IMPORT_SIZE_BYTES = 512 * 1024
 
 const showEditor = computed(() => mode.value !== 'preview')
 const showPreview = computed(() => mode.value !== 'write')
@@ -168,7 +175,7 @@ function toggleOrderedList() {
   const allNumbered = lines.every((line) => ORDERED_PREFIX_PATTERN.test(line))
   const offset = allNumbered ? 0 : previousOrderedNumber(lineStart)
   const next = lines.map((line, rank) =>
-    allNumbered ? stripListMarkers(line) : `${offset + rank + 1}. ${stripListMarkers(line)}`)
+      allNumbered ? stripListMarkers(line) : `${offset + rank + 1}. ${stripListMarkers(line)}`)
   applyToLines(lineStart, lineEnd, next)
 }
 
@@ -299,6 +306,32 @@ function openImagePicker() {
   imageInput.value?.click()
 }
 
+function openFilePicker() {
+  imageError.value = ''
+  if (props.modelValue.trim() && !window.confirm('Le contenu actuel sera remplacé. Continuer ?')) {
+    return
+  }
+  fileInput.value?.click()
+}
+
+// Lit un fichier texte et le place tel quel dans le champ.
+async function onMarkdownFileSelected(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  if (!file) {
+    return
+  }
+  if (file.size > MAX_IMPORT_SIZE_BYTES) {
+    imageError.value = 'Le fichier dépasse 512 Ko.'
+    return
+  }
+  try {
+    updateValue(await file.text())
+  } catch (err) {
+    imageError.value = err.message || 'La lecture du fichier a échoué.'
+  }
+}
+
 // Extrait les fichiers image d'un presse-papiers ou d'un glisser-déposer.
 // Coller depuis un traitement de texte ou une page web ne donne parfois qu'une
 // référence HTML sans fichier : il n'y a alors rien à envoyer.
@@ -307,9 +340,9 @@ function imageFilesFrom(dataTransfer) {
     return []
   }
   const fromItems = Array.from(dataTransfer.items || [])
-    .filter((item) => item.kind === 'file')
-    .map((item) => item.getAsFile())
-    .filter((file) => file && file.type.startsWith('image/'))
+      .filter((item) => item.kind === 'file')
+      .map((item) => item.getAsFile())
+      .filter((file) => file && file.type.startsWith('image/'))
 
   if (fromItems.length > 0) {
     return fromItems
@@ -442,16 +475,35 @@ async function onDrop(event) {
         class="hidden"
         @change="onImageSelected"
       />
-      <button
-        v-if="showEditor"
-        type="button"
-        :disabled="uploadingImage"
-        class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 text-ink-soft hover:text-primary transition-colors disabled:opacity-60"
-        @click="openImagePicker"
-      >
-        <Icon name="image" :size="16"/>
-        {{ uploadingImage ? 'Envoi...' : 'Image' }}
-      </button>
+      <label :for="`${textareaId}-file`" class="sr-only">Fichier Markdown à importer</label>
+      <input
+        :id="`${textareaId}-file`"
+        ref="fileInput"
+        type="file"
+        accept=".md,.markdown,.txt,text/markdown,text/plain"
+        class="hidden"
+        @change="onMarkdownFileSelected"
+      />
+      <div v-if="showEditor" class="flex items-center gap-1">
+        <button
+          type="button"
+          title="Remplacer le contenu par un fichier .md ou .txt"
+          class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 text-ink-soft hover:text-primary transition-colors"
+          @click="openFilePicker"
+        >
+          <Icon name="upload_file" :size="16"/>
+          Importer
+        </button>
+        <button
+          type="button"
+          :disabled="uploadingImage"
+          class="px-3 py-1 rounded-md text-[13px] font-semibold flex items-center gap-1.5 text-ink-soft hover:text-primary transition-colors disabled:opacity-60"
+          @click="openImagePicker"
+        >
+          <Icon name="image" :size="16"/>
+          {{ uploadingImage ? 'Envoi...' : 'Image' }}
+        </button>
+      </div>
     </div>
 
     <!-- Barre de mise en forme -->
