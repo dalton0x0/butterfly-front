@@ -7,7 +7,9 @@ import {computed, onMounted, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
+import Modal from '@/components/Modal.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
+import {IMPORT_TEMPLATE, parseQuestionsFile, validateImportFile} from '@/utils/quizImport'
 
 const route = useRoute()
 const quizId = Number(route.params.id)
@@ -24,6 +26,13 @@ const QUESTION_TYPES = [
   {value: 'SINGLE_CHOICE', label: 'Choix simple'},
   {value: 'MULTIPLE_CHOICE', label: 'Choix multiple'}
 ]
+
+// Import JSON : le fichier remplit le formulaire, rien n'est envoyé au serveur
+// avant que le formateur ait relu et cliqué sur Enregistrer.
+const showImport = ref(false)
+const importMode = ref('replace')
+const importErrors = ref([])
+const importFileInput = ref(null)
 
 const breadcrumb = computed(() => {
   const items = [{label: 'Contenus', to: '/formateur/contenus'}]
@@ -79,6 +88,51 @@ function onTypeChange(question) {
       option.correct = i === firstCorrect
     })
   }
+}
+
+function openImport() {
+  importMode.value = questions.value.length === 0 ? 'append' : 'replace'
+  importErrors.value = []
+  showImport.value = true
+}
+
+function pickImportFile() {
+  importFileInput.value?.click()
+}
+
+// Propose le modèle en téléchargement, sans passer par le serveur.
+function downloadTemplate() {
+  const blob = new Blob([IMPORT_TEMPLATE], {type: 'application/json'})
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'modele-questions.json'
+  link.click()
+  // Sans cette libération, le blob resterait en mémoire jusqu'au rechargement.
+  URL.revokeObjectURL(url)
+}
+
+async function onImportFileSelected(event) {
+  const file = event.target.files?.[0]
+  event.target.value = ''
+  importErrors.value = []
+
+  const fileError = validateImportFile(file)
+  if (fileError) {
+    importErrors.value = [fileError]
+    return
+  }
+
+  const {questions: imported, errors} = parseQuestionsFile(await file.text())
+  if (errors.length > 0) {
+    importErrors.value = errors
+    return
+  }
+
+  questions.value = importMode.value === 'replace' ? imported : [...questions.value, ...imported]
+  showImport.value = false
+  saveError.value = ''
+  success.value = `${imported.length} question(s) importée(s). Relisez puis enregistrez.`
 }
 
 /**
@@ -218,13 +272,22 @@ onMounted(load)
         <h1 class="text-[30px] font-semibold text-navy">Questions du quiz</h1>
         <p class="text-ink-soft mt-1">{{ quiz?.name }}</p>
       </div>
-      <button
-        class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors self-start"
-        @click="addQuestion"
-      >
-        <Icon name="add" :size="18"/>
-        Ajouter une question
-      </button>
+      <div class="flex gap-3 self-start">
+        <button
+          class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors"
+          @click="openImport"
+        >
+          <Icon name="upload_file" :size="18"/>
+          Importer un JSON
+        </button>
+        <button
+          class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors"
+          @click="addQuestion"
+        >
+          <Icon name="add" :size="18"/>
+          Ajouter une question
+        </button>
+      </div>
     </div>
 
     <p v-if="success" class="text-[14px] text-success bg-success/10 rounded-[10px] px-4 py-2.5 mb-5">{{ success }}</p>
@@ -378,5 +441,70 @@ onMounted(load)
         {{ saving ? 'Enregistrement...' : 'Enregistrer les questions' }}
       </button>
     </div>
+
+    <!-- Import d'un fichier JSON de questions -->
+    <Modal v-if="showImport" @close="showImport = false">
+      <div class="px-6 pt-6 pb-6 w-full max-w-[520px]">
+        <h3 class="text-[18px] font-semibold text-navy mb-1">Importer des questions</h3>
+        <p class="text-[13px] text-muted mb-5">
+          Le fichier remplit le formulaire. Rien n'est enregistré tant que vous n'avez pas
+          relu et cliqué sur Enregistrer les questions.
+        </p>
+
+        <fieldset class="mb-5">
+          <legend class="text-[13px] font-medium text-ink-soft mb-2">Que faire des questions actuelles ?</legend>
+          <label class="flex items-start gap-3 cursor-pointer mb-2">
+            <input v-model="importMode" type="radio" value="replace"
+                   class="mt-0.5 w-4 h-4 accent-[var(--color-primary)] cursor-pointer"/>
+            <span>
+              <span class="block text-[14px] text-ink">Remplacer</span>
+              <span class="block text-[12px] text-muted">Les {{ questions.length }} question(s) affichées sont retirées.</span>
+            </span>
+          </label>
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input v-model="importMode" type="radio" value="append"
+                   class="mt-0.5 w-4 h-4 accent-[var(--color-primary)] cursor-pointer"/>
+            <span>
+              <span class="block text-[14px] text-ink">Ajouter à la suite</span>
+              <span class="block text-[12px] text-muted">Les questions importées viennent après les existantes.</span>
+            </span>
+          </label>
+        </fieldset>
+
+        <label for="quiz-import-file" class="sr-only">Fichier JSON de questions</label>
+        <input id="quiz-import-file" ref="importFileInput" type="file" accept="application/json,.json"
+               class="hidden" @change="onImportFileSelected"/>
+
+        <div v-if="importErrors.length" class="bg-danger/8 rounded-[10px] px-4 py-3 mb-4">
+          <p class="text-[13px] font-semibold text-danger mb-1">Import refusé</p>
+          <ul class="text-[13px] text-danger flex flex-col gap-0.5">
+            <li v-for="(message, i) in importErrors.slice(0, 5)" :key="i">{{ message }}</li>
+          </ul>
+          <p v-if="importErrors.length > 5" class="text-[12px] text-danger mt-1">
+            et {{ importErrors.length - 5 }} autre(s) erreur(s).
+          </p>
+        </div>
+
+        <div class="flex items-center justify-between gap-3">
+          <button type="button" class="text-primary text-[13px] font-semibold hover:underline flex items-center gap-1"
+                  @click="downloadTemplate">
+            <Icon name="download" :size="16"/>
+            Télécharger un modèle
+          </button>
+          <div class="flex gap-3">
+            <button type="button"
+                    class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
+                    @click="showImport = false">
+              Annuler
+            </button>
+            <button type="button"
+                    class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                    @click="pickImportFile">
+              Choisir un fichier
+            </button>
+          </div>
+        </div>
+      </div>
+    </Modal>
   </template>
 </template>
