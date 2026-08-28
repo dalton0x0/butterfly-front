@@ -165,7 +165,9 @@ async function load() {
   error.value = ''
   try {
     quiz.value = await quizService.getPlay(Number(route.params.id))
-    questions.value = [...(quiz.value.questions || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+    // L'ordre est décidé par le serveur. Le retrier ici annulerait le mélange
+    // quand le formateur l'a activé sur le quiz.
+    questions.value = [...(quiz.value.questions || [])]
   } catch (err) {
     error.value = err.message || 'Impossible de charger le quiz.'
   } finally {
