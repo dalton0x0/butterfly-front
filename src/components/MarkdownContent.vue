@@ -53,10 +53,28 @@ const html = computed(() => renderMarkdown(props.source))
   margin: 0.7em 0;
 }
 
+/* Tailwind remet list-style à none sur ul et ol dans son preflight.
+   Il faut donc redonner explicitement leurs puces et leurs numéros ici. */
 .md-content :deep(ul),
 .md-content :deep(ol) {
   margin: 0.7em 0;
   padding-left: 1.5em;
+}
+
+.md-content :deep(ul) {
+  list-style: disc outside;
+}
+
+.md-content :deep(ol) {
+  list-style: decimal outside;
+}
+
+.md-content :deep(ul ul) {
+  list-style: circle outside;
+}
+
+.md-content :deep(ul ul ul) {
+  list-style: square outside;
 }
 
 .md-content :deep(li) {
