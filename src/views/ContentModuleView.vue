@@ -99,7 +99,7 @@ const breadcrumb = computed(() => {
 // Quiz (modale métadonnées)
 const showQuizForm = ref(false)
 const quizEditing = ref(false)
-const quizForm = reactive({name: '', content: ''})
+const quizForm = reactive({name: '', content: '', shuffleQuestions: false, shuffleOptions: false})
 const quizError = ref('')
 const savingQuiz = ref(false)
 
@@ -107,6 +107,8 @@ function openCreateQuiz() {
   quizEditing.value = false
   quizForm.name = ''
   quizForm.content = ''
+  quizForm.shuffleQuestions = false
+  quizForm.shuffleOptions = false
   quizError.value = ''
   showQuizForm.value = true
 }
@@ -115,6 +117,9 @@ function openEditQuiz() {
   quizEditing.value = true
   quizForm.name = quiz.value.name || ''
   quizForm.content = quiz.value.content || ''
+  // Un quiz créé avant la fonctionnalité renvoie ces champs à null : on retombe sur false.
+  quizForm.shuffleQuestions = Boolean(quiz.value.shuffleQuestions)
+  quizForm.shuffleOptions = Boolean(quiz.value.shuffleOptions)
   quizError.value = ''
   showQuizForm.value = true
 }
@@ -137,7 +142,13 @@ async function saveQuiz() {
   }
   savingQuiz.value = true
   try {
-    const payload = {name, content, moduleId}
+    const payload = {
+      name,
+      content,
+      moduleId,
+      shuffleQuestions: quizForm.shuffleQuestions,
+      shuffleOptions: quizForm.shuffleOptions
+    }
     if (quizEditing.value) {
       await quizService.updateQuiz(quiz.value.id, payload)
       success.value = 'Quiz modifié avec succès.'
@@ -416,6 +427,31 @@ onMounted(load)
           <textarea id="module-content" v-model="quizForm.content" rows="4" maxlength="50000"
                     placeholder="Instructions affichées avant le quiz"
                     class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"></textarea>
+        </div>
+        <div class="flex flex-col gap-3 border-t border-line-soft pt-4">
+          <p class="text-[13px] font-medium text-ink-soft">Ordre de présentation</p>
+
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input v-model="quizForm.shuffleQuestions" type="checkbox"
+                   class="mt-0.5 w-4 h-4 accent-[var(--color-primary)] cursor-pointer"/>
+            <span>
+              <span class="block text-[14px] text-ink">Mélanger les questions</span>
+              <span class="block text-[12px] text-muted">
+                Chaque apprenant reçoit les questions dans un ordre différent.
+              </span>
+            </span>
+          </label>
+
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input v-model="quizForm.shuffleOptions" type="checkbox"
+                   class="mt-0.5 w-4 h-4 accent-[var(--color-primary)] cursor-pointer"/>
+            <span>
+              <span class="block text-[14px] text-ink">Mélanger les réponses</span>
+              <span class="block text-[12px] text-muted">
+                L'ordre des options change à l'intérieur de chaque question.
+              </span>
+            </span>
+          </label>
         </div>
         <p v-if="quizError" class="text-[13px] text-danger">{{ quizError }}</p>
         <div class="flex justify-end gap-3 mt-1">

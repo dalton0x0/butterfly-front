@@ -66,7 +66,9 @@ export const quizService = {
 
     /**
      * Crée un quiz (ADMIN/TEACHER assigné au bloc du module).
-     * @param {{ name: string, content: string, moduleId: number }} payload
+     * Les drapeaux de mélange sont facultatifs, absents ils valent false côté serveur.
+     * @param {{ name: string, content: string, moduleId: number,
+     *           shuffleQuestions?: boolean, shuffleOptions?: boolean }} payload
      */
     async createQuiz(payload) {
         const envelope = await http.post('/quizzes', payload)
@@ -74,7 +76,8 @@ export const quizService = {
     },
 
     /**
-     * Met à jour les métadonnées d'un quiz.
+     * Met à jour les métadonnées d'un quiz, drapeaux de mélange compris.
+     * Le serveur applique la valeur reçue telle quelle : le comportement reste réversible.
      */
     async updateQuiz(id, payload) {
         const envelope = await http.put(`/quizzes/${id}`, payload)
