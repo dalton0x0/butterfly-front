@@ -8,6 +8,7 @@ import {useRoute} from 'vue-router'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
 import Modal from '@/components/Modal.vue'
+import Toast from '@/components/Toast.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import {IMPORT_TEMPLATE, parseQuestionsFile, validateImportFile} from '@/utils/quizImport'
 
@@ -16,11 +17,28 @@ const quizId = Number(route.params.id)
 
 const loading = ref(true)
 const error = ref('')
-const success = ref('')
 const saving = ref(false)
-const saveError = ref('')
 const quiz = ref(null)
 const questions = ref([])
+
+// Retour d'action affiché en message flottant. La barre d'enregistrement est en bas
+// d'une page longue : un bandeau en haut passerait inaperçu.
+const toast = ref(null)
+
+function showToast(message, variant = 'success') {
+  // Une erreur reste jusqu'à fermeture, le temps de la lire et de corriger.
+  toast.value = {message, variant, duration: variant === 'danger' ? 0 : 4000}
+}
+
+// Amène la question fautive dans le champ de vision et place le curseur dans son énoncé.
+function focusQuestion(index) {
+  const el = document.getElementById(`quiz-question-${index}-statement`)
+  if (!el) {
+    return
+  }
+  el.scrollIntoView({behavior: 'smooth', block: 'center'})
+  el.focus({preventScroll: true})
+}
 
 const QUESTION_TYPES = [
   {value: 'SINGLE_CHOICE', label: 'Choix simple'},
@@ -131,8 +149,7 @@ async function onImportFileSelected(event) {
 
   questions.value = importMode.value === 'replace' ? imported : [...questions.value, ...imported]
   showImport.value = false
-  saveError.value = ''
-  success.value = `${imported.length} question(s) importée(s). Relisez puis enregistrez.`
+  showToast(`${imported.length} question(s) importée(s). Relisez puis enregistrez.`)
 }
 
 /**
@@ -190,24 +207,27 @@ function validateQuestion(question, qi) {
 }
 
 /**
- * Vérifie l'ensemble des questions et renvoie la première erreur rencontrée.
+ * Vérifie l'ensemble des questions et renvoie la première erreur rencontrée,
+ * avec le rang de la question concernée pour pouvoir y amener le formateur.
+ *
+ * @returns {{message: string, index: number}|null} l'erreur, ou null si tout est valide
  */
 function validate() {
   for (const [qi, question] of questions.value.entries()) {
-    const error = validateQuestion(question, qi)
-    if (error) {
-      return error
+    const message = validateQuestion(question, qi)
+    if (message) {
+      return {message, index: qi}
     }
   }
-  return ''
+  return null
 }
 
 async function save() {
-  saveError.value = ''
-  success.value = ''
+  toast.value = null
   const validationError = validate()
   if (validationError) {
-    saveError.value = validationError
+    showToast(validationError.message, 'danger')
+    focusQuestion(validationError.index)
     return
   }
   saving.value = true
@@ -220,9 +240,9 @@ async function save() {
       options: q.options.map((o) => ({text: o.text.trim(), correct: Boolean(o.correct)}))
     }))
     await quizService.updateQuestions(quizId, payload)
-    success.value = 'Questions enregistrées avec succès.'
+    showToast('Questions enregistrées avec succès.')
   } catch (err) {
-    saveError.value = err.message || "L'enregistrement a échoué."
+    showToast(err.message || "L'enregistrement a échoué.", 'danger')
   } finally {
     saving.value = false
   }
@@ -289,9 +309,6 @@ onMounted(load)
         </button>
       </div>
     </div>
-
-    <p v-if="success" class="text-[14px] text-success bg-success/10 rounded-[10px] px-4 py-2.5 mb-5">{{ success }}</p>
-    <p v-if="saveError" class="text-[14px] text-danger bg-danger/8 rounded-[10px] px-4 py-2.5 mb-5">{{ saveError }}</p>
 
     <p v-if="questions.length === 0" class="text-[15px] text-muted py-10 text-center">
       Aucune question. Ajoutez-en une pour commencer.
@@ -506,5 +523,13 @@ onMounted(load)
         </div>
       </div>
     </Modal>
+
+    <Toast
+      v-if="toast"
+      :message="toast.message"
+      :variant="toast.variant"
+      :duration="toast.duration"
+      @close="toast = null"
+    />
   </template>
 </template>
