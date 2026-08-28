@@ -1,12 +1,16 @@
 <script setup>
 // Passage d'un quiz puis résultat corrigé sur la même page.
+// La tentative est ouverte côté serveur avant la première question
+// (POST /api/progress/quizzes/{id}/start). Quitter la page sans soumettre la fait
+// compter comme un échec, sauf pendant le délai de grâce renvoyé par le serveur.
 // GET /api/quizzes/{id}/play (sans les bonnes réponses), navigation question par
 // question, puis POST /api/progress/quizzes/{id}/submit. Le serveur calcule
 // le score et la réussite. Le résultat renvoie la correction par question.
 import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
-import {useRoute} from 'vue-router'
+import {onBeforeRouteLeave, useRoute} from 'vue-router'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
+import Modal from '@/components/Modal.vue'
 import ProgressRing from '@/components/ProgressRing.vue'
 
 const route = useRoute()
@@ -39,6 +43,29 @@ const timerLabel = computed(() => {
 
 // Les cinq dernières secondes passent en alerte visuelle.
 const timerLow = computed(() => remaining.value <= 5)
+
+// Tentative serveur
+const attempt = ref(null)
+const attemptStartedAt = ref(0) // horodatage local du démarrage, en millisecondes
+const previousAttemptCounted = ref(false)
+
+// Garde de sortie
+const showLeaveModal = ref(false)
+const leaving = ref(false)
+let pendingLeave = null
+
+// Une passation est en cours tant que le quiz est chargé et le résultat non affiché.
+const attemptInProgress = computed(() => Boolean(attempt.value) && !result.value)
+
+// Le serveur efface une tentative quittée pendant le délai de grâce. On reproduit
+// le même calcul ici pour annoncer à l'apprenant ce qui va réellement se passer.
+function willCountAsAttempt() {
+  const grace = attempt.value?.graceSeconds
+  if (typeof grace !== 'number' || grace <= 0) {
+    return true
+  }
+  return (Date.now() - attemptStartedAt.value) / 1000 >= grace
+}
 
 // Sélection des réponses
 function isSelected(questionId, optionId) {
@@ -107,6 +134,32 @@ function segmentClass(i) {
   return 'bg-[#e2e8f0]'
 }
 
+// Le navigateur impose son propre dialogue sur la fermeture d'onglet ou le
+// rafraîchissement. On ne peut ni le styliser ni en changer le texte.
+function onBeforeUnload(event) {
+  if (!attemptInProgress.value) {
+    return
+  }
+  event.preventDefault()
+  event.returnValue = ''
+}
+
+function watchUnload() {
+  window.addEventListener('beforeunload', onBeforeUnload)
+}
+
+function unwatchUnload() {
+  window.removeEventListener('beforeunload', onBeforeUnload)
+}
+
+// Ouverture de la tentative côté serveur.
+async function startAttempt() {
+  attempt.value = await quizService.startAttempt(Number(route.params.id))
+  attemptStartedAt.value = Date.now()
+  previousAttemptCounted.value = Boolean(attempt.value.previousAttemptCounted)
+  watchUnload()
+}
+
 // Soumission
 async function submit() {
   clearTimer()
@@ -118,6 +171,8 @@ async function submit() {
       selectedOptionIds: selections[q.id] || []
     }))
     result.value = await quizService.submit(quiz.value.id, answers)
+    // La tentative est close côté serveur, la garde de sortie n'a plus lieu d'être.
+    unwatchUnload()
   } catch (err) {
     submitError.value = err.message || "L'envoi du quiz a échoué."
   } finally {
@@ -125,17 +180,59 @@ async function submit() {
   }
 }
 
-function restart() {
+async function restart() {
+  submitError.value = ''
+  try {
+    // Recommencer ouvre une nouvelle tentative : sans cet appel, le second passage
+    // ne serait comptabilisé nulle part.
+    await startAttempt()
+  } catch (err) {
+    submitError.value = err.message || "Impossible de relancer le quiz."
+    return
+  }
   for (const key of Object.keys(selections)) {
     delete selections[key]
   }
   index.value = 0
   result.value = null
-  submitError.value = ''
   if (current.value) {
     startTimer()
   }
 }
+
+// L'apprenant confirme qu'il quitte : on clôture la tentative avant de le laisser partir.
+async function confirmLeave() {
+  leaving.value = true
+  clearTimer()
+  try {
+    await quizService.abandonAttempt(Number(route.params.id))
+  } catch {
+    // Une clôture qui échoue ne doit pas bloquer la navigation. La tentative
+    // restera ouverte et sera comptée à la prochaine ouverture du quiz.
+  }
+  unwatchUnload()
+  showLeaveModal.value = false
+  const proceed = pendingLeave
+  pendingLeave = null
+  if (proceed) {
+    proceed()
+  }
+}
+
+function cancelLeave() {
+  showLeaveModal.value = false
+  pendingLeave = null
+  // Le minuteur avait continué de tourner, on reste simplement sur la question.
+}
+
+onBeforeRouteLeave((to, from, next) => {
+  if (!attemptInProgress.value || leaving.value) {
+    next()
+    return
+  }
+  pendingLeave = () => next()
+  showLeaveModal.value = true
+})
 
 // Rendu du résultat
 const percent = computed(() => {
@@ -168,6 +265,7 @@ async function load() {
     // L'ordre est décidé par le serveur. Le retrier ici annulerait le mélange
     // quand le formateur l'a activé sur le quiz.
     questions.value = [...(quiz.value.questions || [])]
+    await startAttempt()
   } catch (err) {
     error.value = err.message || 'Impossible de charger le quiz.'
   } finally {
@@ -185,7 +283,10 @@ watch(current, (question) => {
 })
 
 onMounted(load)
-onUnmounted(clearTimer)
+onUnmounted(() => {
+  clearTimer()
+  unwatchUnload()
+})
 </script>
 
 <template>
@@ -211,6 +312,8 @@ onUnmounted(clearTimer)
           Recommencer
         </button>
       </div>
+      <p class="text-[13px] text-muted">Recommencer enregistre une nouvelle tentative.</p>
+      <p v-if="submitError" class="text-[13px] text-danger">{{ submitError }}</p>
     </div>
 
     <!-- Détail des réponses -->
@@ -248,6 +351,16 @@ onUnmounted(clearTimer)
 
   <!-- Passage -->
   <div v-else-if="quiz && current" class="max-w-[760px] mx-auto flex flex-col gap-6">
+    <!-- Tentative précédente restée ouverte -->
+    <div v-if="previousAttemptCounted"
+         class="flex items-start gap-3 bg-warning/10 text-ink rounded-[10px] px-4 py-3">
+      <Icon name="warning" :size="20" class="text-warning shrink-0 mt-0.5"/>
+      <p class="text-[14px]">
+        Une tentative précédente sur ce quiz avait été quittée sans être terminée.
+        Elle a été comptée comme un échec.
+      </p>
+    </div>
+
     <!-- Carte de statut -->
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col gap-4">
       <h3 class="text-[17px] font-semibold text-ink">{{ quiz.name }}</h3>
@@ -336,4 +449,34 @@ onUnmounted(clearTimer)
       </button>
     </div>
   </div>
+
+  <!-- Confirmation de sortie en cours de passation -->
+  <Modal v-if="showLeaveModal" @close="cancelLeave">
+    <div class="px-6 pt-6 pb-6 w-full max-w-[420px] text-center">
+      <div class="w-12 h-12 rounded-full bg-warning/12 text-warning flex items-center justify-center mx-auto mb-4">
+        <Icon name="warning" :size="26"/>
+      </div>
+      <h3 class="text-[18px] font-semibold text-navy mb-2">Quitter le quiz ?</h3>
+      <p v-if="willCountAsAttempt()" class="text-[14px] text-ink-soft mb-4">
+        Cette tentative sera enregistrée comme un échec et vos réponses seront perdues.
+        Elle apparaîtra dans votre historique.
+      </p>
+      <p v-else class="text-[14px] text-ink-soft mb-4">
+        Vous venez d'ouvrir ce quiz, la tentative ne sera pas comptée.
+        Vos réponses seront perdues.
+      </p>
+      <div class="flex justify-center gap-3">
+        <button type="button" :disabled="leaving"
+                class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors disabled:opacity-60"
+                @click="cancelLeave">
+          Continuer le quiz
+        </button>
+        <button type="button" :disabled="leaving"
+                class="h-10 px-5 rounded-[10px] bg-danger text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                @click="confirmLeave">
+          {{ leaving ? 'Sortie...' : 'Quitter quand même' }}
+        </button>
+      </div>
+    </div>
+  </Modal>
 </template>

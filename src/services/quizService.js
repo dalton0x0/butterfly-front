@@ -4,6 +4,8 @@
   Correspondance avec le back :
   - GET /api/users/me/quizzes vers Page<MyQuizResponse>
   - GET /api/quizzes/{id}/play vers QuizPlayResponse (sans les bonnes réponses)
+  - POST /api/progress/quizzes/{id}/start vers QuizAttemptStartResponse
+  - POST /api/progress/quizzes/{id}/abandon sans corps de réponse
   - POST /api/progress/quizzes/{id}/submit vers QuizSubmissionResultResponse
   - GET /api/progress/me/quizzes vers Page<QuizAttemptResponse>
 
@@ -34,6 +36,27 @@ export const quizService = {
     async getPlay(id) {
         const envelope = await http.get(`/quizzes/${id}/play`)
         return envelope.data
+    },
+
+    /**
+     * Ouvre une tentative sur un quiz. À appeler avant la première question.
+     * La tentative existe en base dès cet appel : la quitter sans soumettre la compte
+     * comme un échec sauf pendant le délai de grâce renvoyé par le serveur.
+     * @param {number} quizId
+     * @returns {Promise<object>} QuizAttemptStartResponse { attemptId, startedAt, graceSeconds, previousAttemptCounted }
+     */
+    async startAttempt(quizId) {
+        const envelope = await http.post(`/progress/quizzes/${quizId}/start`)
+        return envelope.data
+    },
+
+    /**
+     * Clôture la tentative en cours sans la corriger.
+     * Sans effet si aucune tentative n'est ouverte sur ce quiz.
+     * @param {number} quizId
+     */
+    async abandonAttempt(quizId) {
+        await http.post(`/progress/quizzes/${quizId}/abandon`)
     },
 
     /**
@@ -76,8 +99,7 @@ export const quizService = {
     },
 
     /**
-     * Met à jour les métadonnées d'un quiz, drapeaux de mélange compris.
-     * Le serveur applique la valeur reçue telle quelle : le comportement reste réversible.
+     * Met à jour les métadonnées d'un quiz.
      */
     async updateQuiz(id, payload) {
         const envelope = await http.put(`/quizzes/${id}`, payload)
