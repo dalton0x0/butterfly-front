@@ -1,6 +1,8 @@
 <script setup>
 // Historique des tentatives de quiz de l'apprenant, tous quiz confondus.
 // GET /api/progress/me/quizzes renvoie une page de QuizAttemptResponse.
+// Une tentative abandonnée est close sans correction : elle a un score nul qui ne
+// reflète aucune réponse, elle est donc distinguée d'un échec au barème.
 import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {quizService} from '@/services/quizService'
@@ -21,13 +23,25 @@ function percent(attempt) {
 }
 
 function duration(attempt) {
-  if (!attempt.startedAt || !attempt.finishedAt) {
+  // Sur un abandon, la clôture peut survenir bien après la sortie réelle :
+  // afficher cet écart donnerait une durée fausse.
+  if (attempt.abandoned || !attempt.startedAt || !attempt.finishedAt) {
     return ''
   }
   const start = new Date(attempt.startedAt)
   const end = new Date(attempt.finishedAt)
   const minutes = Math.max(1, Math.round((end - start) / 60000))
   return `${minutes} min`
+}
+
+function statusLabel(attempt) {
+  if (attempt.abandoned) return 'Abandonnée'
+  return attempt.passed ? 'Réussi' : 'Échoué'
+}
+
+function statusVariant(attempt) {
+  if (attempt.abandoned) return 'neutral'
+  return attempt.passed ? 'success' : 'danger'
 }
 
 async function load() {
@@ -72,12 +86,16 @@ onMounted(load)
         <tr v-for="(t, i) in sortedAttempts" :key="t.id" :class="{ 'border-t border-line-soft': i > 0 }">
           <td class="px-5 py-3 text-ink">{{ t.quizName }}</td>
           <td class="px-5 py-3 text-ink-soft">{{ formatDate(t.finishedAt || t.startedAt) }}</td>
-          <td class="px-5 py-3 text-ink font-medium">{{ t.score }}/{{ t.maxScore }} ({{ percent(t) }} %)</td>
-          <td class="px-5 py-3 text-ink-soft">{{ duration(t) }}</td>
+          <td class="px-5 py-3 font-medium" :class="t.abandoned ? 'text-muted' : 'text-ink'">
+            <span v-if="t.abandoned" title="Quiz quitté avant la fin, aucune réponse corrigée">Non corrigé</span>
+            <span v-else>{{ t.score }}/{{ t.maxScore }} ({{ percent(t) }} %)</span>
+          </td>
+          <td class="px-5 py-3 text-ink-soft">{{ duration(t) || '-' }}</td>
           <td class="px-5 py-3">
             <StatusChip
-              :label="t.passed ? 'Réussi' : 'Échoué'"
-              :variant="t.passed ? 'success' : 'danger'"
+              :label="statusLabel(t)"
+              :variant="statusVariant(t)"
+              :icon="t.abandoned ? 'logout' : ''"
             />
           </td>
         </tr>

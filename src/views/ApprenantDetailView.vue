@@ -64,9 +64,12 @@ const recentActivity = computed(() => {
     })
   }
   for (const q of ov.recentQuizAttempts || []) {
+    // Une tentative abandonnée n'a pas été corrigée : afficher son score n'aurait aucun sens.
     items.push({
       icon: 'quiz',
-      text: `${q.passed ? 'Quiz réussi' : 'Quiz tenté'} : ${q.quizName} (${q.score}/${q.maxScore})`,
+      text: q.abandoned
+        ? `Quiz abandonné : ${q.quizName}`
+        : `${q.passed ? 'Quiz réussi' : 'Quiz tenté'} : ${q.quizName} (${q.score}/${q.maxScore})`,
       at: q.finishedAt || q.startedAt
     })
   }
