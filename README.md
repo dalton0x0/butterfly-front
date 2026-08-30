@@ -4,7 +4,7 @@ Interface web de la plateforme de gestion de l'apprentissage (LMS) Butterfly. Ap
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
-Version : 1.3.0
+Version : 1.4.0
 
 ---
 
@@ -68,6 +68,7 @@ Communes :
 - Réinitialisation du mot de passe par lien reçu par message.
 - Consultation et édition du profil, dont l'avatar.
 - Rendu Markdown sécurisé des contenus (assaini par DOMPurify), avec coloration syntaxique.
+- Message de retour flottant après une action, visible quel que soit le défilement de la page.
 
 Espace apprenant :
 
@@ -75,14 +76,24 @@ Espace apprenant :
 - Suivi d'un cours et enregistrement de la progression.
 - Passation de quiz interactifs (limite de temps par question), avec restitution du score et du
   corrigé.
+- Avertissement avant de quitter un quiz en cours, la sortie étant enregistrée comme une tentative.
+- Historique distinguant une tentative abandonnée d'un échec au barème.
 - Soumission d'exercice (dépôt du contenu et des fichiers en une action), édition tant que la
   soumission est en attente.
+- Téléchargement des fichiers joints à un énoncé d'exercices.
 - Tableau de bord gamifié : expérience, badges et série d'activités.
 
 Espace formateur :
 
 - Gestion complète du contenu : blocs, modules, cours, exercices et quiz, avec prérequis et
   réordonnancement.
+- Éditeur Markdown avec barre de mise en forme, raccourcis clavier, continuation automatique des
+  listes et aperçu côte à côte. Images insérables par bouton, collage d'une capture ou
+  glisser-déposer et contenu remplissable depuis un fichier `.md`.
+- Import des questions d'un quiz depuis un fichier JSON avec contrôle avant application et modèle
+  téléchargeable.
+- Fichiers joints aux énoncés d'exercices, sélectionnables avant même le premier enregistrement.
+- Mélange des questions et des réponses activable par quiz.
 - Téléversement de médias (images de couverture, images de contenu, vidéos).
 - File de correction : validation ou rejet des soumissions avec note et retour.
 - Suivi des apprenants de son périmètre.
@@ -396,6 +407,15 @@ versionnés séparément.
 
 ## Historique des versions
 
+- v1.4.0 : création de contenu et passation de quiz. Éditeur Markdown enrichi (barre de mise en
+  forme, raccourcis, continuation des listes, aperçu côte à côte, collage et glisser-déposer
+  d'images) sans nouvelle dépendance, la sanitation DOMPurify et le nettoyage des images orphelines
+  restant en place. Import des questions d'un quiz par fichier JSON, contrôlé avant application.
+  Fichiers joints aux énoncés d'exercices, côté formateur comme côté apprenant. Réglage du mélange
+  des questions et des réponses. Avertissement avant de quitter un quiz en cours. Correctifs :
+  puces et numéros des listes rétablis dans le rendu Markdown (le reset de Tailwind les retirait),
+  vue conservée dans l'éditeur après un bouton de mise en forme, retour d'action rendu visible par
+  un message flottant, confirmations natives remplacées par les modales du site.
 - v1.3.1 : correctifs de conteneurisation. Passage à la variante non privilégiée de nginx sur la
   branche stable courante (1.30, la 1.27 ne recevant plus de correctifs de sécurité) : le serveur
   tourne sans root et écoute sur le port 8080, revalidation forcée d'`index.html` pour éviter
