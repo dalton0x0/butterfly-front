@@ -11,6 +11,7 @@ import {mediaService, extractMediaImageUrls} from '@/services/mediaService'
 import Icon from '@/components/Icon.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import ExerciseAttachments from '@/components/ExerciseAttachments.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -28,6 +29,7 @@ const form = reactive({name: '', content: ''})
 
 // Référence à l'éditeur Markdown, pour récupérer ses images uploadées en session.
 const editorRef = ref(null)
+const attachmentsRef = ref(null)
 
 const title = computed(() => (isEdit.value ? "Modifier l'exercice" : 'Nouvel exercice'))
 const backTo = computed(() => `/formateur/contenus/modules/${moduleId.value}`)
@@ -76,7 +78,14 @@ async function save() {
     if (isEdit.value) {
       await exerciseService.updateExercise(exerciseId.value, payload)
     } else {
-      await exerciseService.createExercise(payload)
+      const created = await exerciseService.createExercise(payload)
+      // Les fichiers choisis avant l'enregistrement attendaient l'identifiant de l'exercice.
+      const attachmentError = await attachmentsRef.value?.uploadPending?.(created.id)
+      if (attachmentError) {
+        formError.value = `${attachmentError} L'exercice a bien été créé, vous pouvez les rejoindre en modification.`
+        saving.value = false
+        return
+      }
     }
     // Nettoyage des images de contenu uploadées cette session mais absentes du contenu final.
     await cleanupUnusedSessionMedia(content)
@@ -141,6 +150,12 @@ onMounted(load)
         <label for="exercise-edit-content" class="block text-[13px] font-medium text-ink-soft mb-1.5">Énoncé de
           l'exercice</label>
         <MarkdownEditor ref="editorRef" v-model="form.content" input-id="exercise-edit-content" :rows="20"/>
+      </div>
+
+      <!-- Fichiers joints. En création, l'identifiant n'existe pas encore : le
+           composant garde les fichiers de côté et les envoie après l'enregistrement. -->
+      <div class="border-t border-line-soft pt-5">
+        <ExerciseAttachments ref="attachmentsRef" :exercise-id="exerciseId" manageable/>
       </div>
 
       <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>

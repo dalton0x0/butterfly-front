@@ -14,6 +14,7 @@ import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import MarkdownContent from '@/components/MarkdownContent.vue'
+import ExerciseAttachments from '@/components/ExerciseAttachments.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -263,9 +264,16 @@ onMounted(load)
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
       <!-- Énoncé -->
-      <div class="lg:col-span-3 bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
-        <h1 class="text-[30px] font-semibold text-navy mb-4">{{ exercise.name }}</h1>
-        <MarkdownContent :source="exercise.content"/>
+      <div class="lg:col-span-3 flex flex-col gap-5">
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+          <h1 class="text-[30px] font-semibold text-navy mb-4">{{ exercise.name }}</h1>
+          <MarkdownContent :source="exercise.content"/>
+        </div>
+
+        <!-- Sans la prop manageable, le composant se limite au téléchargement. -->
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+          <ExerciseAttachments :exercise-id="exercise.id"/>
+        </div>
       </div>
 
       <!-- Dépôt + historique -->

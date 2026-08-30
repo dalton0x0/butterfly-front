@@ -8,6 +8,10 @@
   - POST /api/progress/exercises/{exerciseId}/submissions/{submissionId}/files (multipart "file")
   - GET /api/progress/me/exercises/{exerciseId}/submissions vers Page<ExerciseSubmissionResponse>
   - GET /api/progress/submissions/{submissionId}/files/{fileId} vers fichier binaire
+  - GET /api/exercises/{id}/attachments vers List<ExerciseAttachmentResponse>
+  - POST /api/exercises/{id}/attachments (multipart "file") vers ExerciseAttachmentResponse
+  - GET /api/exercises/{id}/attachments/{attachmentId} vers fichier binaire
+  - DELETE /api/exercises/{id}/attachments/{attachmentId}
 
   La soumission initiale est atomique : le contenu (partie JSON 'data') et au moins un
   fichier partent dans une seule requête multipart. L'endpoint .../files sert ensuite à
@@ -136,5 +140,43 @@ export const exerciseService = {
      */
     async deleteExercise(id) {
         await http.delete(`/exercises/${id}`)
+    },
+
+    /**
+     * Liste les fichiers joints à l'énoncé d'un exercice.
+     * @returns {Promise<Array>} ExerciseAttachmentResponse[] { id, filename, contentType, sizeBytes, uploadedAt }
+     */
+    async getAttachments(exerciseId) {
+        const envelope = await http.get(`/exercises/${exerciseId}/attachments`)
+        return envelope.data
+    },
+
+    /**
+     * Joint un fichier à l'énoncé (ADMIN/TEACHER assigné au bloc).
+     * @returns {Promise<object>} ExerciseAttachmentResponse
+     */
+    async addAttachment(exerciseId, file) {
+        const formData = new FormData()
+        formData.append('file', file)
+        const envelope = await http.post(`/exercises/${exerciseId}/attachments`, formData)
+        return envelope.data
+    },
+
+    /**
+     * Télécharge une pièce jointe.
+     * Réponse binaire : l'intercepteur renvoie directement le Blob (pas d'enveloppe ApiResponse).
+     * @returns {Promise<Blob>}
+     */
+    async downloadAttachment(exerciseId, attachmentId) {
+        return http.get(`/exercises/${exerciseId}/attachments/${attachmentId}`, {
+            responseType: 'blob'
+        })
+    },
+
+    /**
+     * Supprime une pièce jointe.
+     */
+    async deleteAttachment(exerciseId, attachmentId) {
+        await http.delete(`/exercises/${exerciseId}/attachments/${attachmentId}`)
     }
 }

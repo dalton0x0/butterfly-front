@@ -12,6 +12,7 @@
 // au back puis la syntaxe ![](url) remplace le jeton posé à l'endroit du curseur.
 import {computed, nextTick, ref, useId} from 'vue'
 import Icon from './Icon.vue'
+import Modal from './Modal.vue'
 import MarkdownContent from './MarkdownContent.vue'
 import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, validateImageFile} from '@/utils/media'
@@ -37,6 +38,7 @@ const uploadingImage = ref(false)
 const imageError = ref('')
 const dragging = ref(false)
 const fileInput = ref(null)
+const showImportConfirm = ref(false)
 
 // Taille maximale d'un fichier Markdown importé. Le back limite le contenu à
 // 50 000 caractères, on refuse donc bien avant d'atteindre cette borne.
@@ -308,9 +310,16 @@ function openImagePicker() {
 
 function openFilePicker() {
   imageError.value = ''
-  if (props.modelValue.trim() && !window.confirm('Le contenu actuel sera remplacé. Continuer ?')) {
+  // Sur un contenu vide il n'y a rien à écraser, on ouvre directement le sélecteur.
+  if (props.modelValue.trim()) {
+    showImportConfirm.value = true
     return
   }
+  fileInput.value?.click()
+}
+
+function confirmImport() {
+  showImportConfirm.value = false
   fileInput.value?.click()
 }
 
@@ -613,6 +622,31 @@ async function onDrop(event) {
       </div>
     </div>
   </div>
+
+  <Modal v-if="showImportConfirm" @close="showImportConfirm = false">
+    <div class="px-6 pt-6 pb-6 w-full max-w-[420px] text-center">
+      <div class="w-12 h-12 rounded-full bg-warning/12 text-warning flex items-center justify-center mx-auto mb-4">
+        <Icon name="warning" :size="26"/>
+      </div>
+      <h3 class="text-[18px] font-semibold text-navy mb-2">Remplacer le contenu ?</h3>
+      <p class="text-[14px] text-ink-soft mb-5">
+        Le fichier importé écrasera tout ce qui est actuellement dans l'éditeur.
+        Cette action reste annulable tant que vous n'avez pas enregistré.
+      </p>
+      <div class="flex justify-center gap-3">
+        <button type="button"
+                class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
+                @click="showImportConfirm = false">
+          Annuler
+        </button>
+        <button type="button"
+                class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+                @click="confirmImport">
+          Choisir un fichier
+        </button>
+      </div>
+    </div>
+  </Modal>
 
   <p v-if="imageError" class="text-[12px] text-danger mt-1.5">{{ imageError }}</p>
   <p class="text-[12px] text-muted mt-1.5">
