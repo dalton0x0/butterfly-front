@@ -407,6 +407,13 @@ versionnés séparément.
 
 ## Historique des versions
 
+- v1.4.1 : correctifs d'accès et de messages d'erreur. Les pages de mot de passe oublié et de
+  nouveau mot de passe ne sont plus réservées aux visiteurs : le lien reçu par e-mail s'ouvre
+  aussi depuis une session déjà connectée comme celui de vérification d'adresse. Session locale
+  abandonnée après une réinitialisation réussie, le serveur ayant révoqué toutes les sessions.
+  Corps d'erreur du back désormais lu sur les réponses binaires : un téléchargement refusé affiche
+  sa vraie cause au lieu du message générique. Requêtes mises en attente pendant un renouvellement
+  raté rejetées avec la même forme d'erreur que les autres.
 - v1.4.0 : création de contenu et passation de quiz. Éditeur Markdown enrichi (barre de mise en
   forme, raccourcis, continuation des listes, aperçu côte à côte, collage et glisser-déposer
   d'images) sans nouvelle dépendance, la sanitation DOMPurify et le nettoyage des images orphelines
