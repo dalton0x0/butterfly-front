@@ -217,13 +217,13 @@ const routes = [
         path: '/mot-de-passe-oublie',
         name: 'forgot-password',
         component: () => import('@/views/ForgotPasswordView.vue'),
-        meta: {layout: 'auth', guestOnly: true}
+        meta: {layout: 'auth'}
     },
     {
         path: '/nouveau-mot-de-passe',
         name: 'reset-password',
         component: () => import('@/views/ResetPasswordView.vue'),
-        meta: {layout: 'auth', guestOnly: true}
+        meta: {layout: 'auth'}
     },
     {
         path: '/verification-email',
