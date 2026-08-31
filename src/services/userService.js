@@ -117,5 +117,33 @@ export const userService = {
     async getUserOverview(userId) {
         const envelope = await http.get(`/progress/users/${userId}/overview`)
         return envelope.data
+    },
+
+    /**
+     * Historique complet des tentatives de quiz d'un apprenant (réservé au staff).
+     * L'aperçu ne porte que les dernières activités, cet appel donne tout l'historique.
+     * @returns {Promise<object>} page normalisée de QuizAttemptResponse
+     */
+    async getUserQuizAttempts(userId, {page = 0, size = 50, sort} = {}) {
+        const envelope = await http.get(`/progress/users/${userId}/quizzes`, {
+            params: buildPageParams({page, size, sort})
+        })
+        return normalizePage(envelope.data)
+    },
+
+    /**
+     * Progressions de cours d'un apprenant (réservé au staff).
+     * @param {number} userId
+     * @param {{ status?: string, page?: number, size?: number, sort?: string }} options
+     *        status : NOT_STARTED, IN_PROGRESS ou COMPLETED
+     * @returns {Promise<object>} page normalisée de CourseProgressResponse
+     */
+    async getUserCourseProgress(userId, {status, page = 0, size = 50, sort} = {}) {
+        const params = {...buildPageParams({page, size, sort})}
+        if (status) {
+            params.status = status
+        }
+        const envelope = await http.get(`/progress/users/${userId}/courses`, {params})
+        return normalizePage(envelope.data)
     }
 }
