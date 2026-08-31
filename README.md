@@ -4,7 +4,7 @@ Interface web de la plateforme de gestion de l'apprentissage (LMS) Butterfly. Ap
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
-Version : 1.4.0
+Version : 1.5.0
 
 ---
 
@@ -407,6 +407,12 @@ versionnés séparément.
 
 ## Historique des versions
 
+- v1.5.0 : suivi détaillé des apprenants. Nouveau panneau à trois onglets sur les fiches
+  apprenant du formateur et de l'administrateur avec l'historique complet des cours, des
+  exercices et des tentatives de quiz. Il complète l'activité récente qui ne montre que les
+  dernières entrées. Composant unique partagé par les deux vues plutôt qu'un gabarit recopié.
+  L'onglet exercices s'appuie sur l'endpoint de la file de correction qui restreint un
+  formateur aux exercices de ses propres blocs contrairement aux deux autres onglets.
 - v1.4.1 : correctifs d'accès et de messages d'erreur. Les pages de mot de passe oublié et de
   nouveau mot de passe ne sont plus réservées aux visiteurs : le lien reçu par e-mail s'ouvre
   aussi depuis une session déjà connectée comme celui de vérification d'adresse. Session locale
