@@ -93,7 +93,8 @@ http.interceptors.response.use(
             // throw plutôt que Promise.reject : dans une fonction async, la valeur levée
             // est déjà enveloppée dans une promesse rejetée. Le résultat est identique
             // pour l'appelant, avec une intention plus lisible.
-            throw normalizeError(error)
+            // L'await est nécessaire depuis que normalizeError lit les corps binaires.
+            throw await normalizeError(error)
         }
 
         // Un refresh est déjà en cours : on patiente puis on rejoue la requête.
@@ -132,7 +133,11 @@ http.interceptors.response.use(
             return http(original)
         } catch (refreshError) {
             // Le refresh a échoué : la session est définitivement expirée.
-            flushQueue(refreshError, null)
+            // L'erreur est normalisée avant d'être diffusée pour que les requêtes mises
+            // en attente reçoivent un ApiError, comme toutes les autres, et non l'erreur
+            // brute d'Axios que leur code appelant ne sait pas lire.
+            const normalized = await normalizeError(refreshError)
+            flushQueue(normalized, null)
             tokenStorage.clear()
             // Redirection vers la page de connexion (rechargement complet volontaire
             // pour repartir d'un état propre). Le motif transmis dans l'URL permet à la
@@ -141,7 +146,7 @@ http.interceptors.response.use(
             if (window.location.pathname !== '/connexion') {
                 window.location.href = '/connexion?motif=session-invalide'
             }
-            throw normalizeError(refreshError)
+            throw normalized
         } finally {
             isRefreshing = false
         }
@@ -153,14 +158,37 @@ http.interceptors.response.use(
  * Récupère le message et les erreurs de validation renvoyés par le back
  * (ErrorResponse) avec un repli générique.
  */
-function normalizeError(error) {
-    const body = error.response?.data
+async function normalizeError(error) {
+    const body = await readErrorBody(error)
     return new ApiError({
         status: error.response?.status ?? 0,
         message: body?.message || 'Une erreur est survenue. Veuillez réessayer.',
         validationErrors: body?.validationErrors || null,
         cause: error
     })
+}
+
+/**
+ * Extrait le corps d'erreur du back quel que soit le type de réponse demandé.
+ *
+ * Sur un téléchargement, la requête porte responseType 'blob' : Axios applique ce type
+ * à la réponse d'erreur aussi, alors que le back y renvoie du JSON. Sans cette lecture,
+ * le corps reste un Blob, message et validationErrors valent undefined et l'utilisateur
+ * reçoit le message générique à la place de la vraie cause (403, 404).
+ *
+ * Un Blob illisible ou non JSON n'est pas une erreur : on rend null et l'appelant
+ * retombe sur le message générique.
+ */
+async function readErrorBody(error) {
+    const data = error.response?.data
+    if (typeof Blob !== 'undefined' && data instanceof Blob) {
+        try {
+            return JSON.parse(await data.text())
+        } catch {
+            return null
+        }
+    }
+    return data
 }
 
 export default http
