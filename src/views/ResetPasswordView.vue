@@ -1,13 +1,16 @@
 <script setup>
 // Définition d'un nouveau mot de passe à partir du lien reçu par e-mail.
 import {computed, reactive, ref} from 'vue'
-import {useRoute} from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {authService} from '@/services/authService'
+import {useAuthStore} from '@/stores/auth'
 import {mapBackendError, validateMatch, validatePassword} from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
 import LogoIcon from '@/components/LogoIcon.vue'
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
 
 // Le jeton est lu dans l'URL, puisque c'est ainsi que le lien de l'e-mail le transmet,
 // mais il repart dans le corps de la requête : une URL se retrouve dans les journaux
@@ -46,6 +49,13 @@ async function handleSubmit() {
       confirmPassword: form.confirmPassword
     })
     succeeded.value = true
+
+    // Le serveur vient de révoquer toutes les sessions. Si la personne était connectée
+    // sur cet appareil, on abandonne les jetons locaux tout de suite plutôt que
+    // d'attendre le 401 de la prochaine requête, qui afficherait une erreur obscure.
+    if (auth.isAuthenticated) {
+      auth.clearTokens()
+    }
   } catch (err) {
     const {fieldErrors, globalError} = mapBackendError(err, {
       knownFields: ['newPassword', 'confirmPassword']
@@ -61,6 +71,18 @@ async function handleSubmit() {
     loading.value = false
   }
 }
+
+/**
+ * Renvoie vers la connexion en repartant d'un état propre.
+ * <p>
+ * Un simple lien ne suffirait pas : le profil resterait en mémoire, la garde de route
+ * considérerait la personne comme connectée et la renverrait au tableau de bord, où
+ * chaque appel échouerait faute de jetons.
+ */
+async function goToLogin() {
+  await auth.logout()
+  router.push({name: 'login'})
+}
 </script>
 
 <template>
@@ -75,10 +97,11 @@ async function handleSubmit() {
         Votre mot de passe a bien été enregistré. Par sécurité, toutes vos sessions ont été
         déconnectées, y compris sur vos autres appareils.
       </p>
-      <RouterLink to="/connexion"
-                  class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity">
+      <button type="button"
+              @click="goToLogin"
+              class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity">
         Se connecter
-      </RouterLink>
+      </button>
     </template>
 
     <template v-else-if="!token">
