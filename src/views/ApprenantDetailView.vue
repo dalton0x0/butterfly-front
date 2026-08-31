@@ -11,6 +11,7 @@ import Breadcrumb from '@/components/Breadcrumb.vue'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
+import LearnerProgressDetail from '@/components/LearnerProgressDetail.vue'
 
 const route = useRoute()
 
@@ -146,7 +147,7 @@ onMounted(load)
     </div>
 
     <!-- Activité récente -->
-    <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
+    <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 mb-6">
       <h2 class="text-[17px] font-semibold text-ink mb-4">Activité récente</h2>
       <p v-if="recentActivity.length === 0" class="text-[14px] text-muted">Aucune activité récente.</p>
       <ul v-else>
@@ -164,5 +165,8 @@ onMounted(load)
         </li>
       </ul>
     </div>
+
+    <!-- Détail complet, au delà des dernières activités portées par l'aperçu -->
+    <LearnerProgressDetail :user-id="userId"/>
   </template>
 </template>
