@@ -11,8 +11,11 @@ RUN npm ci
 
 COPY . .
 
-# Adresse relative : nginx réachemine /api vers le backend, une seule origine.
-ENV VITE_API_URL=/api
+# Adresse relative par défaut : nginx réachemine /api vers le backend, une seule
+# origine. Exposée en argument comme les autres variables Vite pour permettre un
+# build pointant vers une API hébergée ailleurs sans modifier ce fichier.
+ARG VITE_API_URL=/api
+ENV VITE_API_URL=${VITE_API_URL}
 
 # Nom et slogan affichés, surchargeables au build (le .env local est dockerignoré).
 ARG VITE_APP_NAME=Butterfly
