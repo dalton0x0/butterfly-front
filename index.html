@@ -5,9 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Butterfly</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+
+    <!--
+      Styles de l'indicateur de chargement écrits ici et non dans une feuille
+      externe. Le but est justement de s'afficher avant que la moindre ressource
+      ne soit arrivée, feuille de style de l'application comprise.
+    -->
+    <style>
+        body {
+            margin: 0;
+            background-color: #f7f9ff;
+        }
+
+        #app-loader {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #app-loader span {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e5eaf2;
+            border-top-color: #0047ab;
+            border-radius: 50%;
+            animation: app-loader-spin 0.8s linear infinite;
+        }
+
+        @keyframes app-loader-spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Respect de la préference de mouvement réduit comme dans style.css. */
+        @media (prefers-reduced-motion: reduce) {
+            #app-loader span {
+                animation: none;
+                border-top-color: #e5eaf2;
+            }
+        }
+    </style>
 </head>
 <body>
-<div id="app"></div>
+<!--
+  Indicateur de chargement affiché pendant que le navigateur télécharge et
+  execute le bundle. Vue remplace tout le contenu de #app au montage, ce bloc
+  disparait donc de lui-meme sans code de nettoyage.
+-->
+<div id="app">
+    <div id="app-loader" role="status" aria-label="Chargement en cours">
+        <span></span>
+    </div>
+</div>
 <script type="module" src="/src/main.js"></script>
 </body>
 </html>
