@@ -4,7 +4,7 @@ Interface web de la plateforme de gestion de l'apprentissage (LMS) Butterfly. Ap
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
-Version : 1.5.0
+Version : 1.6.0
 
 ---
 
@@ -56,8 +56,11 @@ serveur, jamais présumé côté client.
 | marked + highlight.js | 18 / 11 | Rendu Markdown des contenus de cours          |
 | DOMPurify             | 3.4     | Assainissement du HTML rendu (anti-XSS)       |
 
-Les icônes (Material Symbols Outlined) et la police Inter sont chargées côté page. La palette
-« Cobalt sky » est définie dans `src/style.css`.
+Les polices sont hébergées par l'application et livrées dans le bundle : Inter et Fira Code via
+`@fontsource-variable`, les icônes via `material-symbols`. Elles étaient auparavant chargées
+depuis Google Fonts. Les rapatrier supprime une dépendance externe au premier rendu, permet un
+fonctionnement sur un réseau sans accès Internet et évite de transmettre l'adresse IP des
+utilisateurs à un tiers. La palette « Cobalt sky » est définie dans `src/style.css`.
 
 ## Fonctionnalités
 
@@ -140,6 +143,11 @@ un jeton de rafraîchissement de longue durée, avec rotation à chaque renouvel
   code 401, tente un rafraîchissement puis rejoue la requête d'origine. Si plusieurs requêtes
   échouent en même temps, un seul rafraîchissement est lancé : les autres patientent dans une file
   d'attente puis sont rejouées avec le nouveau jeton, ce qui évite les rafraîchissements concurrents.
+  Cette file ne protège que l'onglet courant : un verrou `navigator.locks` sérialise l'appel entre
+  les onglets ouverts, faute de quoi deux onglets présenteraient le même jeton de rafraîchissement,
+  le second serait vu comme un rejeu et le backend révoquerait toutes les sessions. Le jeton est
+  relu après obtention du verrou, un verrou seul ne disant rien de ce qui s'est passé pendant
+  l'attente.
 - `services/tokenStorage.js` : persistance des jetons. Selon l'option « Se souvenir de moi », ils
   sont stockés dans le `localStorage` (la session survit à la fermeture du navigateur) ou dans le
   `sessionStorage`.
@@ -158,6 +166,10 @@ le serveur la déduit du jeton présenté, seule source qui ne puisse pas être 
 Les erreurs remontées par la couche HTTP sont des instances d'`ApiError`, une classe étendant
 `Error`. Elles portent donc une pile d'appels exploitable fonctionnent avec `instanceof` et
 s'affichent correctement dans la console, ce qu'un objet littéral ne permettait pas.
+
+Quand la session est définitivement perdue, la redirection vers la connexion conserve la page en
+cours dans le paramètre `redirect`, celui-là même que la garde de navigation utilise déjà. Une
+reconnexion ramène donc l'utilisateur là où il travaillait plutôt que sur le tableau de bord.
 
 ## Parcours e-mail
 
@@ -255,6 +267,12 @@ cohérence visuelle entre les trois espaces.
 | background   | #F7F9FF | fond de page              |
 | surface      | #FFFFFF | cartes                    |
 
+Un indicateur de chargement est écrit en CSS directement dans le `<head>` de `index.html` et son
+balisage à l'intérieur de `<div id="app">`. Une application à page unique ne peut rien peindre
+avant le montage de Vue : le serveur ne renvoie qu'un conteneur vide. L'indicateur remplit cet
+intervalle. Il n'a pas besoin d'être retiré puisque Vue remplace le contenu de son élément racine
+au montage, ce qui écarte toute désynchronisation entre montage et nettoyage.
+
 ## Accessibilité et qualité
 
 ### Étiquettes de formulaire
@@ -283,6 +301,10 @@ Les signalements SonarQube ont été traités par lots :
 - **await de premier niveau dans une vue** : la suggestion transformerait le composant en composant
   asynchrone qui exigerait alors un `<Suspense>` parent pour être monté. La correction retenue est
   `onMounted` qui satisfait la règle sans casser l'écran,
+- **await de premier niveau dans le point d'entrée** : la règle inverse qui pousse à remplacer une
+  chaîne de promesse par une attente directe. L'appliquer ici rend le chunk d'entrée asynchrone et
+  provoque un interblocage avec les vues chargées à la demande (voir « Cible de compilation »). Le
+  signalement est neutralisé par un `NOSONAR` accompagné du motif, jamais seul,
 - **groupement sémantique des listes d'options** : écart relevé en revue et non signalé par l'outil,
   reporté avec la refonte des composants de formulaire.
 
@@ -292,9 +314,16 @@ règle, puis choisir le remède adapté, vaut mieux que l'appliquer mécaniqueme
 
 ### Cible de compilation
 
-`build.target` est fixé à `es2022` dans `vite.config.js`, l'attente de premier niveau utilisée dans
-le point d'entrée n'étant pas transpilable. Conséquence assumée : les navigateurs antérieurs à
-Chrome 89, Firefox 89, Safari 15 et Edge 89, tous sortis en 2021, ne sont plus pris en charge.
+`build.target` est fixé à `es2022` dans `vite.config.js`. Conséquence assumée : les navigateurs
+antérieurs à Chrome 89, Firefox 89, Safari 15 et Edge 89, tous sortis en 2021 ne sont plus pris
+en charge.
+
+Ce réglage venait à l'origine d'une attente de premier niveau dans le point d'entrée, non
+transpilable. Elle a été retirée en 1.6.0 : elle rendait le chunk d'entrée asynchrone, or les vues
+chargées à la demande l'importent et ne pouvaient donc pas terminer leur évaluation tant qu'il
+restait suspendu. Le routeur attendant lui-même la résolution de ces vues, les trois s'attendaient
+mutuellement et l'application ne se montait jamais. Chromium et Gecko bloquaient, WebKit passait.
+La cible reste à `es2022` sans plus dépendre de ce cas.
 
 ## Structure du projet
 
@@ -407,6 +436,19 @@ versionnés séparément.
 
 ## Historique des versions
 
+- v1.6.0 : robustesse du démarrage et de la session. L'attente de premier niveau du point d'entrée
+  rendait le chunk partagé asynchrone et bloquait les vues chargées à la demande qui l'importent :
+  page blanche sur Chromium et Gecko, WebKit passant. Le montage repasse par une chaîne de promesse.
+  Polices rapatriées dans le bundle, l'application ne dépend plus d'un domaine externe pour
+  s'afficher correctement et fonctionne sans accès Internet. Indicateur de chargement affiché
+  pendant l'amorçage, l'écran n'est plus vide entre l'arrivée du HTML et le montage. Renouvellement
+  de jeton sérialisé entre onglets par `navigator.locks` : deux onglets qui renouvelaient ensemble
+  déclenchaient la détection de rejeu du backend et fermaient toutes les sessions. Destination
+  conservée à l'expiration de session. Échecs de chargement du profil désormais journalisés, le
+  repli sur le profil minimal était silencieux alors qu'il prive les écrans de `id` et de
+  `emailVerified`. Configuration nginx : compression du bundle rétablie quelle que soit la table
+  MIME de l'image, en-tête de cache posé une seule fois sur les assets, nom du backend réinterrogé
+  auprès du DNS de Docker au lieu d'être figé au démarrage.
 - v1.5.0 : suivi détaillé des apprenants. Nouveau panneau à trois onglets sur les fiches
   apprenant du formateur et de l'administrateur avec l'historique complet des cours, des
   exercices et des tentatives de quiz. Il complète l'activité récente qui ne montre que les
