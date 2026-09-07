@@ -89,8 +89,11 @@ export const useAuthStore = defineStore('auth', () => {
         user.value = mapAuthResponse(authResponse)
         try {
             user.value = mapUser(await authService.fetchProfile())
-        } catch {
-            // On garde le profil minimal : la session reste valide.
+        } catch (error) {
+            // On garde le profil minimal : la session reste valide. Mais ce profil ne
+            // porte ni id, ni emailVerified, ni promotion. Les écrans qui les lisent
+            // se dégradent alors sans le moindre signal, d'où cet avertissement.
+            console.warn('[auth] profil complet indisponible, profil minimal conservé', error)
         }
         initialized.value = true
     }
@@ -160,7 +163,8 @@ export const useAuthStore = defineStore('auth', () => {
         if (refreshToken) {
             try {
                 user.value = mapUser(await authService.fetchProfile())
-            } catch {
+            } catch (error) {
+                console.warn('[auth] restauration de session impossible', error)
                 tokenStorage.clear()
                 user.value = null
             }

@@ -19,6 +19,13 @@ import {tokenStorage} from './tokenStorage'
 
 const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
+// Sans VITE_API_URL, le build produit une application qui interroge le poste de
+// chaque visiteur. L'erreur ne se voit qu'une fois déployée, d'où cet avertissement
+// au chargement du module.
+if (!import.meta.env.VITE_API_URL) {
+    console.warn(`[http] VITE_API_URL absente au build, repli sur ${baseURL}`)
+}
+
 // Instance principale utilisée par tous les services métier.
 const http = axios.create({
     baseURL,
@@ -64,15 +71,94 @@ function isAuthEndpoint(config) {
 let isRefreshing = false
 let pendingQueue = []
 
-function flushQueue(error, token = null) {
+function flushQueue(error) {
     pendingQueue.forEach((promise) => {
         if (error) {
             promise.reject(error)
         } else {
-            promise.resolve(token)
+            promise.resolve()
         }
     })
     pendingQueue = []
+}
+
+// Nom du verrou partagé par tous les onglets de la même origine.
+const REFRESH_LOCK = 'butterfly.token-refresh'
+
+/**
+ * Exécute une opération en exclusion mutuelle entre les onglets ouverts.
+ *
+ * isRefreshing ne protège que l'onglet courant. Sans verrou partagé, deux onglets
+ * dont le jeton d'accès expire en même temps appellent /auth/refresh avec le même
+ * refresh token. La rotation côté back invalide le premier jeton, le second onglet
+ * présente donc un jeton déjà consommé, le back y voit une réutilisation et révoque
+ * toutes les sessions. L'utilisateur est déconnecté partout sans avoir rien fait.
+ *
+ * L'API Web Locks n'existe pas sur les navigateurs anciens. On exécute alors
+ * l'opération sans verrou : la protection dans l'onglet reste active et le
+ * comportement redevient celui d'avant.
+ */
+function withRefreshLock(operation) {
+    if (typeof navigator !== 'undefined' && navigator.locks) {
+        return navigator.locks.request(REFRESH_LOCK, operation)
+    }
+    return operation()
+}
+
+/**
+ * Renouvelle le couple de jetons et le range dans tokenStorage.
+ *
+ * @param {string} previousRefreshToken jeton lu avant l'attente du verrou
+ */
+async function refreshTokens(previousRefreshToken) {
+    const currentRefreshToken = tokenStorage.getRefresh()
+
+    // Un autre onglet a pu faire tourner le jeton pendant l'attente du verrou.
+    // Le travail est déjà fait, refaire l'appel déclencherait la détection de
+    // réutilisation que ce verrou sert précisément à éviter.
+    if (currentRefreshToken && currentRefreshToken !== previousRefreshToken) {
+        return
+    }
+
+    // Un autre onglet a échoué et nettoyé le stockage : la session est perdue.
+    if (!currentRefreshToken) {
+        throw new ApiError({
+            status: 401,
+            message: 'Votre session a expiré. Veuillez vous reconnecter.'
+        })
+    }
+
+    const {data: envelope} = await refreshClient.post('/auth/refresh', {
+        refreshToken: currentRefreshToken
+    })
+    const payload = envelope.data
+
+    // Rotation : on enregistre le nouveau couple (access + refresh) ainsi que le
+    // nouvel identifiant de session. La rotation révoque l'ancien refresh token et
+    // en crée un nouveau : l'identifiant renvoyé ici remplace donc le précédent,
+    // qui ne correspond plus à aucune session active. Sans cette mise à jour, la
+    // vue profil cesse de reconnaître l'appareil courant après le premier refresh,
+    // et la déconnexion des autres appareils révoque aussi la session en cours.
+    tokenStorage.set(
+        payload.accessToken,
+        payload.refreshToken,
+        undefined,
+        payload.sessionId
+    )
+}
+
+/**
+ * Renvoie l'utilisateur vers la connexion en conservant la page en cours, pour l'y
+ * ramener une fois reconnecté. Le rechargement complet est volontaire : il repart
+ * d'un état applicatif propre.
+ */
+function redirectToLogin() {
+    if (window.location.pathname === '/connexion') {
+        return
+    }
+    const target = window.location.pathname + window.location.search
+    const params = new URLSearchParams({motif: 'session-invalide', redirect: target})
+    window.location.href = `/connexion?${params}`
 }
 
 // Intercepteur de réponse : déballage + refresh sur 401
@@ -97,11 +183,13 @@ http.interceptors.response.use(
             throw await normalizeError(error)
         }
 
-        // Un refresh est déjà en cours : on patiente puis on rejoue la requête.
+        // Un refresh est déjà en cours dans cet onglet : on patiente puis on rejoue
+        // la requête. Le jeton n'est pas transmis ici, l'intercepteur de requête le
+        // relit dans tokenStorage au moment du rejeu.
         if (isRefreshing) {
             return new Promise((resolve, reject) => {
                 pendingQueue.push({resolve, reject})
-            }).then((newToken) => {
+            }).then(() => {
                 original._retry = true
                 original.headers.Authorization = `Bearer ${newToken}`
                 return http(original)
@@ -112,40 +200,23 @@ http.interceptors.response.use(
         isRefreshing = true
 
         try {
-            const {data: envelope} = await refreshClient.post('/auth/refresh', {refreshToken})
-            const payload = envelope.data
-
-            // Rotation : on enregistre le nouveau couple (access + refresh) ainsi que le
-            // nouvel identifiant de session. La rotation révoque l'ancien refresh token et
-            // en crée un nouveau : l'identifiant renvoyé ici remplace donc le précédent,
-            // qui ne correspond plus à aucune session active. Sans cette mise à jour, la
-            // vue profil cesse de reconnaître l'appareil courant après le premier refresh,
-            // et la déconnexion des autres appareils révoque aussi la session en cours.
-            tokenStorage.set(
-                payload.accessToken,
-                payload.refreshToken,
-                undefined,
-                payload.sessionId
-            )
-
-            flushQueue(null, payload.accessToken)
-            original.headers.Authorization = `Bearer ${payload.accessToken}`
+            await withRefreshLock(() => refreshTokens(refreshToken))
+            flushQueue(null)
             return http(original)
         } catch (refreshError) {
             // Le refresh a échoué : la session est définitivement expirée.
             // L'erreur est normalisée avant d'être diffusée pour que les requêtes mises
             // en attente reçoivent un ApiError, comme toutes les autres, et non l'erreur
             // brute d'Axios que leur code appelant ne sait pas lire.
-            const normalized = await normalizeError(refreshError)
-            flushQueue(normalized, null)
+            const normalized = refreshError instanceof ApiError
+                ? refreshError
+                : await normalizeError(refreshError)
+            flushQueue(normalized)
             tokenStorage.clear()
-            // Redirection vers la page de connexion (rechargement complet volontaire
-            // pour repartir d'un état propre). Le motif transmis dans l'URL permet à la
-            // vue de connexion d'expliquer la situation : session expirée naturellement
-            // ou révoquée par mesure de sécurité (rotation, détection de réutilisation).
-            if (window.location.pathname !== '/connexion') {
-                window.location.href = '/connexion?motif=session-invalide'
-            }
+            // Le motif transmis dans l'URL permet à la vue de connexion d'expliquer la
+            // situation : session expirée naturellement ou révoquée par mesure de
+            // sécurité (rotation, détection de réutilisation).
+            redirectToLogin()
             throw normalized
         } finally {
             isRefreshing = false
