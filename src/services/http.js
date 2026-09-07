@@ -191,7 +191,6 @@ http.interceptors.response.use(
                 pendingQueue.push({resolve, reject})
             }).then(() => {
                 original._retry = true
-                original.headers.Authorization = `Bearer ${newToken}`
                 return http(original)
             })
         }
