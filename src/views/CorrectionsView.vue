@@ -182,15 +182,27 @@ async function reject() {
   }
 }
 
+/**
+ * Charge la correspondance identifiant vers nom des apprenants.
+ *
+ * Appelée une seule fois au montage et non à chaque changement d'onglet : la liste des
+ * apprenants ne varie pas pendant la session de correction, la retélécharger à chaque
+ * bascule était du trafic pur.
+ *
+ * Solution provisoire : la file de correction devrait porter le nom de l'apprenant dans
+ * sa propre réponse, comme elle porte déjà son identifiant. Tant que ce n'est pas le
+ * cas, un apprenant absent de cette page apparaît sous la forme "Apprenant #12".
+ */
+async function loadUserNames() {
+  const users = await userService.getUsers().catch(() => ({items: []}))
+  usersMap.value = new Map(users.items.map((u) => [u.id, `${u.firstName} ${u.lastName}`]))
+}
+
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [progress, users] = await Promise.all([
-      correctionService.listProgress({status: currentTab.value}),
-      userService.getUsers().catch(() => ({items: []}))
-    ])
-    usersMap.value = new Map(users.items.map((u) => [u.id, `${u.firstName} ${u.lastName}`]))
+    const progress = await correctionService.listProgress({status: currentTab.value})
     queue.value = progress.items
   } catch (err) {
     error.value = err.message || 'Impossible de charger les corrections.'
@@ -199,7 +211,9 @@ async function load() {
   }
 }
 
-onMounted(load)
+onMounted(async () => {
+  await Promise.all([loadUserNames(), load()])
+})
 </script>
 
 <template>
