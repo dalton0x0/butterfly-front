@@ -10,6 +10,7 @@ import {useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {exerciseService} from '@/services/exerciseService'
 import {ALLOWED_UPLOAD_ACCEPT, formatFileSize, validateUploadFile} from '@/utils/upload'
+import {saveBlobAs} from '@/utils/download'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -221,14 +222,7 @@ async function handleSubmit() {
 async function download(submission, file) {
   try {
     const blob = await exerciseService.downloadFile(submission.id, file.id)
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = file.originalFilename || 'fichier'
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
+    saveBlobAs(blob, file.originalFilename)
   } catch {
     submitError.value = 'Le téléchargement du fichier a échoué.'
   }

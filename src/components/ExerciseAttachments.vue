@@ -13,7 +13,8 @@ import {computed, onMounted, ref, watch} from 'vue'
 import {exerciseService} from '@/services/exerciseService'
 import {formatDate} from '@/utils/date'
 import {formatFileSize} from '@/utils/upload'
-import {ALLOWED_ATTACHMENT_ACCEPT, attachmentIcon, saveBlobAs, validateAttachmentFile} from '@/utils/attachment'
+import {ALLOWED_ATTACHMENT_ACCEPT, attachmentIcon, validateAttachmentFile} from '@/utils/attachment'
+import {saveBlobAs} from '@/utils/download'
 import Icon from './Icon.vue'
 import Modal from './Modal.vue'
 
@@ -50,7 +51,7 @@ defineExpose({
       return ''
     }
     const failures = []
-    for (const item of [...pending.value]) {
+    for (const item of pending.value) {
       try {
         await exerciseService.addAttachment(exerciseId, item.file)
         pending.value = pending.value.filter((entry) => entry.key !== item.key)

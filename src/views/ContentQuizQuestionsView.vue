@@ -11,6 +11,7 @@ import Modal from '@/components/Modal.vue'
 import Toast from '@/components/Toast.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import {IMPORT_TEMPLATE, parseQuestionsFile, validateImportFile} from '@/utils/quizImport'
+import {saveBlobAs} from '@/utils/download'
 
 const route = useRoute()
 const quizId = Number(route.params.id)
@@ -121,13 +122,7 @@ function pickImportFile() {
 // Propose le modèle en téléchargement, sans passer par le serveur.
 function downloadTemplate() {
   const blob = new Blob([IMPORT_TEMPLATE], {type: 'application/json'})
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = 'modele-questions.json'
-  link.click()
-  // Sans cette libération, le blob resterait en mémoire jusqu'au rechargement.
-  URL.revokeObjectURL(url)
+  saveBlobAs(blob, 'modele-questions.json')
 }
 
 async function onImportFileSelected(event) {

@@ -84,21 +84,3 @@ export function attachmentIcon(contentType) {
     }
     return 'description'
 }
-
-/**
- * Déclenche le téléchargement d'un blob sous un nom donné.
- * Le fichier arrive par l'API avec le jeton d'authentification, on ne peut donc pas
- * se contenter d'un lien direct vers l'URL.
- *
- * @param {Blob} blob le contenu reçu
- * @param {string} filename le nom à présenter
- */
-export function saveBlobAs(blob, filename) {
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = filename || 'fichier'
-    link.click()
-    // Sans cette libération, le blob resterait en mémoire jusqu'au rechargement.
-    URL.revokeObjectURL(url)
-}

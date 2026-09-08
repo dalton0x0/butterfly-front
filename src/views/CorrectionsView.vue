@@ -9,6 +9,7 @@ import {correctionService} from '@/services/correctionService'
 import {userService} from '@/services/userService'
 import {exerciseService} from '@/services/exerciseService'
 import {formatFileSize} from '@/utils/upload'
+import {saveBlobAs} from '@/utils/download'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 
@@ -117,14 +118,7 @@ async function select(item) {
 async function download(submission, file) {
   try {
     const blob = await exerciseService.downloadFile(submission.id, file.id)
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = file.originalFilename || 'fichier'
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
+    saveBlobAs(blob, file.originalFilename)
   } catch {
     detailError.value = 'Le téléchargement du fichier a échoué.'
   }
