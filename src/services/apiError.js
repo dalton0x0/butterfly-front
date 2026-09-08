@@ -38,4 +38,16 @@ export class ApiError extends Error {
     get isValidationError() {
         return this.status === 400 && this.validationErrors !== null
     }
+
+    /**
+     * Indique un accès refusé : la session est valide, mais la ressource visée sort du
+     * périmètre de l'utilisateur (portée pédagogique d'un formateur, action réservée à
+     * l'administrateur).
+     *
+     * À distinguer d'une panne : réessayer ne changera rien, l'interface doit donc
+     * proposer autre chose plutôt qu'un simple message d'erreur.
+     */
+    get isForbidden() {
+        return this.status === 403
+    }
 }

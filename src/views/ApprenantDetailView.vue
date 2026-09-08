@@ -2,10 +2,11 @@
 // Espace formateur : page détail d'un apprenant. En-tête (identité, promotion,
 // statut), indicateurs de progression, note moyenne et activité récente.
 // GET /api/users/{id} pour l'identité, GET /api/progress/users/{id}/overview
-// pour la progression (lecture seule, accessible à tout le staff).
+// pour la progression. Les deux appliquent la portée pédagogique : un formateur
+// n'accède qu'aux apprenants avec qui il partage au moins un bloc.
 import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
-import {useRoute} from 'vue-router'
+import {RouterLink, useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Icon from '@/components/Icon.vue'
@@ -17,6 +18,9 @@ const route = useRoute()
 
 const loading = ref(true)
 const error = ref('')
+// Refus de portée plutôt que panne : réessayer ne changera rien, on propose donc
+// le retour à la liste au lieu d'un message d'erreur générique.
+const forbidden = ref(false)
 const learner = ref(null)
 const overview = ref(null)
 
@@ -83,6 +87,7 @@ const recentActivity = computed(() => {
 async function load() {
   loading.value = true
   error.value = ''
+  forbidden.value = false
   try {
     const [user, ov] = await Promise.all([
       userService.getUser(userId.value),
@@ -91,7 +96,11 @@ async function load() {
     learner.value = user
     overview.value = ov
   } catch (err) {
-    error.value = err.message || "Impossible de charger l'apprenant."
+    if (err?.isForbidden) {
+      forbidden.value = true
+    } else {
+      error.value = err.message || "Impossible de charger l'apprenant."
+    }
   } finally {
     loading.value = false
   }
@@ -104,6 +113,22 @@ onMounted(load)
   <Breadcrumb :items="[{ label: 'Apprenants', to: '/formateur/apprenants' }, { label: fullName || 'Apprenant' }]"/>
 
   <div v-if="loading" class="text-[15px] text-muted py-10 text-center">Chargement de l'apprenant...</div>
+
+  <div v-else-if="forbidden"
+       class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-8 text-center">
+    <Icon name="lock" :size="40" class="text-muted mb-3"/>
+    <h1 class="text-[20px] font-semibold text-navy mb-2">Apprenant hors de votre périmètre</h1>
+    <p class="text-[15px] text-ink-soft mb-5">
+      Vous ne suivez cet apprenant sur aucun de vos blocs. Son dossier n'est consultable
+      que par les formateurs de ses blocs et par un administrateur.
+    </p>
+    <RouterLink to="/formateur/apprenants"
+                class="inline-flex items-center gap-1.5 text-[14px] text-primary font-semibold hover:underline">
+      <Icon name="arrow_back" :size="18"/>
+      Revenir à la liste des apprenants
+    </RouterLink>
+  </div>
+
   <div v-else-if="error" class="text-[15px] text-danger bg-danger/8 rounded-[10px] px-4 py-3">{{ error }}</div>
 
   <template v-else-if="learner">

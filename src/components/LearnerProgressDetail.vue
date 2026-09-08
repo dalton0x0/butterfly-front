@@ -30,6 +30,7 @@ const TABS = [
 const tab = ref('courses')
 const loading = ref(true)
 const error = ref('')
+const forbidden = ref(false)
 const courses = ref(null)
 const exercises = ref(null)
 const quizzes = ref(null)
@@ -72,6 +73,7 @@ function quizStatus(attempt) {
 async function load() {
   loading.value = true
   error.value = ''
+  forbidden.value = false
   try {
     const [coursePage, exercisePage, quizPage] = await Promise.all([
       userService.getUserCourseProgress(props.userId, {size: PAGE_SIZE}),
@@ -82,7 +84,13 @@ async function load() {
     exercises.value = exercisePage
     quizzes.value = quizPage
   } catch (err) {
-    error.value = err.message || 'Impossible de charger le détail de progression.'
+    // Refus de portée : le composant s'efface au lieu d'afficher une erreur rouge,
+    // la vue parente portant déjà l'explication.
+    if (err?.isForbidden) {
+      forbidden.value = true
+    } else {
+      error.value = err.message || 'Impossible de charger le détail de progression.'
+    }
   } finally {
     loading.value = false
   }
@@ -101,7 +109,9 @@ onMounted(load)
 </script>
 
 <template>
-  <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
+  <!-- Refus de portée : le bloc disparaît entièrement. La vue parente affiche déjà
+       l'explication, la répéter ici encombrerait l'écran sans rien apprendre. -->
+  <div v-if="!forbidden" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
     <div class="flex items-center gap-2 mb-4" role="tablist">
       <button
         v-for="t in TABS"
