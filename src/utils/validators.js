@@ -13,6 +13,12 @@ const EMAIL_PATTERN = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]{2,}\.[a-zA-Z]{2,}$/
 // Mot de passe : 10 caractères minimum, 1 minuscule, 1 majuscule, 1 chiffre, 1 caractère spécial, sans espace.
 const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])\S{10,}$/
 
+// Borne haute imposée par le back. C'est la limite de l'algorithme BCrypt qui ignore
+// tout ce qui dépasse : au delà, un mot de passe plus long n'apporte aucune sécurité
+// supplémentaire. Sans cette vérification, la jauge afficherait le maximum et le
+// formulaire accepterait une saisie que le serveur refuse ensuite.
+const PASSWORD_MAX_LENGTH = 72
+
 const PASSWORD_MESSAGE =
     'Le mot de passe doit contenir au minimum 10 caractères avec au moins 1 majuscule, 1 minuscule, 1 chiffre et 1 caractère spécial.'
 
@@ -41,6 +47,9 @@ export function validatePassword(value) {
     if (!value) {
         return 'Le mot de passe est obligatoire.'
     }
+    if (value.length > PASSWORD_MAX_LENGTH) {
+        return `Le mot de passe ne doit pas dépasser ${PASSWORD_MAX_LENGTH} caractères.`
+    }
     return PASSWORD_PATTERN.test(value) ? '' : PASSWORD_MESSAGE
 }
 
@@ -59,7 +68,7 @@ export function validateMatch(password, confirmation) {
  * Chaque critère rempli ajoute un point.
  */
 export function passwordStrength(value) {
-    if (!value) {
+    if (!value || value.length > PASSWORD_MAX_LENGTH) {
         return 0
     }
     let score = 0
