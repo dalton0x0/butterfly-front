@@ -31,12 +31,33 @@ export function normalizePage(page) {
 }
 
 /*
+  Nombre maximum d'éléments qu'une page peut contenir.
+
+  Cette valeur reflète PAGE_MAX_SIZE côté serveur (spring.data.web.pageable.max-page-size).
+  Spring rabaisse toute demande supérieure sans erreur ni en-tête : une liste tronquée
+  ressemble alors à une liste complète. Le plafond est donc appliqué ici à la source
+  avec un avertissement pour que le décalage se voie pendant le développement plutôt
+  qu'en production.
+
+  À faire évoluer en même temps que PAGE_MAX_SIZE côté déploiement.
+*/
+export const MAX_PAGE_SIZE = 100
+
+/*
   Construit les paramètres d'URL de pagination attendus par Spring.
   Exemple : buildPageParams({ page: 0, size: 20, sort: 'name,asc' }).
   Rappel : l'index de page commence à 0 côté back.
 */
 export function buildPageParams({page = 0, size = 20, sort} = {}) {
-    const params = {page, size}
+    let effectiveSize = size
+    if (size > MAX_PAGE_SIZE) {
+        console.warn(
+            `[pagination] taille demandée ${size} au dessus du plafond serveur, ramenée à ${MAX_PAGE_SIZE}`
+        )
+        effectiveSize = MAX_PAGE_SIZE
+    }
+
+    const params = {page, size: effectiveSize}
     if (sort) {
         params.sort = sort
     }

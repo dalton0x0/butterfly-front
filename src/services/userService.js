@@ -10,13 +10,13 @@
 */
 
 import http from './http'
-import {buildPageParams, normalizePage} from '@/utils/pagination'
+import {buildPageParams, MAX_PAGE_SIZE, normalizePage} from '@/utils/pagination'
 
 export const userService = {
     /**
      * Liste paginée des utilisateurs (triée par nom côté back).
      */
-    async getUsers({page = 0, size = 200, sort = 'lastName'} = {}) {
+    async getUsers({page = 0, size = MAX_PAGE_SIZE, sort = 'lastName'} = {}) {
         const envelope = await http.get('/users', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },
@@ -33,7 +33,7 @@ export const userService = {
     /**
      * Liste paginée des utilisateurs supprimés logiquement (ADMIN).
      */
-    async getDeletedUsers({page = 0, size = 200, sort} = {}) {
+    async getDeletedUsers({page = 0, size = MAX_PAGE_SIZE, sort} = {}) {
         const envelope = await http.get('/users/deleted', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },

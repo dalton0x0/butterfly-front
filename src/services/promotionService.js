@@ -14,13 +14,13 @@
 */
 
 import http from './http'
-import {buildPageParams, normalizePage} from '@/utils/pagination'
+import {buildPageParams, MAX_PAGE_SIZE, normalizePage} from '@/utils/pagination'
 
 export const promotionService = {
     /**
      * Liste paginée des promotions.
      */
-    async getPromotions({page = 0, size = 200, sort} = {}) {
+    async getPromotions({page = 0, size = MAX_PAGE_SIZE, sort} = {}) {
         const envelope = await http.get('/promos', {params: buildPageParams({page, size, sort})})
         return normalizePage(envelope.data)
     },
