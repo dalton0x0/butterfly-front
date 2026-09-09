@@ -44,6 +44,15 @@ export function normalizePage(page) {
 export const MAX_PAGE_SIZE = 100
 
 /*
+  Taille de page par défaut des listes navigables.
+
+  Elle valait 100, c'est-à-dire le plafond, parce qu'aucun écran ne savait changer de
+  page : demander le maximum était la seule façon d'afficher beaucoup de lignes. Avec la
+  navigation, une page courte se charge plus vite et se lit mieux.
+*/
+export const DEFAULT_PAGE_SIZE = 20
+
+/*
   Construit les paramètres d'URL de pagination attendus par Spring.
   Exemple : buildPageParams({ page: 0, size: 20, sort: 'name,asc' }).
   Rappel : l'index de page commence à 0 côté back.
