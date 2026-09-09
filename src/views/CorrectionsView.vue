@@ -4,13 +4,15 @@
 // Validés / Rejetés : historique en lecture seule, avec la note et le feedback donnés.
 // File : GET /api/progress/exercises?status=... (restreinte aux apprenants du formateur).
 import {computed, onMounted, ref} from 'vue'
+import {usePagedList} from '@/composables/usePagedList'
+import {useDebouncedRef} from '@/composables/useDebouncedRef'
 import {formatDate} from '@/utils/date'
 import {correctionService} from '@/services/correctionService'
-import {userService} from '@/services/userService'
 import {exerciseService} from '@/services/exerciseService'
 import {formatFileSize} from '@/utils/upload'
 import {saveBlobAs} from '@/utils/download'
 import Icon from '@/components/Icon.vue'
+import Pagination from '@/components/Pagination.vue'
 import StatusChip from '@/components/StatusChip.vue'
 
 const TABS = [
@@ -19,14 +21,28 @@ const TABS = [
   {key: 'REJECTED', label: 'Rejetés'}
 ]
 
-const loading = ref(true)
-const error = ref('')
 const reviewSuccess = ref('')
 
 const currentTab = ref('SUBMITTED')
-const queue = ref([])
-const usersMap = ref(new Map())
+// Plus de carte identifiant vers nom : la réponse du serveur porte désormais le nom de
+// l'apprenant sur chaque ligne. L'ancienne solution téléchargeait la liste complète des
+// utilisateurs et devenait fausse dès que celle-ci dépassait une page.
 const search = ref('')
+const debouncedSearch = useDebouncedRef(search)
+
+/*
+  Onglet et recherche sont deux filtres serveur.
+*/
+const filters = computed(() => ({
+  status: currentTab.value,
+  search: debouncedSearch.value.trim() || undefined
+}))
+
+const {items: queue, page, totalPages, totalElements, loading, error, load, goToPage, refresh} = usePagedList(
+  ({page: current, status, search: term}) =>
+    correctionService.listProgress({status, search: term}, {page: current}),
+  {filters: () => filters.value, errorMessage: 'Impossible de charger les corrections.'}
+)
 
 // Détail
 const selected = ref(null)
@@ -45,8 +61,12 @@ const isPending = computed(() => currentTab.value === 'SUBMITTED')
 
 const canReview = computed(() => currentTab.value === 'SUBMITTED' || currentTab.value === 'VALIDATED')
 
-function studentName(userId) {
-  return usersMap.value.get(userId) || `Apprenant #${userId}`
+function studentName(item) {
+  if (!item) {
+    return ''
+  }
+  const name = `${item.userFirstName || ''} ${item.userLastName || ''}`.trim()
+  return name || `Apprenant #${item.userId}`
 }
 
 const STATUS_CHIP = {
@@ -59,18 +79,6 @@ function statusChip(status) {
   return STATUS_CHIP[status] || STATUS_CHIP.SUBMITTED
 }
 
-const filteredQueue = computed(() => {
-  const term = search.value.trim().toLowerCase()
-  if (!term) {
-    return queue.value
-  }
-  return queue.value.filter(
-    (item) =>
-      studentName(item.userId).toLowerCase().includes(term) ||
-      (item.exerciseName || '').toLowerCase().includes(term)
-  )
-})
-
 const sortedSubmissions = computed(() =>
   [...submissions.value].sort((a, b) => (b.attemptNumber ?? 0) - (a.attemptNumber ?? 0))
 )
@@ -82,7 +90,8 @@ const reviewedSubmission = computed(() =>
   sortedSubmissions.value.find((s) => s.reviewedAt) || latestSubmission.value
 )
 
-async function changeTab(key) {
+// L'onglet est un filtre : le composable recharge et revient en page 1 de lui-même.
+function changeTab(key) {
   if (currentTab.value === key) {
     return
   }
@@ -90,7 +99,6 @@ async function changeTab(key) {
   selected.value = null
   submissions.value = []
   reviewSuccess.value = ''
-  await load()
 }
 
 async function select(item) {
@@ -124,18 +132,20 @@ async function download(submission, file) {
   }
 }
 
-function finishReview(verb) {
-  reviewSuccess.value = `Exercice ${verb} pour ${studentName(selected.value.userId)}.`
-  queue.value = queue.value.filter((i) => i.id !== selected.value.id)
+async function finishReview(verb) {
+  reviewSuccess.value = `Exercice ${verb} pour ${studentName(selected.value)}.`
   selected.value = null
   submissions.value = []
+  // Rechargement plutôt que retrait local : la ligne corrigée quitte l'onglet À corriger,
+  // celle qui la suit doit remonter dans la page et le total affiché doit suivre.
+  await refresh()
 }
 
 async function refreshAfterUpdate(message) {
   reviewSuccess.value = message
   selected.value = null
   submissions.value = []
-  await load()
+  await refresh()
 }
 
 async function validate() {
@@ -156,9 +166,9 @@ async function validate() {
       feedback: feedback.value.trim() || null
     })
     if (currentTab.value === 'VALIDATED') {
-      await refreshAfterUpdate(`Note mise à jour pour ${studentName(selected.value.userId)}.`)
+      await refreshAfterUpdate(`Note mise à jour pour ${studentName(selected.value)}.`)
     } else {
-      finishReview('validé')
+      await finishReview('validé')
     }
   } catch (err) {
     actionError.value = err.message || 'La validation a échoué.'
@@ -174,7 +184,7 @@ async function reject() {
     await correctionService.reject(selected.value.exerciseId, selected.value.userId, {
       feedback: feedback.value.trim() || null
     })
-    finishReview('rejeté')
+    await finishReview('rejeté')
   } catch (err) {
     actionError.value = err.message || 'Le rejet a échoué.'
   } finally {
@@ -182,38 +192,7 @@ async function reject() {
   }
 }
 
-/**
- * Charge la correspondance identifiant vers nom des apprenants.
- *
- * Appelée une seule fois au montage et non à chaque changement d'onglet : la liste des
- * apprenants ne varie pas pendant la session de correction, la retélécharger à chaque
- * bascule était du trafic pur.
- *
- * Solution provisoire : la file de correction devrait porter le nom de l'apprenant dans
- * sa propre réponse, comme elle porte déjà son identifiant. Tant que ce n'est pas le
- * cas, un apprenant absent de cette page apparaît sous la forme "Apprenant #12".
- */
-async function loadUserNames() {
-  const users = await userService.getUsers().catch(() => ({items: []}))
-  usersMap.value = new Map(users.items.map((u) => [u.id, `${u.firstName} ${u.lastName}`]))
-}
-
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
-    const progress = await correctionService.listProgress({status: currentTab.value})
-    queue.value = progress.items
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les corrections.'
-  } finally {
-    loading.value = false
-  }
-}
-
-onMounted(async () => {
-  await Promise.all([loadUserNames(), load()])
-})
+onMounted(load)
 </script>
 
 <template>
@@ -242,25 +221,28 @@ onMounted(async () => {
     {{ reviewSuccess }}
   </p>
 
+  <!-- La recherche reste montée pendant le chargement : chaque frappe déclenche une
+       requête, et un champ retiré du DOM à ce moment perdrait le focus. -->
+  <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex flex-wrap gap-3 mb-6">
+    <div class="flex items-center gap-2 flex-1 min-w-[200px] h-10 px-3 border border-input rounded-[10px] bg-white">
+      <Icon name="search" :size="20" class="text-muted"/>
+      <label for="corrections-search" class="sr-only">Rechercher un apprenant ou un exercice</label>
+      <input id="corrections-search" v-model="search"
+             placeholder="Rechercher un apprenant ou un exercice"
+             class="flex-1 outline-none text-[14px] bg-transparent"/>
+    </div>
+  </div>
+
   <div v-if="loading" class="text-[15px] text-muted py-10 text-center">Chargement des corrections...</div>
   <div v-else-if="error" class="text-[15px] text-danger bg-danger/8 rounded-[10px] px-4 py-3">{{ error }}</div>
 
   <template v-else>
-    <!-- Recherche -->
-    <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex flex-wrap gap-3 mb-6">
-      <div class="flex items-center gap-2 flex-1 min-w-[200px] h-10 px-3 border border-input rounded-[10px] bg-white">
-        <Icon name="search" :size="20" class="text-muted"/>
-        <label for="corrections-search" class="sr-only">Rechercher un apprenant ou un exercice</label>
-        <input id="corrections-search" v-model="search"
-               placeholder="Rechercher un apprenant ou un exercice"
-               class="flex-1 outline-none text-[14px] bg-transparent"/>
-      </div>
-    </div>
-
     <!-- File -->
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden mb-6">
-      <p v-if="filteredQueue.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">
-        {{ isPending ? 'Aucune correction en attente.' : 'Aucune correction dans cet historique.' }}
+      <p v-if="queue.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">
+        <template v-if="filters.search">Aucun résultat pour cette recherche.</template>
+        <template v-else-if="isPending">Aucune correction en attente.</template>
+        <template v-else>Aucune correction dans cet historique.</template>
       </p>
       <table v-else class="w-full text-[14px]">
         <thead>
@@ -275,13 +257,13 @@ onMounted(async () => {
         </thead>
         <tbody>
         <tr
-          v-for="c in filteredQueue"
+          v-for="c in queue"
           :key="c.id"
           class="border-t border-line-soft hover:bg-surface-hover transition-colors cursor-pointer"
           :class="{ 'bg-surface-tint/60': selected && selected.id === c.id }"
           @click="select(c)"
         >
-          <td class="px-5 py-3"><span class="text-ink">{{ studentName(c.userId) }}</span></td>
+          <td class="px-5 py-3"><span class="text-ink">{{ studentName(c) }}</span></td>
           <td class="px-5 py-3 text-ink-soft">{{ c.exerciseName }}</td>
           <td class="px-5 py-3 text-ink-soft">
             <template v-if="isPending">{{ formatDate(c.submittedAt) }}</template>
@@ -300,12 +282,20 @@ onMounted(async () => {
         </tr>
         </tbody>
       </table>
+
+      <Pagination
+        :page="page"
+        :total-pages="totalPages"
+        :total-elements="totalElements"
+        item-label="soumissions"
+        @change="goToPage"
+      />
     </div>
 
     <!-- Détail soumission -->
     <div v-if="selected" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
       <h3 class="text-[17px] font-semibold text-ink mb-5">
-        Soumission de {{ studentName(selected.userId) }} - {{ selected.exerciseName }}
+        Soumission de {{ studentName(selected) }} - {{ selected.exerciseName }}
       </h3>
 
       <div v-if="loadingDetail" class="text-[14px] text-muted py-6 text-center">Chargement de la soumission...</div>
