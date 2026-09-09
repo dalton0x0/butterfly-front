@@ -7,22 +7,25 @@ import {roleChip} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
+import {usePagedList} from '@/composables/usePagedList'
+import {useDebouncedRef} from '@/composables/useDebouncedRef'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Avatar from '@/components/Avatar.vue'
 import Modal from '@/components/Modal.vue'
+import Pagination from '@/components/Pagination.vue'
 
 const auth = useAuthStore()
 
-const loading = ref(true)
-const error = ref('')
 const message = ref('')
 
-const rows = ref([])
 const showDeleted = ref(false)
 const search = ref('')
 const roleFilter = ref('ALL')
 const statusFilter = ref('ALL')
+
+// La saisie déclenche une requête serveur : on attend que la frappe se stabilise.
+const debouncedSearch = useDebouncedRef(search)
 
 const showDelete = ref(false)
 const deleting = ref(null)
@@ -37,24 +40,39 @@ function fullName(user) {
   return `${user.firstName} ${user.lastName}`
 }
 
-const filtered = computed(() => {
-  const term = search.value.trim().toLowerCase()
-  return rows.value.filter((u) => {
-    if (term && !fullName(u).toLowerCase().includes(term) && !(u.email || '').toLowerCase().includes(term)) {
-      return false
-    }
-    if (roleFilter.value !== 'ALL' && u.role !== roleFilter.value) {
-      return false
-    }
-    if (!showDeleted.value && statusFilter.value !== 'ALL') {
-      const wantActive = statusFilter.value === 'ACTIVE'
-      if (Boolean(u.enabled) !== wantActive) {
-        return false
-      }
-    }
-    return true
-  })
-})
+/*
+  Filtres transmis au serveur.
+
+  Ils étaient appliqués sur la liste déjà reçue, ce qui fonctionnait tant qu'elle était
+  complète. Avec la pagination, une recherche côté client ne verrait que la page
+  affichée : un utilisateur en page 3 deviendrait introuvable en silence.
+
+  La valeur ALL signifie "aucun filtre" et n'est donc pas transmise : envoyer un filtre
+  qui ne filtre rien n'a pas de sens côté serveur.
+*/
+const filters = computed(() => ({
+  deleted: showDeleted.value,
+  search: debouncedSearch.value.trim() || undefined,
+  role: roleFilter.value === 'ALL' ? undefined : roleFilter.value,
+  enabled: showDeleted.value || statusFilter.value === 'ALL'
+    ? undefined
+    : statusFilter.value === 'ACTIVE'
+}))
+
+const {items: rows, page, totalPages, totalElements, loading, error, load, goToPage, refresh} = usePagedList(
+  ({page: current, deleted, search: term, role, enabled}) =>
+    deleted
+      ? userService.getDeletedUsers({page: current, search: term, role})
+      : userService.getUsers({page: current, search: term, role, enabled}),
+  {filters: () => filters.value, errorMessage: 'Impossible de charger les utilisateurs.'}
+)
+
+// Distingue une liste réellement vide d'une recherche sans résultat : les deux
+// affichaient le même message, ce qui laissait croire à une corbeille vide alors que le
+// filtre était simplement trop restrictif.
+const hasActiveFilter = computed(() =>
+  Boolean(filters.value.search) || filters.value.role !== undefined || filters.value.enabled !== undefined
+)
 
 function flashMessage(text) {
   message.value = text
@@ -65,26 +83,14 @@ function flashMessage(text) {
   }, 3000)
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
-    const page = showDeleted.value ? await userService.getDeletedUsers() : await userService.getUsers()
-    rows.value = page.items
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les utilisateurs.'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function switchView(deleted) {
+// Le changement d'onglet modifie les filtres : le composable recharge et revient en
+// page 1 de lui-même, aucun appel explicite n'est nécessaire.
+function switchView(deleted) {
   if (showDeleted.value === deleted) {
     return
   }
   showDeleted.value = deleted
   statusFilter.value = 'ALL'
-  await load()
 }
 
 async function toggleEnabled(user) {
@@ -114,9 +120,11 @@ async function confirmDelete() {
   removing.value = true
   try {
     await userService.deleteUser(deleting.value.id)
-    rows.value = rows.value.filter((u) => u.id !== deleting.value.id)
     flashMessage(`${fullName(deleting.value)} a été supprimé.`)
     showDelete.value = false
+    // Rechargement plutôt que retrait local : la ligne suivante doit remonter dans la
+    // page, et le total affiché doit suivre.
+    await refresh()
   } catch (err) {
     deleteError.value = err.message || 'La suppression a échoué.'
   } finally {
@@ -127,8 +135,8 @@ async function confirmDelete() {
 async function restoreUser(user) {
   try {
     await userService.restoreUser(user.id)
-    rows.value = rows.value.filter((u) => u.id !== user.id)
     flashMessage(`${fullName(user)} a été restauré.`)
+    await refresh()
   } catch (err) {
     error.value = err.message || 'La restauration a échoué.'
   }
@@ -204,8 +212,9 @@ onMounted(load)
 
   <!-- Table -->
   <div v-else class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
-    <p v-if="filtered.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">
-      {{ showDeleted ? 'La corbeille est vide.' : 'Aucun utilisateur à afficher.' }}
+    <p v-if="rows.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">
+      {{ hasActiveFilter ? 'Aucun résultat pour cette recherche.'
+        : showDeleted ? 'La corbeille est vide.' : 'Aucun utilisateur à afficher.' }}
     </p>
     <table v-else class="w-full text-[14px]">
       <thead>
@@ -219,7 +228,7 @@ onMounted(load)
       </tr>
       </thead>
       <tbody>
-      <tr v-for="u in filtered" :key="u.id" class="border-t border-line-soft hover:bg-surface-hover transition-colors">
+      <tr v-for="u in rows" :key="u.id" class="border-t border-line-soft hover:bg-surface-hover transition-colors">
         <td class="px-5 py-3">
           <div class="flex items-center gap-2.5">
             <Avatar :src="u.avatar" :name="fullName(u)" :size="36"/>
@@ -287,6 +296,14 @@ onMounted(load)
       </tr>
       </tbody>
     </table>
+
+    <Pagination
+      :page="page"
+      :total-pages="totalPages"
+      :total-elements="totalElements"
+      item-label="utilisateurs"
+      @change="goToPage"
+    />
   </div>
 
   <!-- Modale de confirmation de suppression -->

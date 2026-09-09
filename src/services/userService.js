@@ -10,14 +10,39 @@
 */
 
 import http from './http'
-import {buildPageParams, MAX_PAGE_SIZE, normalizePage} from '@/utils/pagination'
+import {buildPageParams, DEFAULT_PAGE_SIZE, normalizePage} from '@/utils/pagination'
 
 export const userService = {
     /**
-     * Liste paginée des utilisateurs (triée par nom côté back).
+     * Liste paginée des utilisateurs, triée par nom côté back.
+     *
+     * Les filtres sont transmis au serveur et non appliqués sur la page reçue : une
+     * recherche côté client ne verrait que les vingt lignes affichées.
+     *
+     * @param {object} [params]
+     * @param {number} [params.page] index de page, commençant à 0
+     * @param {number} [params.size] taille de page
+     * @param {string} [params.sort] champ de tri
+     * @param {string} [params.search] terme recherché dans le prénom, le nom ou l'e-mail
+     * @param {string} [params.role] rôle attendu
+     * @param {boolean} [params.enabled] état d'activation attendu
      */
-    async getUsers({page = 0, size = MAX_PAGE_SIZE, sort = 'lastName'} = {}) {
-        const envelope = await http.get('/users', {params: buildPageParams({page, size, sort})})
+    async getUsers({page = 0, size = DEFAULT_PAGE_SIZE, sort = 'lastName', search, role, enabled} = {}) {
+        const params = buildPageParams({page, size, sort})
+
+        // Les filtres absents ne sont pas transmis : envoyer search vide reviendrait à
+        // demander au serveur un filtre qui ne filtre rien.
+        if (search) {
+            params.search = search
+        }
+        if (role) {
+            params.role = role
+        }
+        if (enabled !== undefined && enabled !== null) {
+            params.enabled = enabled
+        }
+
+        const envelope = await http.get('/users', {params})
         return normalizePage(envelope.data)
     },
 
@@ -32,9 +57,28 @@ export const userService = {
 
     /**
      * Liste paginée des utilisateurs supprimés logiquement (ADMIN).
+     *
+     * Pas de filtre enabled ici : un compte de la corbeille est désactivé par
+     * construction, filtrer sur son état n'aurait pas de sens.
+     *
+     * @param {object} [params]
+     * @param {number} [params.page] index de page, commençant à 0
+     * @param {number} [params.size] taille de page
+     * @param {string} [params.sort] champ de tri
+     * @param {string} [params.search] terme recherché dans le prénom, le nom ou l'e-mail
+     * @param {string} [params.role] rôle attendu
      */
-    async getDeletedUsers({page = 0, size = MAX_PAGE_SIZE, sort} = {}) {
-        const envelope = await http.get('/users/deleted', {params: buildPageParams({page, size, sort})})
+    async getDeletedUsers({page = 0, size = DEFAULT_PAGE_SIZE, sort, search, role} = {}) {
+        const params = buildPageParams({page, size, sort})
+
+        if (search) {
+            params.search = search
+        }
+        if (role) {
+            params.role = role
+        }
+
+        const envelope = await http.get('/users/deleted', {params})
         return normalizePage(envelope.data)
     },
 
