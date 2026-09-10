@@ -4,7 +4,7 @@ Interface web de la plateforme de gestion de l'apprentissage (LMS) Butterfly. Ap
 (SPA) développée en Vue 3 qui consomme l'API REST du backend et adapte l'expérience au rôle de
 l'utilisateur connecté (apprenant, formateur, administrateur).
 
-Version : 1.6.0
+Version : 1.7.0
 
 ---
 
@@ -436,6 +436,21 @@ versionnés séparément.
 
 ## Historique des versions
 
+- v1.7.0 : listes navigables et alignement sur les contraintes du serveur. Les écrans
+  d'utilisateurs, d'apprenants et de corrections se parcourent page par page avec recherche et
+  filtres traités par le serveur : appliqués à la page reçue, ils n'auraient trouvé que ce qui
+  était déjà affiché. Un composable `usePagedList` porte l'état commun de ces listes et règle
+  deux pièges que du code dispersé laissait passer, le retour en première page sur changement de
+  filtre et l'écrasement d'une réponse récente par une plus lente. La saisie de recherche est
+  temporisée et les barres de recherche restent montées pendant le chargement, faute de quoi le
+  champ perdrait le focus à chaque frappe. Trois services demandaient des pages de 200 éléments
+  alors que le serveur plafonne à 100 et rabaisse sans le signaler : le plafond est désormais
+  appliqué à la source avec un avertissement en développement. La file de correction lit le nom
+  de l'apprenant fourni par l'API au lieu de télécharger la liste complète des comptes. Un refus
+  de portée pédagogique affiche un écran dédié plutôt qu'une erreur générique puisque réessayer
+  n'y changerait rien. La longueur maximale du mot de passe rejoint celle du serveur et le
+  téléchargement de fichiers est unifié dans un seul module avec libération différée de l'URL
+  temporaire que certains navigateurs interprétaient comme une annulation.
 - v1.6.0 : robustesse du démarrage et de la session. L'attente de premier niveau du point d'entrée
   rendait le chunk partagé asynchrone et bloquait les vues chargées à la demande qui l'importent :
   page blanche sur Chromium et Gecko, WebKit passant. Le montage repasse par une chaîne de promesse.
