@@ -1,0 +1,41 @@
+# Analyse statique et construction du frontend à chaque poussée et à chaque pull request.
+#
+# Deux étapes distinctes et non une seule : quand le workflow échoue, on sait
+# immédiatement si le problème vient d'une règle ESLint ou de la construction Vite.
+
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build:
+    name: Analyse et construction
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@v7
+
+      - name: Installation de Node
+        uses: actions/setup-node@v7
+        with:
+          # Même version majeure que l'image de construction du Dockerfile.
+          # Les deux doivent rester alignées, sinon le workflow valide un code
+          # que l'image ne saurait pas construire.
+          node-version: '22'
+          cache: npm
+
+      - name: Installation des dépendances
+        # npm ci et non npm install : installation reproductible à partir du
+        # package-lock.json seul. npm install peut mettre à jour le verrou en
+        # silence et livrer des versions différentes de celles testées en local.
+        run: npm ci
+
+      - name: Analyse statique
+        run: npm run lint
+
+      - name: Construction
+        run: npm run build
