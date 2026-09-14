@@ -23,7 +23,20 @@ import sql from 'highlight.js/lib/languages/sql'
 import yaml from 'highlight.js/lib/languages/yaml'
 import dockerfile from 'highlight.js/lib/languages/dockerfile'
 import 'highlight.js/styles/atom-one-dark.css'
-import DOMPurify from 'dompurify'
+import createDOMPurify from 'dompurify'
+
+/*
+  Instance privée plutôt que l'instance partagée exportée par le paquet.
+
+  addHook pose un traitement global : enregistré sur l'instance partagée, il
+  s'appliquerait à tous les appels sanitize de l'application. Le réécriture des IMG
+  ci-dessous n'a de sens que pour le Markdown des cours et le jour où un second
+  usage de DOMPurify apparaîtra ailleurs, il héritera d'un comportement qu'il n'a pas
+  demandé sans que rien ne l'indique.
+
+  Une instance dédiée garde le traitement là où il sert.
+*/
+const purifier = createDOMPurify(window)
 import {mediaUrl} from './media'
 
 // Enregistrement des langages (le nom sert d'identifiant dans les blocs ```lang).
@@ -61,7 +74,7 @@ marked.setOptions({
 })
 
 // Les liens s'ouvrent dans un nouvel onglet, de façon sûre.
-DOMPurify.addHook('afterSanitizeAttributes', (node) => {
+purifier.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'A') {
         node.setAttribute('target', '_blank')
         node.setAttribute('rel', 'noopener noreferrer')
@@ -88,5 +101,5 @@ export function renderMarkdown(source) {
         return ''
     }
     const rawHtml = marked.parse(source)
-    return DOMPurify.sanitize(rawHtml)
+    return purifier.sanitize(rawHtml)
 }
