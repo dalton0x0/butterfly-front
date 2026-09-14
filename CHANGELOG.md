@@ -11,6 +11,26 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v1.8.0](https://github.com/dalton0x0/butterfly-front/compare/v1.7.0...v1.8.0) - 2026-09-14
+
+Outillage de qualité et découpage des plus gros écrans. Le projet n'avait ni analyse statique
+ni test : ESLint est ajouté au niveau `essential` de `eslint-plugin-vue` et non `recommended`,
+qui produisait 2 777 signalements dont 2 770 de pure présentation, un outil que l'on finit par
+désactiver. Dès le premier passage il a relevé un vrai défaut : le `<transition>` de `Modal`
+enveloppait un élément sans condition, le `v-if` étant posé par les parents si bien que
+l'animation ne s'est jamais jouée et que son CSS était mort. L'attribut `appear` la déclenche
+enfin au montage sans toucher aux appelants. Vitest couvre les modules purs avec des tests :
+validateurs, import de questions, pagination, erreurs d'API et stockage des jetons. Un composable
+`useAsyncTask` remplace dans seize vues un cadre de six lignes recopié à l'identique trente-six
+fois et il ignore en plus les réponses périmées, un écran filtré pouvant recevoir dans le
+désordre des appels qui se chevauchent. `ProfileView` passe de 633 lignes à 41 en confiant ses
+trois formulaires indépendants à autant de composants, la navigation de reconnexion restant dans
+la vue plutôt que d'être dupliquée dans chacun. Le rendu Markdown utilise une instance DOMPurify
+privée : `addHook` pose un traitement global que tout autre appel à `sanitize` aurait hérité sans
+l'avoir demandé. Une politique de sécurité du contenu est posée en mode rapport dans le nginx,
+chaque directive étant réglée sur un usage constaté, `script-src 'self'` étant celle qui rend une
+injection de script inopérante et protège donc les jetons rangés dans le stockage local.
+
 ## [v1.7.0](https://github.com/dalton0x0/butterfly-front/compare/v1.6.0...v1.7.0) - 2026-09-10
 
 Listes navigables et alignement sur les contraintes du serveur. Les écrans d'utilisateurs,
