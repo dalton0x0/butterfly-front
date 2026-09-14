@@ -37,5 +37,8 @@ jobs:
       - name: Analyse statique
         run: npm run lint
 
+      - name: Tests unitaires
+        run: npm test
+
       - name: Construction
         run: npm run build
