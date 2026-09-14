@@ -4,6 +4,7 @@
 // actif), et recalcul des badges d'un apprenant. La création d'un type de badge passe
 // par le back (enum BadgeCode + logique d'évaluation), elle n'est donc pas proposée ici.
 import {computed, onMounted, reactive, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {ROLES} from '@/utils/roles'
 import {badgeService} from '@/services/badgeService'
 import {userService} from '@/services/userService'
@@ -14,8 +15,7 @@ import {badgeIcon} from '@/utils/badgeIcons'
 // Badges dont l'obtention est événementielle : le seuil y a un effet limité.
 const EVENT_CODES = new Set(['PERFECT_SCORE', 'TOP_GRADE', 'EARLY_BIRD', 'NIGHT_OWL', 'COMEBACK'])
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger les badges.', {loadingFromStart: true})
 const message = ref('')
 
 const badges = ref([])
@@ -55,21 +55,15 @@ function flashMessage(text) {
   }, 3000)
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     const [catalog, users] = await Promise.all([
       badgeService.getAllBadges(),
       userService.getUsers().catch(() => ({items: []}))
     ])
     badges.value = catalog
     learners.value = users.items.filter((u) => u.role === ROLES.USER)
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les badges.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 function openEdit(badge) {

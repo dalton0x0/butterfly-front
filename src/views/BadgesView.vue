@@ -3,6 +3,7 @@
 // GET /api/badges/me/progress renvoie tous les badges avec, pour l'utilisateur,
 // l'état (obtenu ou non), la valeur courante, la cible et le pourcentage.
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {formatDate} from '@/utils/date'
 import {badgeService} from '@/services/badgeService'
 import Icon from '@/components/Icon.vue'
@@ -16,8 +17,7 @@ function formatBadgeDate(value) {
   return formatDate(value, {options: {day: '2-digit', month: '2-digit', year: 'numeric'}})
 }
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger les badges.', {loadingFromStart: true})
 const items = ref([]) // BadgeProgressResponse[]
 const selected = ref(null)
 const activeFilter = ref('all')
@@ -61,16 +61,10 @@ const filtered = computed(() => {
   return items.value.filter((i) => i.badge?.category === activeFilter.value)
 })
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     items.value = await badgeService.getMyProgress()
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les badges.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

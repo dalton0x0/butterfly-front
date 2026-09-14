@@ -4,6 +4,7 @@
 // bonnes réponses). PUT /api/quizzes/{id}/questions remplace l'intégralité des
 // questions. Le score sera calculé côté serveur lors du passage par l'apprenant.
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute} from 'vue-router'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
@@ -16,8 +17,7 @@ import {saveBlobAs} from '@/utils/download'
 const route = useRoute()
 const quizId = Number(route.params.id)
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le quiz.', {loadingFromStart: true})
 const saving = ref(false)
 const quiz = ref(null)
 const questions = ref([])
@@ -243,10 +243,8 @@ async function save() {
   }
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     const [meta, existing] = await Promise.all([
       quizService.getQuiz(quizId),
       quizService.getQuestions(quizId)
@@ -265,11 +263,7 @@ async function load() {
           .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
           .map((o) => ({text: o.text || '', correct: Boolean(o.correct)}))
       }))
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le quiz.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

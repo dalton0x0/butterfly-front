@@ -4,6 +4,7 @@
 // Création : /formateur/contenus/modules/:moduleId/cours/nouveau
 // Édition : /formateur/contenus/cours/:id
 import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute, useRouter} from 'vue-router'
 import {courseService} from '@/services/courseService'
 import {moduleService} from '@/services/moduleService'
@@ -19,8 +20,7 @@ const router = useRouter()
 const isEdit = computed(() => route.name === 'content-course-edit')
 const courseId = computed(() => (isEdit.value ? Number(route.params.id) : null))
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Chargement impossible.', {loadingFromStart: true})
 const saving = ref(false)
 const formError = ref('')
 const moduleId = ref(null)
@@ -83,10 +83,8 @@ function removeVideo() {
   videoError.value = ''
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     if (isEdit.value) {
       const course = await courseService.getCourse(courseId.value)
       form.name = course.name || ''
@@ -100,11 +98,7 @@ async function load() {
       const module = await moduleService.getModule(moduleId.value)
       moduleName.value = module.name || 'Module'
     }
-  } catch (err) {
-    error.value = err.message || 'Chargement impossible.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 async function save() {

@@ -3,13 +3,13 @@
 // GET /api/users/me/exercises renvoie tous les exercices visibles (y compris
 // NOT_STARTED) avec leur statut. On filtre par statut côté client.
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {exerciseService} from '@/services/exerciseService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger les exercices.', {loadingFromStart: true})
 const exercises = ref([])
 
 const STATUS_MAP = {
@@ -39,17 +39,11 @@ const filtered = computed(() => {
   return exercises.value.filter((e) => e.status === filter.value)
 })
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     const page = await exerciseService.getMyExercises()
     exercises.value = page.items
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les exercices.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

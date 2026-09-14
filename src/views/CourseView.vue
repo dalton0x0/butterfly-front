@@ -3,6 +3,7 @@
 // GET /api/courses/{id} renvoie name, description, videoUrl, content, completed.
 // POST /api/progress/courses/{courseId}/complete marque le cours terminé (USER).
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {ROLES} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
@@ -15,8 +16,7 @@ import {resolveVideoSource} from '@/utils/media'
 const route = useRoute()
 const auth = useAuthStore()
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le cours.', {loadingFromStart: true})
 const course = ref(null)
 const completed = ref(false)
 const completing = ref(false)
@@ -50,17 +50,11 @@ async function markCompleted() {
   }
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     course.value = await courseService.getCourse(Number(route.params.id))
     completed.value = Boolean(course.value.completed)
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le cours.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

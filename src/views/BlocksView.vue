@@ -4,6 +4,7 @@
 // de GET /api/users/me/blocks (fusionnée par blockId). Le statut affiché est
 // dérivé du pourcentage de progression (pas de verrouillage au niveau bloc).
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {blockService} from '@/services/blockService'
 import {progressService} from '@/services/progressService'
 import Icon from '@/components/Icon.vue'
@@ -13,8 +14,7 @@ import BlockCover from '@/components/BlockCover.vue'
 import {mediaUrl} from '@/utils/media'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger les blocs.', {loadingFromStart: true})
 const blocks = ref([])
 
 // Statut dérivé de la progression : terminé, en cours, ou à commencer.
@@ -77,10 +77,8 @@ const filtered = computed(() => {
   return blocks.value.filter((block) => blockStatus(block) === filter.value)
 })
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     // La progression peut être vide (ex : formateur non inscrit) : on tolère l'absence.
     const [page, summaries] = await Promise.all([
       blockService.getBlocks({size: 100}),
@@ -91,11 +89,7 @@ async function load() {
       ...block,
       summary: summaryByBlockId.get(block.id) || null
     }))
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les blocs.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

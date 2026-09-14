@@ -4,6 +4,7 @@
 // Création : /formateur/contenus/modules/:moduleId/exercices/nouveau
 // Édition : /formateur/contenus/exercices/:id
 import {computed, onBeforeUnmount, onMounted, reactive, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute, useRouter} from 'vue-router'
 import {exerciseService} from '@/services/exerciseService'
 import {moduleService} from '@/services/moduleService'
@@ -19,8 +20,7 @@ const router = useRouter()
 const isEdit = computed(() => route.name === 'content-exercise-edit')
 const exerciseId = computed(() => (isEdit.value ? Number(route.params.id) : null))
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Chargement impossible.', {loadingFromStart: true})
 const saving = ref(false)
 const formError = ref('')
 const moduleId = ref(null)
@@ -34,10 +34,8 @@ const attachmentsRef = ref(null)
 const title = computed(() => (isEdit.value ? "Modifier l'exercice" : 'Nouvel exercice'))
 const backTo = computed(() => `/formateur/contenus/modules/${moduleId.value}`)
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     if (isEdit.value) {
       const exercise = await exerciseService.getExercise(exerciseId.value)
       form.name = exercise.name || ''
@@ -49,11 +47,7 @@ async function load() {
       const module = await moduleService.getModule(moduleId.value)
       moduleName.value = module.name || 'Module'
     }
-  } catch (err) {
-    error.value = err.message || 'Chargement impossible.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 async function save() {

@@ -4,6 +4,7 @@
 // chacun avec un booléen "completed". La progression de l'en-tête est dérivée de
 // ces éléments réels.
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute} from 'vue-router'
 import {moduleService} from '@/services/moduleService'
 import Icon from '@/components/Icon.vue'
@@ -12,8 +13,7 @@ import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
 const route = useRoute()
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le module.', {loadingFromStart: true})
 const module = ref(null)
 const tab = ref('all')
 
@@ -81,16 +81,10 @@ const breadcrumb = computed(() => {
   return items
 })
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     module.value = await moduleService.getModule(Number(route.params.id))
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le module.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

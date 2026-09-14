@@ -3,6 +3,7 @@
 // Le bloc et ses modules viennent de GET /api/blocks/{id}. CRUD via /api/modules.
 // Les prérequis se remplacent via PUT /api/modules/{id}/prerequisites.
 import {computed, onMounted, reactive, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute} from 'vue-router'
 import {blockService} from '@/services/blockService'
 import {moduleService} from '@/services/moduleService'
@@ -14,8 +15,7 @@ import Modal from '@/components/Modal.vue'
 const route = useRoute()
 const blockId = Number(route.params.id)
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le bloc.', {loadingFromStart: true})
 const block = ref(null)
 const success = ref('')
 
@@ -169,16 +169,10 @@ async function savePrereq() {
   }
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     block.value = await blockService.getBlock(blockId)
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le bloc.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

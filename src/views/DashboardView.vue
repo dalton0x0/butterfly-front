@@ -2,6 +2,7 @@
 // Tableau de bord apprenant : en-tête, KPIs, blocs assignés, activité récente,
 // derniers badges. Tout vient d'un seul appel : GET /api/users/me/dashboard.
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {formatDate} from '@/utils/date'
 import {useAuthStore} from '@/stores/auth'
 import {dashboardService} from '@/services/dashboardService'
@@ -18,8 +19,7 @@ function formatShortDate(value) {
 
 const auth = useAuthStore()
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le tableau de bord.', {loadingFromStart: true})
 const dashboard = ref(null)
 
 const overview = computed(() => dashboard.value?.overview || {})
@@ -80,16 +80,10 @@ const recentActivity = computed(() => {
     .slice(0, 6)
 })
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     dashboard.value = await dashboardService.getDashboard()
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le tableau de bord.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

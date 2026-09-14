@@ -3,6 +3,7 @@
 // Un formateur ne voit et ne gère que ses blocs assignés (filtrage côté back).
 // GET /api/blocks (liste), POST/PUT/DELETE /api/blocks (CRUD, ADMIN/TEACHER).
 import {computed, onMounted, reactive, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {blockService} from '@/services/blockService'
 import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
@@ -10,8 +11,7 @@ import Icon from '@/components/Icon.vue'
 import BlockCover from '@/components/BlockCover.vue'
 import Modal from '@/components/Modal.vue'
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger les blocs.', {loadingFromStart: true})
 const blocks = ref([])
 const success = ref('')
 
@@ -221,17 +221,11 @@ async function savePrereq() {
   }
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     const page = await blockService.getBlocks({size: 100})
     blocks.value = page.items
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les blocs.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

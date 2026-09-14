@@ -7,6 +7,7 @@
 // question, puis POST /api/progress/quizzes/{id}/submit. Le serveur calcule
 // le score et la réussite. Le résultat renvoie la correction par question.
 import {computed, onMounted, onUnmounted, reactive, ref, watch} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {onBeforeRouteLeave, useRoute} from 'vue-router'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
@@ -15,8 +16,7 @@ import ProgressRing from '@/components/ProgressRing.vue'
 
 const route = useRoute()
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le quiz.', {loadingFromStart: true})
 const quiz = ref(null)
 const questions = ref([])
 
@@ -257,20 +257,14 @@ function optionTexts(questionId, optionIds) {
   return (optionIds || []).map((id) => optionText(questionId, id)).filter(Boolean).join(', ')
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     quiz.value = await quizService.getPlay(Number(route.params.id))
     // L'ordre est décidé par le serveur. Le retrier ici annulerait le mélange
     // quand le formateur l'a activé sur le quiz.
     questions.value = [...(quiz.value.questions || [])]
     await startAttempt()
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le quiz.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 // Redémarre le compte à rebours à chaque changement de question pendant la passation.

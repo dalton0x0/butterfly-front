@@ -4,6 +4,7 @@
 // comptes désactivés, corbeille, blocs, promotions. Plus les derniers inscrits
 // et des raccourcis vers les écrans de gestion.
 import {computed, onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {roleChip, ROLES} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
@@ -13,8 +14,7 @@ import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le tableau de bord.', {loadingFromStart: true})
 
 const activeUsers = ref([])
 const deletedCount = ref(0)
@@ -64,10 +64,8 @@ const quickLinks = [
   {label: 'Gérer les contenus', to: '/admin/contenus', icon: 'category'}
 ]
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     const [users, deleted, blocks, promos] = await Promise.all([
       userService.getUsers(),
       userService.getDeletedUsers().catch(() => ({items: []})),
@@ -78,11 +76,7 @@ async function load() {
     deletedCount.value = deleted.items.length
     blocksCount.value = blocks.items.length
     promotions.value = promos.items
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le tableau de bord.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

@@ -4,6 +4,7 @@
 // Le quiz (métadonnées courtes) reste géré dans une modale ; ses questions ont
 // leur propre éditeur. GET /api/modules/{id} fournit cours, exercices et quiz.
 import {computed, onMounted, reactive, ref, watch} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute} from 'vue-router'
 import {moduleService} from '@/services/moduleService'
 import {courseService} from '@/services/courseService'
@@ -17,8 +18,7 @@ import Modal from '@/components/Modal.vue'
 const route = useRoute()
 const moduleId = Number(route.params.id)
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger le module.', {loadingFromStart: true})
 const module = ref(null)
 const success = ref('')
 const tab = ref('courses')
@@ -201,16 +201,10 @@ async function confirmDelete() {
   }
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     module.value = await moduleService.getModule(moduleId)
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger le module.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)

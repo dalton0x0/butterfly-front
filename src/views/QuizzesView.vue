@@ -2,13 +2,13 @@
 // Mes quiz : liste des quiz visibles avec leur état (tenté, réussi, meilleur
 // score). Chaque carte mène au passage du quiz. GET /api/users/me/quizzes.
 import {onMounted, ref} from 'vue'
+import {useAsyncTask} from '@/composables/useAsyncTask'
 import {quizService} from '@/services/quizService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
-const loading = ref(true)
-const error = ref('')
+const {loading, error, run} = useAsyncTask('Impossible de charger les quiz.', {loadingFromStart: true})
 const quizzes = ref([])
 
 function statusChip(quiz) {
@@ -21,17 +21,11 @@ function statusChip(quiz) {
   return {label: 'À faire', variant: 'neutral', icon: 'radio_button_unchecked'}
 }
 
-async function load() {
-  loading.value = true
-  error.value = ''
-  try {
+function load() {
+  return run(async () => {
     const page = await quizService.getMyQuizzes()
     quizzes.value = page.items
-  } catch (err) {
-    error.value = err.message || 'Impossible de charger les quiz.'
-  } finally {
-    loading.value = false
-  }
+  })
 }
 
 onMounted(load)
