@@ -15,7 +15,7 @@ onUnmounted(() => document.removeEventListener('keydown', onKey))
 </script>
 
 <template>
-  <transition name="modal">
+  <transition name="modal" appear>
     <div
       class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm"
       @click.self="emit('close')"
