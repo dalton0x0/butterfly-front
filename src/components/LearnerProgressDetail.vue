@@ -10,7 +10,6 @@ import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {correctionService} from '@/services/correctionService'
 import Icon from './Icon.vue'
-import ProgressBar from './ProgressBar.vue'
 import StatusChip from './StatusChip.vue'
 
 const props = defineProps({
@@ -35,6 +34,9 @@ const courses = ref(null)
 const exercises = ref(null)
 const quizzes = ref(null)
 
+// Une progression de cours n'existe qu'à partir du moment où l'apprenant a terminé
+// le cours : il n'y a pas d'avancement partiel. Les deux autres états sont conservés
+// comme repli d'affichage, ils ne devraient plus apparaître.
 const COURSE_STATUS = {
   COMPLETED: {label: 'Terminé', variant: 'success'},
   IN_PROGRESS: {label: 'En cours', variant: 'primary'},
@@ -135,7 +137,7 @@ onMounted(load)
       <!-- Progressions de cours -->
       <div v-if="tab === 'courses'" role="tabpanel">
         <p v-if="courses.items.length === 0" class="text-[14px] text-muted py-4">
-          Aucune progression de cours enregistrée.
+          Aucun cours terminé.
         </p>
         <ul v-else>
           <li
@@ -154,7 +156,6 @@ onMounted(load)
                 {{ formatDate(item.completedAt || item.updatedAt || item.startedAt, {fallback: '-'}) }}
               </span>
             </div>
-            <ProgressBar :value="item.progressPercent ?? 0" show-label/>
           </li>
         </ul>
       </div>
