@@ -358,6 +358,17 @@ onUnmounted(() => {
     <!-- Carte de statut -->
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col gap-4">
       <h3 class="text-[17px] font-semibold text-ink">{{ quiz.name }}</h3>
+
+      <!--
+        Consigne rédigée par le formateur. Elle reste visible pendant toute la
+        passation plutôt que sur la seule première question : l'apprenant doit
+        pouvoir la relire sans perdre sa tentative en revenant en arrière.
+      -->
+      <div v-if="quiz.content" class="rounded-xl bg-surface-tint px-4 py-3">
+        <p class="text-[12px] font-semibold text-muted uppercase tracking-wide mb-1">Consigne</p>
+        <p class="text-[14px] text-ink whitespace-pre-wrap break-words">{{ quiz.content }}</p>
+      </div>
+
       <div class="flex flex-col gap-2">
         <span class="text-[13px] text-muted">Question {{ index + 1 }} / {{ questions.length }}</span>
         <div class="flex gap-1 h-2">
