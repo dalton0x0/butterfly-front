@@ -309,7 +309,10 @@ onMounted(load)
               Dernière soumission (tentative {{ latestSubmission.attemptNumber }})
             </p>
             <div class="rounded-xl p-3 bg-surface-tint">
-              <p class="text-[14px] text-ink whitespace-pre-wrap break-words">{{ latestSubmission.content }}</p>
+              <p v-if="latestSubmission.content" class="text-[14px] text-ink whitespace-pre-wrap break-words">
+                {{ latestSubmission.content }}</p>
+              <p v-else class="text-[14px] text-muted italic">
+                Aucune description, voir les fichiers joints.</p>
             </div>
           </div>
 

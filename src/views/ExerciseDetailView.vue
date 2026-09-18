@@ -126,13 +126,9 @@ function cancelEdit() {
 
 async function saveEdit(s) {
   editError.value = ''
-  if (!editContent.value.trim()) {
-    editError.value = 'Le contenu de la soumission est obligatoire.'
-    return
-  }
   editSaving.value = true
   try {
-    await exerciseService.updateSubmission(exercise.value.id, s.id, editContent.value.trim())
+    await exerciseService.updateSubmission(exercise.value.id, s.id, editContent.value.trim() || null)
     editingId.value = null
     await loadSubmissions()
   } catch (err) {
@@ -195,10 +191,6 @@ async function handleSubmit() {
   if (isValidated.value) {
     return
   }
-  if (!content.value.trim()) {
-    submitError.value = 'Le contenu de la soumission est obligatoire.'
-    return
-  }
   if (selectedFiles.value.length === 0) {
     submitError.value = 'Ajoutez au moins un fichier à votre soumission.'
     return
@@ -206,7 +198,8 @@ async function handleSubmit() {
   submitting.value = true
   try {
     // Envoi atomique : le contenu et les fichiers partent dans une seule requête.
-    await exerciseService.submit(exercise.value.id, content.value.trim(), selectedFiles.value)
+    // La description est facultative : les fichiers portent l'essentiel du rendu.
+    await exerciseService.submit(exercise.value.id, content.value.trim() || null, selectedFiles.value)
     submitSuccess.value = 'Soumission envoyée avec succès.'
     content.value = ''
     selectedFiles.value = []
@@ -329,7 +322,7 @@ onMounted(load)
             v-model="content"
             rows="3"
             :disabled="isValidated"
-            placeholder="Décrivez votre solution (obligatoire)"
+            placeholder="Décrivez votre solution (facultatif)"
             class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors mb-3 resize-none disabled:opacity-60 disabled:cursor-not-allowed"
           ></textarea>
 
