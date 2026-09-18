@@ -131,11 +131,10 @@ async function saveQuiz() {
     quizError.value = 'Le nom doit contenir entre 2 et 255 caractères.'
     return
   }
+  // Consigne facultative : un quiz dont les questions se suffisent à elles-mêmes
+  // n'a pas besoin d'énoncé d'introduction. Vide, on envoie null plutôt qu'une
+  // chaîne vide pour ne pas créer deux représentations de l'absence.
   const content = quizForm.content.trim()
-  if (!content) {
-    quizError.value = 'La consigne est obligatoire.'
-    return
-  }
   if (content.length > 50000) {
     quizError.value = 'La consigne ne doit pas dépasser 50 000 caractères.'
     return
@@ -144,7 +143,7 @@ async function saveQuiz() {
   try {
     const payload = {
       name,
-      content,
+      content: content || null,
       moduleId,
       shuffleQuestions: quizForm.shuffleQuestions,
       shuffleOptions: quizForm.shuffleOptions
@@ -320,7 +319,8 @@ onMounted(load)
         </div>
         <div class="flex-1 min-w-0">
           <h3 class="text-[16px] font-semibold text-ink truncate">{{ quiz.name }}</h3>
-          <p class="text-[13px] text-ink-soft line-clamp-1">{{ quiz.content }}</p>
+          <p v-if="quiz.content" class="text-[13px] text-ink-soft line-clamp-1">{{ quiz.content }}</p>
+          <p v-else class="text-[13px] text-muted italic">Aucune consigne</p>
         </div>
         <div class="flex items-center gap-2 shrink-0">
           <RouterLink
@@ -417,7 +417,9 @@ onMounted(load)
                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"/>
         </div>
         <div>
-          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="module-content">Consigne du quiz</label>
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="module-content">
+            Consigne du quiz <span class="text-muted font-normal">(facultative)</span>
+          </label>
           <textarea id="module-content" v-model="quizForm.content" rows="4" maxlength="50000"
                     placeholder="Instructions affichées avant le quiz"
                     class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"></textarea>

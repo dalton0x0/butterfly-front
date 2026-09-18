@@ -90,8 +90,9 @@ export const quizService = {
     /**
      * Crée un quiz (ADMIN/TEACHER assigné au bloc du module).
      * Les drapeaux de mélange sont facultatifs, absents ils valent false côté serveur.
-     * @param {{ name: string, content: string, moduleId: number,
-     *           shuffleQuestions?: boolean, shuffleOptions?: boolean }} payload
+     * La consigne est facultative : envoyer null quand l'auteur n'en saisit pas.
+     * @param {{ name: string, content: ?string, moduleId: number,
+     * shuffleQuestions?: boolean, shuffleOptions?: boolean }} payload
      */
     async createQuiz(payload) {
         const envelope = await http.post('/quizzes', payload)
