@@ -2,7 +2,7 @@
   Service des promotions (ADMIN).
 
   Correspondance avec le back (/api/promos) :
-  - GET /api/promos vers Page<PromoResponse>
+  - GET /api/promos vers Page<PromoResponse> (paramètre facultatif active)
   - GET /api/promos/{id} vers PromoResponse
   - POST /api/promos créer
   - PUT /api/promos/{id} mettre à jour
@@ -19,9 +19,23 @@ import {buildPageParams, DEFAULT_PAGE_SIZE, normalizePage} from '@/utils/paginat
 export const promotionService = {
     /**
      * Liste paginée des promotions.
+     *
+     * @param {object} [params]
+     * @param {number} [params.page] index de page, commençant à 0
+     * @param {number} [params.size] taille de page
+     * @param {string} [params.sort] champ de tri
+     * @param {boolean} [params.active] restreint aux promotions actives ou inactives.
+     * Le filtre est transmis au serveur : appliqué sur la page reçue, il ne verrait
+     * que les promotions déjà affichées et fausserait tout comptage.
      */
-    async getPromotions({page = 0, size = DEFAULT_PAGE_SIZE, sort} = {}) {
-        const envelope = await http.get('/promos', {params: buildPageParams({page, size, sort})})
+    async getPromotions({page = 0, size = DEFAULT_PAGE_SIZE, sort, active} = {}) {
+        const params = buildPageParams({page, size, sort})
+
+        if (active !== undefined && active !== null) {
+            params.active = active
+        }
+
+        const envelope = await http.get('/promos', {params})
         return normalizePage(envelope.data)
     },
 

@@ -1,8 +1,10 @@
 <script setup>
-// Espace admin : tableau de bord. Indicateurs agrégés côté client à partir des
-// listes existantes (pas d'endpoint de stats dédié) : utilisateurs par rôle,
-// comptes désactivés, corbeille, blocs, promotions. Plus les derniers inscrits
-// et des raccourcis vers les écrans de gestion.
+// Espace admin : tableau de bord. Indicateurs et derniers inscrits.
+//
+// Chaque indicateur est un comptage serveur et non un décompte de la liste reçue.
+// La version précédente demandait une page d'utilisateurs puis filtrait dessus :
+// au delà de vingt comptes, toutes les cartes mentaient sans le moindre signal et
+// les "derniers inscrits" étaient en réalité les premiers par ordre alphabétique.
 import {computed, onMounted, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {roleChip, ROLES} from '@/utils/roles'
@@ -16,47 +18,44 @@ import StatusChip from '@/components/StatusChip.vue'
 
 const {loading, error, run} = useAsyncTask('Impossible de charger le tableau de bord.', {loadingFromStart: true})
 
-const activeUsers = ref([])
-const deletedCount = ref(0)
-const blocksCount = ref(0)
-const promotions = ref([])
+// Taille de page des requêtes qui ne servent qu'à compter. Une page vide serait
+// refusée par Spring, un seul élément suffit à obtenir totalElements.
+const COUNT_ONLY_SIZE = 1
 
-const stats = computed(() => {
-  const users = activeUsers.value
-  return {
-    total: users.length,
-    learners: users.filter((u) => u.role === ROLES.USER).length,
-    teachers: users.filter((u) => u.role === ROLES.TEACHER).length,
-    admins: users.filter((u) => u.role === ROLES.ADMIN).length,
-    disabled: users.filter((u) => !u.enabled).length,
-    deleted: deletedCount.value,
-    blocks: blocksCount.value,
-    promotions: promotions.value.length,
-    activePromotions: promotions.value.filter((p) => p.active).length
-  }
+// Nombre de lignes de la carte des derniers inscrits.
+const RECENT_LEARNERS_SIZE = 5
+
+// Page de repli quand une liste est indisponible : le tableau de bord affiche zéro
+// plutôt que de ne rien afficher du tout.
+const EMPTY_PAGE = {items: [], totalElements: 0}
+
+const counts = ref({
+  learners: 0,
+  teachers: 0,
+  admins: 0,
+  disabled: 0,
+  deleted: 0,
+  blocks: 0,
+  promotions: 0,
+  activePromotions: 0
 })
 
+const recentLearners = ref([])
+
 const cards = computed(() => [
-  {label: 'Apprenants', value: stats.value.learners, icon: 'school', tint: 'bg-accent/15 text-primary'},
-  {label: 'Formateurs', value: stats.value.teachers, icon: 'co_present', tint: 'bg-accent/15 text-primary'},
-  {label: 'Administrateurs', value: stats.value.admins, icon: 'shield_person', tint: 'bg-accent/15 text-primary'},
-  {label: 'Blocs', value: stats.value.blocks, icon: 'category', tint: 'bg-accent/15 text-primary'},
+  {label: 'Apprenants', value: counts.value.learners, icon: 'school', tint: 'bg-accent/15 text-primary'},
+  {label: 'Formateurs', value: counts.value.teachers, icon: 'co_present', tint: 'bg-accent/15 text-primary'},
+  {label: 'Administrateurs', value: counts.value.admins, icon: 'shield_person', tint: 'bg-accent/15 text-primary'},
+  {label: 'Blocs', value: counts.value.blocks, icon: 'category', tint: 'bg-accent/15 text-primary'},
   {
     label: 'Promotions actives',
-    value: `${stats.value.activePromotions} / ${stats.value.promotions}`,
+    value: `${counts.value.activePromotions} / ${counts.value.promotions}`,
     icon: 'workspaces',
     tint: 'bg-accent/15 text-primary'
   },
-  {label: 'Comptes désactivés', value: stats.value.disabled, icon: 'block', tint: 'bg-surface-tint text-ink-soft'},
-  {label: 'Corbeille', value: stats.value.deleted, icon: 'delete', tint: 'bg-surface-tint text-ink-soft'}
+  {label: 'Comptes désactivés', value: counts.value.disabled, icon: 'block', tint: 'bg-surface-tint text-ink-soft'},
+  {label: 'Corbeille', value: counts.value.deleted, icon: 'delete', tint: 'bg-surface-tint text-ink-soft'}
 ])
-
-const recentUsers = computed(() =>
-  [...activeUsers.value]
-    .filter((u) => u.createdAt)
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 5)
-)
 
 const quickLinks = [
   {label: 'Gérer les utilisateurs', to: '/admin/utilisateurs', icon: 'group'},
@@ -64,18 +63,56 @@ const quickLinks = [
   {label: 'Gérer les contenus', to: '/admin/contenus', icon: 'category'}
 ]
 
+/**
+ * Renvoie une page vide plutôt qu'une erreur quand une liste facultative échoue.
+ * Un indicateur indisponible ne doit pas emporter tout l'écran.
+ */
+function orEmptyPage(request) {
+  return request.catch(() => EMPTY_PAGE)
+}
+
 function load() {
   return run(async () => {
-    const [users, deleted, blocks, promos] = await Promise.all([
-      userService.getUsers(),
-      userService.getDeletedUsers().catch(() => ({items: []})),
-      blockService.getBlocks().catch(() => ({items: []})),
-      promotionService.getPromotions().catch(() => ({items: []}))
+    const [
+      learners,
+      teachers,
+      admins,
+      disabled,
+      deleted,
+      blocks,
+      promotions,
+      activePromotions,
+      latestLearners
+    ] = await Promise.all([
+      userService.getUsers({role: ROLES.USER, size: COUNT_ONLY_SIZE}),
+      userService.getUsers({role: ROLES.TEACHER, size: COUNT_ONLY_SIZE}),
+      userService.getUsers({role: ROLES.ADMIN, size: COUNT_ONLY_SIZE}),
+      userService.getUsers({enabled: false, size: COUNT_ONLY_SIZE}),
+      orEmptyPage(userService.getDeletedUsers({size: COUNT_ONLY_SIZE})),
+      orEmptyPage(blockService.getBlocks({size: COUNT_ONLY_SIZE})),
+      orEmptyPage(promotionService.getPromotions({size: COUNT_ONLY_SIZE})),
+      orEmptyPage(promotionService.getPromotions({active: true, size: COUNT_ONLY_SIZE})),
+      // Tri et filtre appliqués par le serveur : la carte annonce des inscriptions,
+      // elle doit donc montrer les comptes les plus récents et seulement des apprenants.
+      userService.getUsers({
+        role: ROLES.USER,
+        sort: 'createdAt,desc',
+        size: RECENT_LEARNERS_SIZE
+      })
     ])
-    activeUsers.value = users.items
-    deletedCount.value = deleted.items.length
-    blocksCount.value = blocks.items.length
-    promotions.value = promos.items
+
+    counts.value = {
+      learners: learners.totalElements,
+      teachers: teachers.totalElements,
+      admins: admins.totalElements,
+      disabled: disabled.totalElements,
+      deleted: deleted.totalElements,
+      blocks: blocks.totalElements,
+      promotions: promotions.totalElements,
+      activePromotions: activePromotions.totalElements
+    }
+
+    recentLearners.value = latestLearners.items
   })
 }
 
@@ -112,10 +149,10 @@ onMounted(load)
             voir
           </RouterLink>
         </div>
-        <p v-if="recentUsers.length === 0" class="text-[14px] text-muted">Aucun utilisateur.</p>
+        <p v-if="recentLearners.length === 0" class="text-[14px] text-muted">Aucun apprenant inscrit.</p>
         <ul v-else>
           <li
-            v-for="(u, i) in recentUsers"
+            v-for="(u, i) in recentLearners"
             :key="u.id"
             class="flex items-center gap-3 py-2.5"
             :class="{ 'border-t border-line-soft': i > 0 }"
