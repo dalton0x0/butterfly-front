@@ -15,9 +15,9 @@ const exercises = ref([])
 const STATUS_MAP = {
   NOT_STARTED: {label: 'À faire', variant: 'neutral', icon: 'radio_button_unchecked'},
   IN_PROGRESS: {label: 'En cours', variant: 'primary', icon: 'schedule'},
-  SUBMITTED: {label: 'En attente', variant: 'warning', icon: 'schedule'},
-  VALIDATED: {label: 'Validé', variant: 'success', icon: 'check_circle'},
-  REJECTED: {label: 'Rejeté', variant: 'danger', icon: 'cancel'}
+  SUBMITTED: {label: 'En attente de correction', variant: 'warning', icon: 'schedule'},
+  VALIDATED: {label: 'Corrigé', variant: 'success', icon: 'check_circle'},
+  REJECTED: {label: 'À retravailler', variant: 'danger', icon: 'cancel'}
 }
 
 function statusChip(status) {
@@ -29,8 +29,8 @@ const filters = [
   {key: 'all', label: 'Tous'},
   {key: 'NOT_STARTED', label: 'À faire'},
   {key: 'SUBMITTED', label: 'En attente'},
-  {key: 'VALIDATED', label: 'Validés'},
-  {key: 'REJECTED', label: 'Rejetés'}
+  {key: 'VALIDATED', label: 'Corrigés'},
+  {key: 'REJECTED', label: 'À retravailler'}
 ]
 const filtered = computed(() => {
   if (filter.value === 'all') {

@@ -5,8 +5,13 @@
 // Les exercices passent par GET /api/progress/exercises?userId=, déjà utilisé par la
 // file de correction. Attention : contrairement aux deux autres, cet endpoint restreint
 // un formateur aux exercices de ses propres blocs.
+//
+// Une ligne d'exercice ne porte que l'état courant. L'historique des tentatives, avec
+// les reprises demandées et les retours du correcteur, vient de
+// GET /api/progress/exercises/{id}/users/{userId}/submissions, chargé au dépliage.
 import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
+import {formatGrade} from '@/utils/grading'
 import {userService} from '@/services/userService'
 import {correctionService} from '@/services/correctionService'
 import Icon from './Icon.vue'
@@ -51,9 +56,9 @@ function courseStatus(status) {
 // d'un écran à l'autre. NOT_STARTED et IN_PROGRESS n'y figuraient pas : la file ne
 // montre que les exercices déjà rendus.
 const EXERCISE_STATUS = {
-  VALIDATED: {label: 'Validé', variant: 'success'},
-  SUBMITTED: {label: 'En attente', variant: 'warning'},
-  REJECTED: {label: 'Rejeté', variant: 'danger'},
+  VALIDATED: {label: 'Corrigé', variant: 'success'},
+  SUBMITTED: {label: 'En attente de correction', variant: 'warning'},
+  REJECTED: {label: 'À retravailler', variant: 'danger'},
   IN_PROGRESS: {label: 'En cours', variant: 'primary'},
   NOT_STARTED: {label: 'Non commencé', variant: 'neutral'}
 }
@@ -70,6 +75,44 @@ function quizStatus(attempt) {
   return attempt.passed
       ? {label: 'Réussi', variant: 'success'}
       : {label: 'Échoué', variant: 'danger'}
+}
+
+// Historique des soumissions, chargé à la demande et conservé par exercice.
+// Précharger les 50 lignes de l'onglet ferait 50 requêtes pour un panneau que le
+// formateur n'ouvrira peut-être jamais.
+const expandedExerciseId = ref(null)
+const submissionsByExercise = ref({})
+const submissionsLoading = ref(false)
+const submissionsError = ref('')
+
+async function toggleSubmissions(item) {
+  submissionsError.value = ''
+
+  if (expandedExerciseId.value === item.exerciseId) {
+    expandedExerciseId.value = null
+    return
+  }
+
+  expandedExerciseId.value = item.exerciseId
+
+  // Déjà chargé : on réaffiche sans rappeler le serveur.
+  if (submissionsByExercise.value[item.exerciseId]) {
+    return
+  }
+
+  submissionsLoading.value = true
+  try {
+    const page = await correctionService.getUserSubmissions(item.exerciseId, props.userId)
+    submissionsByExercise.value = {...submissionsByExercise.value, [item.exerciseId]: page.items}
+  } catch (err) {
+    submissionsError.value = err.message || "Impossible de charger l'historique des soumissions."
+  } finally {
+    submissionsLoading.value = false
+  }
+}
+
+function submissionsOf(exerciseId) {
+  return submissionsByExercise.value[exerciseId] || []
 }
 
 async function load() {
@@ -169,20 +212,65 @@ onMounted(load)
           <li
             v-for="(item, i) in exercises.items"
             :key="item.id"
-            class="flex items-center gap-3 py-2.5"
+            class="py-2.5"
             :class="{ 'border-t border-line-soft': i > 0 }"
           >
-            <div class="w-8 h-8 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
-              <Icon name="terminal" :size="18"/>
+            <button
+              type="button"
+              class="w-full flex items-center gap-3 text-left"
+              :aria-expanded="expandedExerciseId === item.exerciseId"
+              @click="toggleSubmissions(item)"
+            >
+              <div class="w-8 h-8 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
+                <Icon name="terminal" :size="18"/>
+              </div>
+              <span class="text-[15px] text-ink flex-1 truncate">{{ item.exerciseName }}</span>
+              <span v-if="item.grade != null" class="text-[14px] text-ink-soft tabular-nums shrink-0">
+                {{ formatGrade(item.grade) }}
+              </span>
+              <StatusChip :label="exerciseStatus(item.status).label" :variant="exerciseStatus(item.status).variant"/>
+              <span class="text-[13px] text-muted shrink-0 w-24 text-right">
+                {{ formatDate(item.validatedAt || item.submittedAt || item.updatedAt, {fallback: '-'}) }}
+              </span>
+              <Icon
+                :name="expandedExerciseId === item.exerciseId ? 'expand_less' : 'expand_more'"
+                :size="18"
+                class="text-muted shrink-0"
+              />
+            </button>
+
+            <!-- Historique des tentatives, à la manière de l'onglet Quiz -->
+            <div v-if="expandedExerciseId === item.exerciseId" class="mt-3 ml-11">
+              <p v-if="submissionsLoading" class="text-[13px] text-muted">Chargement de l'historique...</p>
+              <p v-else-if="submissionsError" class="text-[13px] text-danger">{{ submissionsError }}</p>
+              <p v-else-if="submissionsOf(item.exerciseId).length === 0" class="text-[13px] text-muted">
+                Aucune soumission enregistrée.
+              </p>
+              <ol v-else class="flex flex-col gap-2">
+                <li
+                  v-for="submission in submissionsOf(item.exerciseId)"
+                  :key="submission.id"
+                  class="rounded-xl bg-surface-tint px-3 py-2"
+                >
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-[13px] font-semibold text-ink">Tentative {{ submission.attemptNumber }}</span>
+                    <StatusChip
+                      :label="exerciseStatus(submission.status).label"
+                      :variant="exerciseStatus(submission.status).variant"
+                    />
+                    <span v-if="submission.grade != null" class="text-[13px] text-ink-soft tabular-nums">
+                      {{ formatGrade(submission.grade) }}
+                    </span>
+                    <span class="text-[13px] text-muted ml-auto">
+                      {{ formatDate(submission.reviewedAt || submission.submittedAt, {fallback: '-'}) }}
+                    </span>
+                  </div>
+                  <p v-if="submission.feedback" class="text-[13px] text-ink-soft mt-1 whitespace-pre-wrap break-words">
+                    {{ submission.feedback }}
+                  </p>
+                </li>
+              </ol>
             </div>
-            <span class="text-[15px] text-ink flex-1 truncate">{{ item.exerciseName }}</span>
-            <span v-if="item.grade != null" class="text-[14px] text-ink-soft tabular-nums shrink-0">
-              {{ item.grade }}/20
-            </span>
-            <StatusChip :label="exerciseStatus(item.status).label" :variant="exerciseStatus(item.status).variant"/>
-            <span class="text-[13px] text-muted shrink-0 w-24 text-right">
-              {{ formatDate(item.validatedAt || item.submittedAt || item.updatedAt, {fallback: '-'}) }}
-            </span>
           </li>
         </ul>
       </div>

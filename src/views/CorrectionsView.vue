@@ -1,7 +1,12 @@
 <script setup>
 // Espace formateur : corrections d'exercices, organisées en trois onglets.
-// À corriger (SUBMITTED) : panneau de correction (note + feedback, valider/rejeter).
-// Validés / Rejetés : historique en lecture seule, avec la note et le feedback donnés.
+// À corriger (SUBMITTED) : panneau de correction (note + retour, correction ou reprise).
+// Corrigés / À retravailler : historique en lecture seule avec la note et le retour donnés.
+//
+// Vocabulaire : l'interface décrit la suite à donner, le serveur garde ses noms
+// techniques (VALIDATED, REJECTED). « Corrigé » dit que la correction a eu lieu et que
+// l'exercice est clos sans préjuger de la réussite : la note porte seule le jugement.
+// « À retravailler » dit qu'un nouveau rendu est attendu avec ou sans note.
 // File : GET /api/progress/exercises?status=... (restreinte aux apprenants du formateur).
 import {computed, onMounted, ref} from 'vue'
 import {usePagedList} from '@/composables/usePagedList'
@@ -10,6 +15,7 @@ import {formatDate} from '@/utils/date'
 import {correctionService} from '@/services/correctionService'
 import {exerciseService} from '@/services/exerciseService'
 import {formatFileSize} from '@/utils/upload'
+import {formatGrade, MAX_GRADE} from '@/utils/grading'
 import {saveBlobAs} from '@/utils/download'
 import Icon from '@/components/Icon.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -17,8 +23,8 @@ import StatusChip from '@/components/StatusChip.vue'
 
 const TABS = [
   {key: 'SUBMITTED', label: 'À corriger'},
-  {key: 'VALIDATED', label: 'Validés'},
-  {key: 'REJECTED', label: 'Rejetés'}
+  {key: 'VALIDATED', label: 'Corrigés'},
+  {key: 'REJECTED', label: 'À retravailler'}
 ]
 
 const reviewSuccess = ref('')
@@ -59,7 +65,12 @@ const actionError = ref('')
 // Seul l'onglet À corriger autorise les actions de correction.
 const isPending = computed(() => currentTab.value === 'SUBMITTED')
 
-const canReview = computed(() => currentTab.value === 'SUBMITTED' || currentTab.value === 'VALIDATED')
+// Les trois onglets sont actionnables : un exercice rendu se corrige, un exercice déjà
+// corrigé se réajuste, et un exercice renvoyé au travail se clôt sur le dernier rendu
+// reçu quand la reprise demandée n'arrive jamais.
+// La reprise ne se demande que sur un exercice rendu ou déjà corrigé : la redemander
+// sur un exercice qui l'attend déjà n'aurait aucun effet, et le serveur la refuse.
+const canAskForRework = computed(() => currentTab.value !== 'REJECTED')
 
 function studentName(item) {
   if (!item) {
@@ -70,9 +81,9 @@ function studentName(item) {
 }
 
 const STATUS_CHIP = {
-  SUBMITTED: {label: 'En attente', variant: 'warning'},
-  VALIDATED: {label: 'Validé', variant: 'success'},
-  REJECTED: {label: 'Rejeté', variant: 'danger'}
+  SUBMITTED: {label: 'En attente de correction', variant: 'warning'},
+  VALIDATED: {label: 'Corrigé', variant: 'success'},
+  REJECTED: {label: 'À retravailler', variant: 'danger'}
 }
 
 function statusChip(status) {
@@ -103,7 +114,8 @@ function changeTab(key) {
 
 async function select(item) {
   selected.value = item
-  grade.value = currentTab.value === 'VALIDATED' ? item.grade : null
+  // Les deux onglets d'historique peuvent porter une note, une reprise comprise.
+  grade.value = currentTab.value === 'SUBMITTED' ? null : item.grade
   feedback.value = ''
   actionError.value = ''
   detailError.value = ''
@@ -112,8 +124,9 @@ async function select(item) {
   try {
     const page = await correctionService.getUserSubmissions(item.exerciseId, item.userId)
     submissions.value = page.items
-    // Onglet Validés : on pré-remplit le feedback existant pour permettre sa réédition.
-    if (currentTab.value === 'VALIDATED') {
+    // Onglets d'historique : on pré-remplit le retour existant pour permettre sa
+    // réédition plutôt que d'obliger le correcteur à le retaper.
+    if (!isPending.value) {
       feedback.value = reviewedSubmission.value?.feedback || ''
     }
   } catch (err) {
@@ -148,15 +161,32 @@ async function refreshAfterUpdate(message) {
   await refresh()
 }
 
-async function validate() {
-  actionError.value = ''
+/**
+ * Lit la note saisie et la contrôle.
+ * Renvoie la note, null si le champ est vide ou undefined si la saisie est invalide
+ * auquel cas le message d'erreur est déjà posé.
+ */
+function readGrade() {
   if (grade.value === null || grade.value === '') {
-    actionError.value = 'La note est obligatoire.'
-    return
+    return null
   }
   const numericGrade = Number(grade.value)
-  if (Number.isNaN(numericGrade) || numericGrade < 0 || numericGrade > 20) {
-    actionError.value = 'La note doit être comprise entre 0 et 20.'
+  if (Number.isNaN(numericGrade) || numericGrade < 0 || numericGrade > MAX_GRADE) {
+    actionError.value = `La note doit être comprise entre 0 et ${MAX_GRADE}.`
+    return undefined
+  }
+  return numericGrade
+}
+
+async function saveCorrection() {
+  actionError.value = ''
+  const numericGrade = readGrade()
+  if (numericGrade === undefined) {
+    return
+  }
+  // Clore un exercice sans l'évaluer priverait l'apprenant de son retour chiffré.
+  if (numericGrade === null) {
+    actionError.value = 'La note est obligatoire pour enregistrer une correction.'
     return
   }
   acting.value = true
@@ -168,25 +198,32 @@ async function validate() {
     if (currentTab.value === 'VALIDATED') {
       await refreshAfterUpdate(`Note mise à jour pour ${studentName(selected.value)}.`)
     } else {
-      await finishReview('validé')
+      await finishReview('corrigé')
     }
   } catch (err) {
-    actionError.value = err.message || 'La validation a échoué.'
+    actionError.value = err.message || "L'enregistrement a échoué."
   } finally {
     acting.value = false
   }
 }
 
-async function reject() {
+async function askForRework() {
   actionError.value = ''
+  // Note facultative ici : elle exprime « corrigé mais insuffisant ». Absente, la
+  // progression repart sans note et l'apprenant n'a que le retour écrit.
+  const numericGrade = readGrade()
+  if (numericGrade === undefined) {
+    return
+  }
   acting.value = true
   try {
     await correctionService.reject(selected.value.exerciseId, selected.value.userId, {
+      grade: numericGrade,
       feedback: feedback.value.trim() || null
     })
-    await finishReview('rejeté')
+    await finishReview('renvoyé au travail')
   } catch (err) {
-    actionError.value = err.message || 'Le rejet a échoué.'
+    actionError.value = err.message || 'La demande de reprise a échoué.'
   } finally {
     acting.value = false
   }
@@ -267,7 +304,7 @@ onMounted(load)
           <td class="px-5 py-3 text-ink-soft">{{ c.exerciseName }}</td>
           <td class="px-5 py-3 text-ink-soft">
             <template v-if="isPending">{{ formatDate(c.submittedAt) }}</template>
-            <template v-else>{{ c.grade != null ? `${c.grade} / 20` : '-' }}</template>
+            <template v-else>{{ formatGrade(c.grade) }}</template>
           </td>
           <td class="px-5 py-3 text-ink-soft">{{ c.attempts }}</td>
           <td class="px-5 py-3">
@@ -336,91 +373,80 @@ onMounted(load)
           <p v-if="!latestSubmission" class="text-[14px] text-muted">Aucune soumission trouvée.</p>
         </div>
 
-        <!-- Droite : correction (À corriger) ou bilan en lecture seule (historique) -->
+        <!-- Droite : panneau de correction, actionnable sur les trois onglets -->
         <div class="flex flex-col gap-4">
-          <template v-if="canReview">
-            <p v-if="currentTab === 'VALIDATED'"
-               class="text-[13px] text-muted bg-surface-tint rounded-[10px] px-3 py-2">
-              Cet exercice est déjà validé. Vous pouvez réajuster la note ou le feedback,
-              ou le rejeter (les XP de validation sera alors annulé).
-            </p>
+          <!-- Rappel de la correction en cours sur les onglets d'historique -->
+          <div v-if="!isPending" class="flex items-center gap-3">
+            <StatusChip v-bind="statusChip(selected.status)"/>
+            <span v-if="reviewedSubmission && reviewedSubmission.reviewedAt" class="text-[13px] text-muted">
+              Corrigé le {{ formatDate(reviewedSubmission.reviewedAt) }}
+            </span>
+          </div>
 
-            <div>
-              <label for="corrections-feedback"
-                     class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-2">
-                Feedback pour l'apprenant (facultatif)
-              </label>
-              <textarea
-                id="corrections-feedback"
-                v-model="feedback"
-                rows="5"
-                placeholder="Saisissez votre commentaire constructif ici..."
-                class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
-              ></textarea>
-            </div>
+          <p v-if="currentTab === 'VALIDATED'"
+             class="text-[13px] text-muted bg-surface-tint rounded-[10px] px-3 py-2">
+            Cet exercice est déjà corrigé. Vous pouvez réajuster la note ou le retour,
+            ou demander une reprise (les XP de correction seront alors annulés).
+          </p>
 
-            <div>
-              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="corrections-grade">Note (sur
-                20)</label>
-              <input id="corrections-grade"
-                v-model="grade"
-                type="number"
-                min="0"
-                max="20"
-                placeholder="0 - 20"
-                class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-              />
-            </div>
+          <p v-else-if="currentTab === 'REJECTED'"
+             class="text-[13px] text-muted bg-surface-tint rounded-[10px] px-3 py-2">
+            Cet exercice attend une reprise que l'apprenant n'a pas encore rendue.
+            Vous pouvez le clore sur son dernier rendu en enregistrant une correction.
+          </p>
 
-            <p v-if="actionError" class="text-[13px] text-danger">{{ actionError }}</p>
+          <div>
+            <label for="corrections-feedback"
+                   class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-2">
+              Feedback pour l'apprenant (facultatif)
+            </label>
+            <textarea
+              id="corrections-feedback"
+              v-model="feedback"
+              rows="5"
+              placeholder="Saisissez votre commentaire constructif ici..."
+              class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors resize-none"
+            ></textarea>
+          </div>
 
-            <div class="flex justify-start gap-3 mt-1">
-              <button
-                type="button"
-                :disabled="acting"
-                class="h-10 px-5 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors flex items-center gap-2 disabled:opacity-60"
-                @click="reject"
-              >
-                <Icon name="close" :size="18"/>
-                Rejeter
-              </button>
-              <button
-                type="button"
-                :disabled="acting"
-                class="h-10 px-5 rounded-[10px] bg-[#16a34a] text-white text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60"
-                @click="validate"
-              >
-                <Icon name="check" :size="18"/>
-                {{ isPending ? 'Valider' : 'Mettre à jour' }}
-              </button>
-            </div>
-          </template>
+          <div>
+            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="corrections-grade">
+              Note (sur {{ MAX_GRADE }})
+              <span v-if="canAskForRework" class="normal-case font-normal text-muted">facultative pour une reprise</span>
+            </label>
+            <input id="corrections-grade"
+              v-model="grade"
+              type="number"
+              min="0"
+              :max="MAX_GRADE"
+              :placeholder="`0 - ${MAX_GRADE}`"
+              class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+            />
+          </div>
 
-          <!-- Historique : bilan en lecture seule -->
-          <template v-else>
-            <div class="flex items-center gap-3">
-              <StatusChip v-bind="statusChip(selected.status)"/>
-              <span v-if="reviewedSubmission && reviewedSubmission.reviewedAt" class="text-[13px] text-muted">
-                Corrigé le {{ formatDate(reviewedSubmission.reviewedAt) }}
-              </span>
-            </div>
+          <p v-if="actionError" class="text-[13px] text-danger">{{ actionError }}</p>
 
-            <div>
-              <p class="text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Note attribuée</p>
-              <p class="text-2xl font-semibold text-ink tabular-nums">
-                {{ selected.grade != null ? `${selected.grade} / 20` : '-' }}
-              </p>
-            </div>
-
-            <div>
-              <p class="text-[12px] font-semibold text-muted uppercase tracking-wide mb-2">Feedback donné</p>
-              <div class="rounded-xl p-3 bg-surface-tint min-h-[60px]">
-                <p class="text-[14px] text-ink whitespace-pre-wrap break-words">
-                  {{ (reviewedSubmission && reviewedSubmission.feedback) || 'Aucun feedback laissé.' }}
-                </p>
-              </div>
-            </div>
-          </template>
+          <div class="flex justify-start gap-3 mt-1">
+            <button
+              v-if="canAskForRework"
+              type="button"
+              :disabled="acting"
+              class="h-10 px-5 rounded-[10px] border border-danger text-danger text-sm font-semibold hover:bg-danger/8 transition-colors flex items-center gap-2 disabled:opacity-60"
+              @click="askForRework"
+            >
+              <Icon name="replay" :size="18"/>
+              Demander une reprise
+            </button>
+            <button
+              type="button"
+              :disabled="acting"
+              class="h-10 px-5 rounded-[10px] bg-[#16a34a] text-white text-sm font-semibold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-60"
+              @click="saveCorrection"
+            >
+              <Icon name="check" :size="18"/>
+              {{ currentTab === 'VALIDATED' ? 'Mettre à jour la correction' : 'Enregistrer la correction' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

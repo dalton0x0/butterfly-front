@@ -2,6 +2,7 @@
 // Espace admin : page d'aperçu d'un utilisateur (apprenant ou formateur).
 import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
+import {MAX_GRADE} from '@/utils/grading'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
@@ -50,7 +51,7 @@ const kpis = computed(() => {
 
 const averageGrade = computed(() => {
   const value = overview.value?.averageGrade
-  return value != null ? `${value.toFixed(1)} / 20` : '-'
+  return value != null ? `${value.toFixed(1)} / ${MAX_GRADE}` : '-'
 })
 
 const recentActivity = computed(() => {
@@ -65,9 +66,9 @@ const recentActivity = computed(() => {
   }
   for (const e of ov.recentExerciseProgress || []) {
     const label = {
-      VALIDATED: 'Exercice validé',
-      SUBMITTED: 'Exercice soumis',
-      REJECTED: 'Exercice rejeté'
+      VALIDATED: 'Exercice corrigé',
+      SUBMITTED: 'Exercice rendu',
+      REJECTED: 'Exercice à retravailler'
     }[e.status] || 'Exercice'
     items.push({
       icon: 'terminal',

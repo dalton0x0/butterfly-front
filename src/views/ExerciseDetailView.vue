@@ -11,6 +11,7 @@ import {useAuthStore} from '@/stores/auth'
 import {exerciseService} from '@/services/exerciseService'
 import {ALLOWED_UPLOAD_ACCEPT, formatFileSize, validateUploadFile} from '@/utils/upload'
 import {saveBlobAs} from '@/utils/download'
+import {formatGrade} from '@/utils/grading'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -59,9 +60,9 @@ const breadcrumb = computed(() => {
 const STATUS_MAP = {
   NOT_STARTED: {label: 'À faire', variant: 'neutral', icon: 'radio_button_unchecked'},
   IN_PROGRESS: {label: 'En cours', variant: 'primary', icon: 'schedule'},
-  SUBMITTED: {label: 'En attente', variant: 'warning', icon: 'schedule'},
-  VALIDATED: {label: 'Validé', variant: 'success', icon: 'check_circle'},
-  REJECTED: {label: 'Rejeté', variant: 'danger', icon: 'cancel'}
+  SUBMITTED: {label: 'En attente de correction', variant: 'warning', icon: 'schedule'},
+  VALIDATED: {label: 'Corrigé', variant: 'success', icon: 'check_circle'},
+  REJECTED: {label: 'À retravailler', variant: 'danger', icon: 'cancel'}
 }
 
 function statusChip(status) {
@@ -453,7 +454,7 @@ onMounted(load)
               <p v-if="canEdit(s) && editError" class="text-[13px] text-danger mb-2">{{ editError }}</p>
 
               <!-- Note attribuée -->
-              <p v-if="s.grade != null" class="text-[14px] text-ink mb-1">Note : {{ s.grade }} / 20</p>
+              <p v-if="s.grade != null" class="text-[14px] text-ink mb-1">Note : {{ formatGrade(s.grade) }}</p>
 
               <!-- Retour du formateur -->
               <div v-if="s.feedback" class="rounded-xl p-3 bg-surface-tint">

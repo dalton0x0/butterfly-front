@@ -55,10 +55,12 @@ export const correctionService = {
     },
 
     /**
-     * Rejette la progression d'un apprenant sur un exercice (feedback facultatif).
+     * Demande une reprise du travail rendu et rouvre l'exercice.
+     * Note et retour sont facultatifs. Une note fournie exprime « corrigé mais
+     * insuffisant » ; absente, la progression repart sans note.
      * @param exerciseId
      * @param userId
-     * @param {{ feedback?: string }} payload
+     * @param {{ grade?: ?number, feedback?: ?string }} payload
      */
     async reject(exerciseId, userId, payload) {
         const envelope = await http.post(`/progress/exercises/${exerciseId}/users/${userId}/reject`, payload)

@@ -54,9 +54,9 @@ const recentActivity = computed(() => {
   }
   for (const e of ov.recentExerciseProgress || []) {
     const label = {
-      VALIDATED: 'Exercice validé',
-      SUBMITTED: 'Exercice soumis',
-      REJECTED: 'Exercice rejeté'
+      VALIDATED: 'Exercice corrigé',
+      SUBMITTED: 'Exercice rendu',
+      REJECTED: 'Exercice à retravailler'
     }[e.status] || 'Exercice'
     items.push({
       icon: 'terminal',
