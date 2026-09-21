@@ -2,6 +2,7 @@
 // Espace admin : page d'aperçu d'un utilisateur (apprenant ou formateur).
 import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
+import {buildRecentActivity} from '@/utils/activity'
 import {MAX_GRADE} from '@/utils/grading'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
@@ -54,43 +55,7 @@ const averageGrade = computed(() => {
   return value != null ? `${value.toFixed(1)} / ${MAX_GRADE}` : '-'
 })
 
-const recentActivity = computed(() => {
-  const ov = overview.value || {}
-  const items = []
-  for (const c of ov.recentCourseProgress || []) {
-    items.push({
-      icon: 'menu_book',
-      text: c.status === 'COMPLETED' ? `Cours terminé : ${c.courseName}` : `Cours en cours : ${c.courseName}`,
-      at: c.completedAt || c.updatedAt || c.startedAt
-    })
-  }
-  for (const e of ov.recentExerciseProgress || []) {
-    const label = {
-      VALIDATED: 'Exercice corrigé',
-      SUBMITTED: 'Exercice rendu',
-      REJECTED: 'Exercice à retravailler'
-    }[e.status] || 'Exercice'
-    items.push({
-      icon: 'terminal',
-      text: `${label} : ${e.exerciseName}`,
-      at: e.validatedAt || e.submittedAt || e.updatedAt
-    })
-  }
-  for (const q of ov.recentQuizAttempts || []) {
-    // Une tentative abandonnée n'a pas été corrigée : afficher son score n'aurait aucun sens.
-    items.push({
-      icon: 'quiz',
-      text: q.abandoned
-        ? `Quiz abandonné : ${q.quizName}`
-        : `${q.passed ? 'Quiz réussi' : 'Quiz tenté'} : ${q.quizName} (${q.score}/${q.maxScore})`,
-      at: q.finishedAt || q.startedAt
-    })
-  }
-  return items
-    .filter((i) => i.at)
-    .sort((a, b) => new Date(b.at) - new Date(a.at))
-    .slice(0, 12)
-})
+const recentActivity = computed(() => buildRecentActivity(overview.value, 12))
 
 async function load() {
   loading.value = true
