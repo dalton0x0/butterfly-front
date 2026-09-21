@@ -15,7 +15,7 @@ import {formatDate} from '@/utils/date'
 import {correctionService} from '@/services/correctionService'
 import {exerciseService} from '@/services/exerciseService'
 import {formatFileSize} from '@/utils/upload'
-import {formatGrade, MAX_GRADE} from '@/utils/grading'
+import {formatGrade, maxGrade} from '@/utils/grading'
 import {saveBlobAs} from '@/utils/download'
 import Icon from '@/components/Icon.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -171,8 +171,8 @@ function readGrade() {
     return null
   }
   const numericGrade = Number(grade.value)
-  if (Number.isNaN(numericGrade) || numericGrade < 0 || numericGrade > MAX_GRADE) {
-    actionError.value = `La note doit être comprise entre 0 et ${MAX_GRADE}.`
+  if (Number.isNaN(numericGrade) || numericGrade < 0 || numericGrade > maxGrade.value) {
+    actionError.value = `La note doit être comprise entre 0 et ${maxGrade.value}.`
     return undefined
   }
   return numericGrade
@@ -411,15 +411,15 @@ onMounted(load)
 
           <div>
             <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="corrections-grade">
-              Note (sur {{ MAX_GRADE }})
+              Note (sur {{ maxGrade }})
               <span v-if="canAskForRework" class="normal-case font-normal text-muted">facultative pour une reprise</span>
             </label>
             <input id="corrections-grade"
               v-model="grade"
               type="number"
               min="0"
-              :max="MAX_GRADE"
-              :placeholder="`0 - ${MAX_GRADE}`"
+              :max="maxGrade"
+              :placeholder="`0 - ${maxGrade}`"
               class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
             />
           </div>

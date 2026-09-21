@@ -3,7 +3,7 @@
 import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {buildRecentActivity} from '@/utils/activity'
-import {MAX_GRADE} from '@/utils/grading'
+import {maxGrade} from '@/utils/grading'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
@@ -52,7 +52,7 @@ const kpis = computed(() => {
 
 const averageGrade = computed(() => {
   const value = overview.value?.averageGrade
-  return value != null ? `${value.toFixed(1)} / ${MAX_GRADE}` : '-'
+  return value != null ? `${value.toFixed(1)} / ${maxGrade.value}` : '-'
 })
 
 const recentActivity = computed(() => buildRecentActivity(overview.value, 12))

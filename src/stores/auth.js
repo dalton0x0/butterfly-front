@@ -2,6 +2,7 @@ import {defineStore} from 'pinia'
 import {computed, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
 import {authService} from '@/services/authService'
+import {loadGradingSettings, resetGradingSettings} from '@/utils/grading'
 import {tokenStorage} from '@/services/tokenStorage'
 
 /*
@@ -95,6 +96,9 @@ export const useAuthStore = defineStore('auth', () => {
             // se dégradent alors sans le moindre signal, d'où cet avertissement.
             console.warn('[auth] profil complet indisponible, profil minimal conservé', error)
         }
+        // Réglages d'affichage chargés avec la session : ils viennent du serveur et ne
+        // doivent pas être devinés par le client.
+        await loadGradingSettings()
         initialized.value = true
     }
 
@@ -147,6 +151,7 @@ export const useAuthStore = defineStore('auth', () => {
         } finally {
             tokenStorage.clear()
             user.value = null
+            resetGradingSettings()
         }
     }
 
@@ -163,6 +168,9 @@ export const useAuthStore = defineStore('auth', () => {
         if (refreshToken) {
             try {
                 user.value = mapUser(await authService.fetchProfile())
+                // Réglages d'affichage rechargés avec la session : ils viennent du
+                // serveur et ne doivent pas être devinés par le client.
+                await loadGradingSettings()
             } catch (error) {
                 console.warn('[auth] restauration de session impossible', error)
                 tokenStorage.clear()
