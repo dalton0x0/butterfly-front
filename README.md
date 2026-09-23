@@ -75,12 +75,15 @@ Espace apprenant :
 
 - Parcours des blocs et modules, avec signalement des modules verrouillés et de leurs prérequis.
 - Suivi d'un cours et enregistrement de la progression.
-- Passation de quiz interactifs (limite de temps par question), avec restitution du score et du
-  corrigé.
-- Avertissement avant de quitter un quiz en cours, la sortie étant enregistrée comme une tentative.
+- Passation de quiz pilotée par le serveur : écran d'introduction qui n'engage à rien, questions
+  envoyées une par une avec leur temps restant, réponse définitive une fois validée et reprise
+  de la tentative après un rechargement.
+- Restitution du résultat selon les réglages du quiz : le score et le corrigé peuvent être
+  masqués en cas d'échec comme en cas de réussite.
+- Avertissement avant de quitter un quiz en cours, la sortie étant enregistrée comme un échec.
 - Historique distinguant une tentative abandonnée d'un échec au barème.
-- Soumission d'exercice (dépôt du contenu et des fichiers en une action), édition tant que la
-  soumission est en attente.
+- Soumission d'exercice (dépôt des fichiers et description facultative en une action), édition
+  tant que la soumission est en attente.
 - Téléchargement des fichiers joints à un énoncé d'exercices.
 - Tableau de bord gamifié : expérience, badges et série d'activités.
 
@@ -94,9 +97,12 @@ Espace formateur :
 - Import des questions d'un quiz depuis un fichier JSON avec contrôle avant application et modèle
   téléchargeable.
 - Fichiers joints aux énoncés d'exercices, sélectionnables avant même le premier enregistrement.
-- Mélange des questions et des réponses activable par quiz.
+- Mélange des questions et des réponses activable par quiz et réglages de passation : ce que
+  voit l'apprenant après un échec, correction montrée ou non après une réussite, attente
+  facultative avant une nouvelle tentative.
 - Téléversement de médias (images de couverture, images de contenu, vidéos).
-- File de correction : validation ou rejet des soumissions avec note et retour.
+- File de correction : un exercice rendu est corrigé et clos ou renvoyé au travail avec une
+  note dans les deux cas et un retour écrit. Historique complet des rendus d'un apprenant.
 - Suivi des apprenants de son périmètre.
 
 Espace administrateur :
@@ -455,7 +461,7 @@ contenu de la version.
 
 ## Historique des versions
 
-Version courante : **v1.8.0**.
+Version courante : **v2.0.0**.
 
 L'historique complet des versions avec le détail de chaque livraison est dans [CHANGELOG.md](CHANGELOG.md).
 
