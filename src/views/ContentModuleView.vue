@@ -99,7 +99,23 @@ const breadcrumb = computed(() => {
 // Quiz (modale métadonnées)
 const showQuizForm = ref(false)
 const quizEditing = ref(false)
-const quizForm = reactive({name: '', content: '', shuffleQuestions: false, shuffleOptions: false})
+const quizForm = reactive({
+  name: '',
+  content: '',
+  shuffleQuestions: false,
+  shuffleOptions: false,
+  feedbackMode: 'SCORE',
+  showCorrectionOnPass: true,
+  retryCooldownMinutes: ''
+})
+
+// Ce que l'apprenant voit après une tentative échouée. Montrer les bonnes réponses
+// rendrait la tentative suivante triviale puisque les questions sont les mêmes.
+const FEEDBACK_MODES = [
+  {value: 'SCORE', label: 'Son score', hint: 'Sans le détail des questions.'},
+  {value: 'SCORE_AND_MISSED', label: 'Son score et les questions ratées', hint: 'Sans les bonnes réponses.'},
+  {value: 'VERDICT_ONLY', label: 'Seulement le résultat', hint: 'Le score reste masqué tant que le quiz n\'est pas réussi.'}
+]
 const quizError = ref('')
 const savingQuiz = ref(false)
 
@@ -109,6 +125,9 @@ function openCreateQuiz() {
   quizForm.content = ''
   quizForm.shuffleQuestions = false
   quizForm.shuffleOptions = false
+  quizForm.feedbackMode = 'SCORE'
+  quizForm.showCorrectionOnPass = true
+  quizForm.retryCooldownMinutes = ''
   quizError.value = ''
   showQuizForm.value = true
 }
@@ -120,6 +139,9 @@ function openEditQuiz() {
   // Un quiz créé avant la fonctionnalité renvoie ces champs à null : on retombe sur false.
   quizForm.shuffleQuestions = Boolean(quiz.value.shuffleQuestions)
   quizForm.shuffleOptions = Boolean(quiz.value.shuffleOptions)
+  quizForm.feedbackMode = quiz.value.feedbackMode || 'SCORE'
+  quizForm.showCorrectionOnPass = quiz.value.showCorrectionOnPass !== false
+  quizForm.retryCooldownMinutes = quiz.value.retryCooldownMinutes ?? ''
   quizError.value = ''
   showQuizForm.value = true
 }
@@ -139,6 +161,14 @@ async function saveQuiz() {
     quizError.value = 'La consigne ne doit pas dépasser 50 000 caractères.'
     return
   }
+  // Délai d'attente facultatif : vide veut dire aucune attente et non zéro minute.
+  const cooldown = String(quizForm.retryCooldownMinutes).trim()
+  const retryCooldownMinutes = cooldown === '' ? null : Number(cooldown)
+  if (retryCooldownMinutes !== null && (!Number.isInteger(retryCooldownMinutes) || retryCooldownMinutes < 1)) {
+    quizError.value = "Le délai d'attente doit être un nombre de minutes d'au moins 1, ou rester vide."
+    return
+  }
+
   savingQuiz.value = true
   try {
     const payload = {
@@ -146,7 +176,10 @@ async function saveQuiz() {
       content: content || null,
       moduleId,
       shuffleQuestions: quizForm.shuffleQuestions,
-      shuffleOptions: quizForm.shuffleOptions
+      shuffleOptions: quizForm.shuffleOptions,
+      feedbackMode: quizForm.feedbackMode,
+      showCorrectionOnPass: quizForm.showCorrectionOnPass,
+      retryCooldownMinutes
     }
     if (quizEditing.value) {
       await quizService.updateQuiz(quiz.value.id, payload)
@@ -449,6 +482,48 @@ onMounted(load)
             </span>
           </label>
         </div>
+        <div class="flex flex-col gap-3 border-t border-line-soft pt-4">
+          <p class="text-[13px] font-medium text-ink-soft">Après une tentative échouée, l'apprenant voit</p>
+
+          <label v-for="mode in FEEDBACK_MODES" :key="mode.value" class="flex items-start gap-3 cursor-pointer">
+            <input v-model="quizForm.feedbackMode" type="radio" :value="mode.value"
+                   class="mt-0.5 w-4 h-4 accent-[var(--color-primary)] cursor-pointer"/>
+            <span>
+              <span class="block text-[14px] text-ink">{{ mode.label }}</span>
+              <span class="block text-[12px] text-muted">{{ mode.hint }}</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="flex flex-col gap-3 border-t border-line-soft pt-4">
+          <p class="text-[13px] font-medium text-ink-soft">Après une réussite</p>
+
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input v-model="quizForm.showCorrectionOnPass" type="checkbox"
+                   class="mt-0.5 w-4 h-4 accent-[var(--color-primary)] cursor-pointer"/>
+            <span>
+              <span class="block text-[14px] text-ink">Montrer la correction complète</span>
+              <span class="block text-[12px] text-muted">
+                Le score et le résultat sont toujours affichés. Masquer la correction limite
+                sa circulation d'une promotion à l'autre ou d'une personne à l'autre.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div class="border-t border-line-soft pt-4">
+          <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="quiz-cooldown">
+            Attente après un échec <span class="text-muted font-normal">(en minutes, facultative)</span>
+          </label>
+          <input id="quiz-cooldown" v-model="quizForm.retryCooldownMinutes" type="number" min="1" max="10080"
+                 placeholder="Aucune attente"
+                 class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"/>
+          <p class="text-[12px] text-muted mt-1.5">
+            Empêche de trouver les réponses en enchaînant les tentatives. Laissez vide pour
+            autoriser une nouvelle tentative immédiate.
+          </p>
+        </div>
+
         <p v-if="quizError" class="text-[13px] text-danger">{{ quizError }}</p>
         <div class="flex justify-end gap-3 mt-1">
           <button type="button"
