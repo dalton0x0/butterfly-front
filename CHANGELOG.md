@@ -11,6 +11,35 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v2.0.0](https://github.com/dalton0x0/butterfly-front/compare/v1.8.0...v2.0.0) - 2026-09-23
+
+Rupture de compatibilité : cette version exige le backend v2.0.0 dont plusieurs routes changent.
+
+L'écran de quiz est repensé autour de la passation pilotée par le serveur. Une introduction
+décrit le quiz sans en livrer la moindre question et n'engage à rien, le chronomètre ne partant
+qu'au clic. Les questions arrivent ensuite une par une, chacune avec le temps restant calculé par
+le serveur, si bien qu'une reprise après rechargement affiche le temps réel au lieu de repartir de
+zéro. Une réponse validée est définitive. Le résultat s'adapte aux réglages du quiz : sans score,
+l'anneau de progression et la ligne de score cèdent la place à une phrase qui explique le choix du
+formateur et les bonnes réponses ne sont affichées que si le serveur les a renvoyées. Comme le
+client ne détient plus la liste des questions, il mémorise chacune au fur et à mesure qu'elle lui
+est servie pour pouvoir afficher les énoncés au moment de la correction. L'éditeur de quiz reçoit
+les trois réglages correspondants avec pour chacun la phrase qui dit ce qu'il implique.
+
+Le tableau de bord d'administration comptait ses indicateurs sur une page de vingt utilisateurs :
+au vingt et unième compte, toutes ses cartes mentaient sans le moindre signal et les « derniers
+inscrits » étaient en réalité les vingt premiers par ordre alphabétique. Les comptages viennent
+désormais du total renvoyé par le serveur et la liste est triée et filtrée par lui. Le barème des
+notes, recopié dans six endroits de cinq écrans est chargé depuis le serveur et n'existe plus
+qu'en un seul point. Le flux d'activité récente, dupliqué à l'identique dans trois vues devient
+une fabrique partagée et testée. Le vocabulaire de la correction d'exercice suit celui du backend,
+le formateur peut renvoyer un travail avec une note et le détail apprenant affiche enfin
+l'historique complet des rendus jusque-là réduit à une seule ligne d'état. La consigne d'un quiz
+et la description d'une soumission deviennent facultatives et la barre de progression d'un cours
+disparaît d'un écran où elle ne pouvait valoir que zéro ou cent.
+
+---
+
 ## [v1.8.0](https://github.com/dalton0x0/butterfly-front/compare/v1.7.0...v1.8.0) - 2026-09-14
 
 Outillage de qualité et découpage des plus gros écrans. Le projet n'avait ni analyse statique
