@@ -3,8 +3,11 @@
 
   Correspondance avec le back :
   - GET /api/users/me/quizzes vers Page<MyQuizResponse>
-  - GET /api/quizzes/{id}/play vers QuizPlayResponse (sans les bonnes réponses)
-  - POST /api/progress/quizzes/{id}/start vers QuizAttemptStartResponse
+  - GET /api/progress/quizzes/{id}/intro vers QuizIntroResponse (aucune question)
+  - POST /api/progress/quizzes/{id}/start vers QuizAttemptStartResponse (première question)
+  - GET /api/progress/attempts/{id}/current vers QuizAttemptStateResponse (reprise)
+  - POST /api/progress/attempts/{id}/answers vers QuizAttemptStateResponse (question suivante)
+  - POST /api/progress/attempts/{id}/finish vers QuizSubmissionResultResponse
   - POST /api/progress/quizzes/{id}/abandon sans corps de réponse
   - POST /api/progress/quizzes/{id}/submit vers QuizSubmissionResultResponse
   - GET /api/progress/me/quizzes vers Page<QuizAttemptResponse>
@@ -30,11 +33,13 @@ export const quizService = {
     },
 
     /**
-     * Récupère un quiz à passer (sans les bonnes réponses).
-     * @returns {Promise<object>} QuizPlayResponse { id, name, content, questions }
+     * Écran d'introduction d'un quiz : consigne, durée, seuil et bilan des tentatives.
+     * Ne contient aucune question et n'ouvre aucune tentative : les questions ne sont
+     * livrées qu'au démarrage, quand le chronomètre part.
+     * @returns {Promise<object>} QuizIntroResponse
      */
-    async getPlay(id) {
-        const envelope = await http.get(`/quizzes/${id}/play`)
+    async getIntro(quizId) {
+        const envelope = await http.get(`/progress/quizzes/${quizId}/intro`)
         return envelope.data
     },
 
@@ -60,13 +65,32 @@ export const quizService = {
     },
 
     /**
-     * soumet les réponses et récupère le résultat corrigé.
-     * @param {number} quizId
-     * @param {Array<{ questionId: number, selectedOptionIds: number[] }>} answers
-     * @returns {Promise<object>} QuizSubmissionResultResponse { attemptId, score, maxScore, passed, results }
+     * Question en cours d'une tentative, pour reprendre après un rechargement.
+     * Le temps restant est celui calculé par le serveur, absence comprise.
+     * @returns {Promise<object>} QuizAttemptStateResponse
      */
-    async submit(quizId, answers) {
-        const envelope = await http.post(`/progress/quizzes/${quizId}/submit`, {answers})
+    async getCurrentState(attemptId) {
+        const envelope = await http.get(`/progress/attempts/${attemptId}/current`)
+        return envelope.data
+    },
+
+    /**
+     * Répond à la question en cours et reçoit la suivante.
+     * La réponse est verrouillée côté serveur : la renvoyer ne la modifiera pas.
+     * @returns {Promise<object>} QuizAttemptStateResponse
+     */
+    async answer(attemptId, questionId, selectedOptionIds) {
+        const envelope = await http.post(`/progress/attempts/${attemptId}/answers`, {questionId, selectedOptionIds})
+        return envelope.data
+    },
+
+    /**
+     * Termine la tentative. Le serveur la note à partir des réponses qu'il a enregistrées.
+     * Le contenu du résultat dépend des réglages du quiz.
+     * @returns {Promise<object>} QuizSubmissionResultResponse
+     */
+    async finish(attemptId) {
+        const envelope = await http.post(`/progress/attempts/${attemptId}/finish`)
         return envelope.data
     },
 
@@ -92,7 +116,7 @@ export const quizService = {
      * Les drapeaux de mélange sont facultatifs, absents ils valent false côté serveur.
      * La consigne est facultative : envoyer null quand l'auteur n'en saisit pas.
      * @param {{ name: string, content: ?string, moduleId: number,
-     * shuffleQuestions?: boolean, shuffleOptions?: boolean }} payload
+     *           shuffleQuestions?: boolean, shuffleOptions?: boolean }} payload
      */
     async createQuiz(payload) {
         const envelope = await http.post('/quizzes', payload)
