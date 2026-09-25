@@ -60,7 +60,8 @@ onMounted(load)
           <span class="text-[15px] font-medium text-ink block truncate">{{ quiz.name }}</span>
           <span class="text-[13px] text-muted">
             {{ quiz.moduleName }}
-            <template v-if="quiz.attempted"> &bull; Meilleur score : {{ quiz.bestScore }}/{{ quiz.maxScore }}</template>
+            <!-- Score absent en mode « verdict seul » tant que le quiz n'est pas réussi -->
+            <template v-if="quiz.attempted && quiz.bestScore != null"> &bull; Meilleur score : {{ quiz.bestScore }}/{{ quiz.maxScore }}</template>
           </span>
         </div>
         <StatusChip v-bind="statusChip(quiz)"/>

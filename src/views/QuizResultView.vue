@@ -22,6 +22,11 @@ function percent(attempt) {
   return attempt.maxScore ? Math.round((attempt.score / attempt.maxScore) * 100) : 0
 }
 
+// En mode « verdict seul », le serveur retire le score d'un échec : seul le verdict est montré.
+function hasScore(attempt) {
+  return attempt.score != null && attempt.maxScore != null
+}
+
 function duration(attempt) {
   // Sur un abandon, la clôture peut survenir bien après la sortie réelle :
   // afficher cet écart donnerait une durée fausse.
@@ -88,6 +93,8 @@ onMounted(load)
           <td class="px-5 py-3 text-ink-soft">{{ formatDate(t.finishedAt || t.startedAt) }}</td>
           <td class="px-5 py-3 font-medium" :class="t.abandoned ? 'text-muted' : 'text-ink'">
             <span v-if="t.abandoned" title="Quiz quitté avant la fin, aucune réponse corrigée">Non corrigé</span>
+            <span v-else-if="!hasScore(t)" class="text-muted"
+                  title="Le formateur ne communique que le verdict après un échec">Non communiqué</span>
             <span v-else>{{ t.score }}/{{ t.maxScore }} ({{ percent(t) }} %)</span>
           </td>
           <td class="px-5 py-3 text-ink-soft">{{ duration(t) || '-' }}</td>

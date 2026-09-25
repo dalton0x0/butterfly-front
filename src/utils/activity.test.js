@@ -62,6 +62,18 @@ describe('buildRecentActivity', () => {
         expect(buildRecentActivity(overview, 10)[0].text).toBe('Quiz abandonné : Quiz')
     })
 
+    it('n\'affiche pas de score masqué par le mode verdict seul', () => {
+        // Le serveur retire le score d'un échec en mode verdict seul : il ne doit pas
+        // apparaître sous la forme null/null.
+        const overview = {
+            recentQuizAttempts: [
+                {quizName: 'Quiz', passed: false, score: null, maxScore: null, finishedAt: '2026-01-01T10:00:00'}
+            ]
+        }
+
+        expect(buildRecentActivity(overview, 10)[0].text).toBe('Quiz tenté : Quiz')
+    })
+
     it('nomme les états d\'exercice comme des événements', () => {
         const overview = {
             recentExerciseProgress: [

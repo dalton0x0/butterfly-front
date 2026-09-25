@@ -14,6 +14,27 @@ const EXERCISE_EVENT_LABELS = {
 }
 
 /**
+ * Décrit une tentative de quiz dans le flux d'activité.
+ *
+ * Deux cas n'affichent pas de score. Une tentative abandonnée n'a pas été corrigée, son
+ * score ne voudrait rien dire. En mode « verdict seul », le serveur retire le score d'un
+ * échec : l'afficher donnerait « null/null ».
+ *
+ * @param {object} attempt la tentative telle que renvoyée par l'aperçu
+ * @returns {string} le libellé de l'événement
+ */
+function quizAttemptText(attempt) {
+    if (attempt.abandoned) {
+        return `Quiz abandonné : ${attempt.quizName}`
+    }
+    const label = `${attempt.passed ? 'Quiz réussi' : 'Quiz tenté'} : ${attempt.quizName}`
+    if (attempt.score == null || attempt.maxScore == null) {
+        return label
+    }
+    return `${label} (${attempt.score}/${attempt.maxScore})`
+}
+
+/**
  * Fusionne les trois flux d'un aperçu en une liste d'événements datés.
  *
  * Les entrées sans date sont écartées : elles ne sauraient pas se placer dans la
@@ -45,12 +66,9 @@ export function buildRecentActivity(overview, limit) {
     }
 
     for (const q of ov.recentQuizAttempts || []) {
-        // Une tentative abandonnée n'a pas été corrigée : afficher son score n'aurait aucun sens.
         items.push({
             icon: 'quiz',
-            text: q.abandoned
-                ? `Quiz abandonné : ${q.quizName}`
-                : `${q.passed ? 'Quiz réussi' : 'Quiz tenté'} : ${q.quizName} (${q.score}/${q.maxScore})`,
+            text: quizAttemptText(q),
             at: q.finishedAt || q.startedAt
         })
     }
