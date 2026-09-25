@@ -11,6 +11,19 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v2.0.1](https://github.com/dalton0x0/butterfly-front/compare/v2.0.0...v2.0.1) - 2026-09-25
+
+En mode « verdict seul », le serveur retire le score d'une tentative échouée, mais trois écrans
+l'affichaient sans le vérifier : la liste des quiz montrait « Meilleur score : null/null »,
+l'historique des tentatives « null/null (0 %) » et le tableau de bord « Quiz tenté : X (null/null) ».
+Le score n'apparaît plus que lorsqu'il est communiqué comme le faisait déjà l'écran de résultat.
+La page d'un bloc explique ce qui déverrouille un module, en particulier la validation des exercices
+par le formateur : sans cela, un module qui attend une correction semblait bloqué sans raison.
+Documentation du délai de grâce retirée du service de quiz et limite connue de l'onglet dupliqué
+en mode session documentée dans le stockage des jetons.
+
+---
+
 ## [v2.0.0](https://github.com/dalton0x0/butterfly-front/compare/v1.8.0...v2.0.0) - 2026-09-23
 
 Rupture de compatibilité : cette version exige le backend v2.0.0 dont plusieurs routes changent.
