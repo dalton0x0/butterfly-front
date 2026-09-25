@@ -25,6 +25,9 @@ const sortedModules = computed(() =>
   [...(block.value?.modules || [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
 )
 
+// Au moins un module verrouillé : l'explication du verrou est alors affichée.
+const hasLockedModule = computed(() => sortedModules.value.some((module) => module.locked))
+
 // Compteurs de l'en-tête dérivés des modules du bloc.
 const totals = computed(() => {
   const mods = block.value?.modules || []
@@ -95,6 +98,15 @@ onMounted(load)
 
     <!-- Modules -->
     <h2 class="text-[22px] font-semibold text-navy mb-4">Modules</h2>
+    <!-- Explique le verrou : un exercice en attente de correction bloque la suite sans que
+         l'apprenant ait quoi que ce soit à faire. -->
+    <p v-if="hasLockedModule" class="text-[13px] text-muted mb-4 flex items-start gap-1.5">
+      <Icon name="info" :size="16" class="shrink-0 mt-0.5"/>
+      <span>
+        Un module se déverrouille quand ses prérequis sont terminés : tous leurs cours suivis,
+        leur quiz réussi et leurs exercices validés par votre formateur.
+      </span>
+    </p>
     <div v-if="sortedModules.length === 0" class="text-[15px] text-muted">Aucun module dans ce bloc.</div>
     <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <component
