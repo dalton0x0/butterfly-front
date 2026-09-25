@@ -44,11 +44,11 @@ export const quizService = {
     },
 
     /**
-     * Ouvre une tentative sur un quiz. À appeler avant la première question.
-     * La tentative existe en base dès cet appel : la quitter sans soumettre la compte
-     * comme un échec sauf pendant le délai de grâce renvoyé par le serveur.
+     * Ouvre une tentative sur un quiz et reçoit sa première question.
+     * La tentative existe en base dès cet appel : la quitter sans la terminer la compte
+     * comme un abandon. Un rechargement la reprend via getCurrentState.
      * @param {number} quizId
-     * @returns {Promise<object>} QuizAttemptStartResponse { attemptId, startedAt, graceSeconds, previousAttemptCounted }
+     * @returns {Promise<object>} QuizAttemptStartResponse { attemptId, startedAt, previousAttemptCounted, state }
      */
     async startAttempt(quizId) {
         const envelope = await http.post(`/progress/quizzes/${quizId}/start`)

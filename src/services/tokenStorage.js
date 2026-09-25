@@ -11,6 +11,13 @@
 
   Les jetons ne vivent que dans un seul des deux supports à la fois. La lecture
   cherche d'abord dans le localStorage, puis dans le sessionStorage.
+
+  Limite connue du mode sessionStorage : « Dupliquer l'onglet » copie le stockage dans
+  le nouvel onglet. Les deux onglets détiennent alors le même refresh token dans deux
+  stockages séparés. Le verrou de http.js les empêche de rafraîchir en même temps, mais
+  le second ne voit pas le jeton renouvelé par le premier : son rafraîchissement présente
+  un jeton déjà consommé que le serveur traite comme une réutilisation en fermant toutes
+  les sessions. Le cas est rare et sans risque pour la sécurité, il est donc accepté.
 */
 
 const ACCESS_KEY = 'butterfly.accessToken'
