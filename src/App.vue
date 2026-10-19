@@ -11,6 +11,15 @@ const layout = computed(() => (route.meta.layout === 'auth' ? AuthLayout : Defau
 
 <template>
   <component :is="layout">
-    <RouterView/>
+    <!--
+      La clé sur le chemin force un nouveau composant à chaque changement d'adresse.
+      Sans elle, Vue Router réutilise l'instance quand seul un paramètre change :
+      passer de /cours/1 à /cours/2 laissait le premier cours affiché, onMounted
+      ne se déclenchant qu'une fois. Le chemin et non l'adresse complète : un simple
+      changement de filtre dans la chaîne de requête ne recharge pas la page.
+    -->
+    <RouterView v-slot="{ Component, route: current }">
+      <component :is="Component" :key="current.path"/>
+    </RouterView>
   </component>
 </template>
