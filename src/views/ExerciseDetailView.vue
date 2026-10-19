@@ -17,6 +17,9 @@ import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import MarkdownContent from '@/components/MarkdownContent.vue'
 import ExerciseAttachments from '@/components/ExerciseAttachments.vue'
+import ContentNavigation from '@/components/ContentNavigation.vue'
+import {useModuleNavigation} from '@/composables/useModuleNavigation'
+import {CONTENT_TYPES} from '@/utils/moduleSequence'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -25,6 +28,7 @@ const loading = ref(true)
 const error = ref('')
 const exercise = ref(null)
 const submissions = ref([])
+const navigation = useModuleNavigation(CONTENT_TYPES.EXERCISE)
 
 // Dépôt
 const content = ref('')
@@ -232,6 +236,8 @@ async function load() {
   error.value = ''
   try {
     exercise.value = await exerciseService.getExercise(Number(route.params.id))
+    // Non attendu : la navigation s'affiche dès qu'elle est prête sans retarder l'énoncé.
+    navigation.load(exercise.value.moduleId, exercise.value.id)
     await loadSubmissions()
   } catch (err) {
     error.value = err.message || "Impossible de charger l'exercice."
@@ -465,5 +471,11 @@ onMounted(load)
         </div>
       </div>
     </div>
+
+    <ContentNavigation
+      :previous="navigation.previous.value"
+      :next="navigation.next.value"
+      :module-id="exercise.moduleId"
+    />
   </template>
 </template>

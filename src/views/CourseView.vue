@@ -11,6 +11,9 @@ import {courseService} from '@/services/courseService'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Icon from '@/components/Icon.vue'
 import MarkdownContent from '@/components/MarkdownContent.vue'
+import ContentNavigation from '@/components/ContentNavigation.vue'
+import {useModuleNavigation} from '@/composables/useModuleNavigation'
+import {CONTENT_TYPES} from '@/utils/moduleSequence'
 import {resolveVideoSource} from '@/utils/media'
 
 const route = useRoute()
@@ -21,6 +24,7 @@ const course = ref(null)
 const completed = ref(false)
 const completing = ref(false)
 const completeError = ref('')
+const navigation = useModuleNavigation(CONTENT_TYPES.COURSE)
 
 // Seul un USER possède une progression de cours.
 const canComplete = computed(() => auth.role === ROLES.USER)
@@ -43,6 +47,8 @@ async function markCompleted() {
   try {
     await courseService.markCompleted(course.value.id)
     completed.value = true
+    // Terminer ce cours peut déverrouiller l'élément suivant.
+    navigation.load(course.value.moduleId, course.value.id)
   } catch (err) {
     completeError.value = err.message || 'Impossible de marquer le cours comme terminé.'
   } finally {
@@ -54,6 +60,8 @@ function load() {
   return run(async () => {
     course.value = await courseService.getCourse(Number(route.params.id))
     completed.value = Boolean(course.value.completed)
+    // Non attendu : la navigation s'affiche dès qu'elle est prête sans retarder le cours.
+    navigation.load(course.value.moduleId, course.value.id)
   })
 }
 
@@ -127,5 +135,11 @@ onMounted(load)
         </div>
       </div>
     </article>
+
+    <ContentNavigation
+      :previous="navigation.previous.value"
+      :next="navigation.next.value"
+      :module-id="course.moduleId"
+    />
   </div>
 </template>
