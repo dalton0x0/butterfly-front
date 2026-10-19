@@ -11,6 +11,7 @@ import Icon from '@/components/Icon.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
+import {buildModuleSequence, contentKindLabel, contentRoute} from '@/utils/moduleSequence'
 
 const route = useRoute()
 const {loading, error, run} = useAsyncTask('Impossible de charger le module.', {loadingFromStart: true})
@@ -21,29 +22,8 @@ const courses = computed(() => module.value?.courses || [])
 const exercises = computed(() => module.value?.exercises || [])
 const quiz = computed(() => module.value?.quiz || null)
 
-// Liste unifiée pour l'onglet "Tous" : cours et exercices triés par position, quiz à la fin.
-const combined = computed(() => {
-  const items = [
-    ...courses.value.map((c) => ({...c, _type: 'course'})),
-    ...exercises.value.map((e) => ({...e, _type: 'exercise'}))
-  ].sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
-  if (quiz.value) {
-    items.push({...quiz.value, _type: 'quiz'})
-  }
-  return items
-})
-
-function itemRoute(item) {
-  if (item._type === 'course') return `/cours/${item.id}`
-  if (item._type === 'exercise') return `/exercices/${item.id}`
-  return `/quiz/${item.id}`
-}
-
-function itemKindLabel(item) {
-  if (item._type === 'course') return 'Cours'
-  if (item._type === 'exercise') return 'Exercice'
-  return 'Quiz'
-}
+// Liste unifiée pour l'onglet "Tous" : même ordre que la navigation précédent / suivant.
+const combined = computed(() => buildModuleSequence(module.value))
 
 const tabs = computed(() => [
   {key: 'all', label: `Tous (${combined.value.length})`},
@@ -134,7 +114,7 @@ onMounted(load)
         :is="item.locked ? 'div' : 'RouterLink'"
         v-for="(item, i) in combined"
         :key="`${item._type}-${item.id}`"
-        :to="item.locked ? undefined : itemRoute(item)"
+        :to="item.locked ? undefined : contentRoute(item)"
         class="flex items-center gap-3 px-5 py-4 transition-colors"
         :class="[
           i > 0 ? 'border-t border-line-soft' : '',
@@ -148,7 +128,7 @@ onMounted(load)
         </div>
         <div class="flex-1 min-w-0">
           <span class="text-[15px] block truncate" :class="item.completed ? 'text-muted' : 'text-ink'">{{ item.name }}</span>
-          <span class="text-[12px] text-muted">{{ itemKindLabel(item) }}</span>
+          <span class="text-[12px] text-muted">{{ contentKindLabel(item) }}</span>
         </div>
         <StatusChip
           v-if="item.locked"
