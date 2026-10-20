@@ -366,7 +366,7 @@ L'URL de l'API est configurable via une variable d'environnement Vite. Créer un
 `.env.local`) à la racine pour surcharger la valeur par défaut :
 
 ```dotenv
-# URL de base de l'API (suffixe /api obligatoire)
+# URL de base de l'API (suffixe /api obligatoire, sans version : le client ajoute /v1)
 VITE_API_URL=http://localhost:8080/api
 
 # Nom affiché de l'application

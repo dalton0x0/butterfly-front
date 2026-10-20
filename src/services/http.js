@@ -17,13 +17,21 @@ import axios from 'axios'
 import {ApiError} from './apiError'
 import {tokenStorage} from './tokenStorage'
 
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+const apiRoot = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+
+// Version de l'API que ce frontend sait appeler. Elle est écrite dans le code et non dans
+// l'environnement : c'est le code qui dépend du contrat de l'API, pas le serveur sur lequel
+// il est déployé. VITE_API_URL reste la racine /api, déjà utilisée pour les médias qui,
+// eux, ne sont pas versionnés.
+export const API_VERSION = 'v1'
+
+const baseURL = `${apiRoot.replace(/\/$/, '')}/${API_VERSION}`
 
 // Sans VITE_API_URL, le build produit une application qui interroge le poste de
 // chaque visiteur. L'erreur ne se voit qu'une fois déployée, d'où cet avertissement
 // au chargement du module.
 if (!import.meta.env.VITE_API_URL) {
-    console.warn(`[http] VITE_API_URL absente au build, repli sur ${baseURL}`)
+    console.warn(`[http] VITE_API_URL absente au build, repli sur ${apiRoot}`)
 }
 
 // Instance principale utilisée par tous les services métier.
