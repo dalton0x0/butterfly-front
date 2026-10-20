@@ -6,6 +6,7 @@ import {useAuthStore} from '@/stores/auth'
 import Icon from './Icon.vue'
 import LogoIcon from './LogoIcon.vue'
 import Avatar from './Avatar.vue'
+import GlobalSearch from './GlobalSearch.vue'
 import config from "@/utils/config.js";
 
 const auth = useAuthStore()
@@ -23,8 +24,6 @@ const homeLink = computed(() => {
 
 const menuOpen = ref(false)
 const userMenuOpen = ref(false)
-const searchOpen = ref(false)
-const searchInput = ref(null)
 
 const links = computed(() => {
   if (auth.isAdmin) {
@@ -51,13 +50,6 @@ const links = computed(() => {
     //{ label: 'Mes badges', to: '/badges', icon: 'military_tech' }
   ]
 })
-
-function toggleSearch() {
-  searchOpen.value = !searchOpen.value
-  if (searchOpen.value) {
-    requestAnimationFrame(() => searchInput.value && searchInput.value.focus())
-  }
-}
 
 async function logout() {
   userMenuOpen.value = false
@@ -89,37 +81,8 @@ async function logout() {
 
       <!-- Actions à droite -->
       <div class="flex items-center gap-2">
-        <!-- Recherche dépliable -->
-        <div class="hidden sm:flex items-center">
-          <transition name="search">
-            <div
-              v-if="searchOpen"
-              class="flex items-center gap-2 h-9 px-3 mr-1 rounded-full bg-white/15 backdrop-blur-sm"
-            >
-              <Icon name="search" :size="20" class="text-white/80"/>
-              <label for="navbar-search" class="sr-only">Rechercher dans la plateforme</label>
-              <input
-                id="navbar-search"
-                ref="searchInput"
-                type="text"
-                placeholder="Rechercher..."
-                class="bg-transparent outline-none text-sm text-white placeholder:text-white/60 w-44"
-                @keyup.esc="searchOpen = false"
-              />
-              <button class="text-white/70 hover:text-white" @click="searchOpen = false">
-                <Icon name="close" :size="18"/>
-              </button>
-            </div>
-          </transition>
-          <button
-            v-if="!searchOpen"
-            class="text-white p-2 rounded-full hover:bg-white/10 transition-colors"
-            aria-label="Rechercher"
-            @click="toggleSearch"
-          >
-            <Icon name="search" :size="22"/>
-          </button>
-        </div>
+        <!-- Recherche globale -->
+        <GlobalSearch/>
 
         <button class="text-white p-2 rounded-full hover:bg-white/10 transition-colors hidden sm:block"
                 aria-label="Notifications">
@@ -209,9 +172,9 @@ async function logout() {
 
   <!-- Couche transparente : ferme les menus au clic extérieur -->
   <div
-    v-if="userMenuOpen || searchOpen"
+    v-if="userMenuOpen"
     class="fixed inset-0 z-40"
-    @click="userMenuOpen = false; searchOpen = false"
+    @click="userMenuOpen = false"
   ></div>
 </template>
 
@@ -225,15 +188,5 @@ async function logout() {
 .dropdown-leave-to {
   opacity: 0;
   transform: translateY(-6px);
-}
-
-.search-enter-active,
-.search-leave-active {
-  transition: opacity 0.2s ease, width 0.2s ease;
-}
-
-.search-enter-from,
-.search-leave-to {
-  opacity: 0;
 }
 </style>
