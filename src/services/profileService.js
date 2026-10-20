@@ -59,5 +59,24 @@ export const profileService = {
      */
     async revokeOtherSessions() {
         await http.delete('/profile/sessions/others')
+    },
+
+    /**
+     * Catégories de notification qui concernent l'utilisateur, avec leur état.
+     * @returns {Promise<Array<{ category: string, enabled: boolean }>>}
+     */
+    async getNotificationPreferences() {
+        const envelope = await http.get('/profile/notifications')
+        return envelope.data
+    },
+
+    /**
+     * Active ou désactive des catégories. Seules les catégories transmises changent.
+     * @param {Object<string, boolean>} preferences ex : { NEW_CONTENT: false }
+     * @returns {Promise<Array<{ category: string, enabled: boolean }>>} l'état complet
+     */
+    async updateNotificationPreferences(preferences) {
+        const envelope = await http.put('/profile/notifications', {preferences})
+        return envelope.data
     }
 }

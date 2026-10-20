@@ -1,5 +1,5 @@
 <script setup>
-// Mon profil : assemble les quatre encarts et gère la reconnexion.
+// Mon profil : assemble les encarts et gère la reconnexion.
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -7,6 +7,7 @@ import ProfileSummaryCard from '@/components/ProfileSummaryCard.vue'
 import ProfileInfoForm from '@/components/ProfileInfoForm.vue'
 import ProfilePasswordForm from '@/components/ProfilePasswordForm.vue'
 import ProfileSessions from '@/components/ProfileSessions.vue'
+import ProfileNotifications from '@/components/ProfileNotifications.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
@@ -35,6 +36,7 @@ async function reconnect() {
     <div class="lg:col-span-2 flex flex-col gap-6">
       <ProfileInfoForm @reconnect="reconnect"/>
       <ProfilePasswordForm @reconnect="reconnect"/>
+      <ProfileNotifications/>
       <ProfileSessions @reconnect="reconnect"/>
     </div>
   </div>
