@@ -1,12 +1,14 @@
 <script setup>
 // Espace admin : page détail et édition d'un utilisateur.
-import {computed, onMounted, reactive, ref} from 'vue'
+import {computed, onMounted, reactive, ref, watch} from 'vue'
 import {roleChip as roleChipFor, ROLES} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
 import {blockService} from '@/services/blockService'
 import {useAuthStore} from '@/stores/auth'
+import {useAsyncTask} from '@/composables/useAsyncTask'
+import {useDebouncedRef} from '@/composables/useDebouncedRef'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
@@ -25,6 +27,8 @@ const message = ref('')
 const user = ref(null)
 const promotions = ref([])
 const blocks = ref([])
+// Nombre total de blocs correspondant au filtre : sert à signaler une liste incomplète.
+const blocksTotal = ref(0)
 
 // Formulaires de chaque section
 const identity = reactive({firstName: '', lastName: '', email: ''})
@@ -42,18 +46,40 @@ const savingBlocks = ref(false)
 const roleChip = computed(() => roleChipFor(user.value?.role))
 const fullName = computed(() => (user.value ? `${user.value.firstName} ${user.value.lastName}` : ''))
 
+// Filtre de l'écran d'assignation. La recherche part au serveur : avec de nombreux
+// blocs, la liste complète ne tient pas dans une page et un bloc absent de la première
+// page ne pouvait tout simplement pas être coché.
+const blockSearch = ref('')
+const debouncedBlockSearch = useDebouncedRef(blockSearch, 300)
+const blockSearchTask = useAsyncTask('Impossible de rechercher les blocs.')
+
 const displayedBlocks = computed(() => {
   const byId = new Map()
   for (const b of blocks.value) {
     byId.set(b.id, b)
   }
+  // Les blocs déjà assignés restent visibles même hors de la page chargée pour pouvoir
+  // les retirer. Pendant une recherche, seuls ceux qui correspondent au terme s'affichent.
+  const filter = blockSearch.value.trim().toLowerCase()
   for (const b of (user.value?.blocks || [])) {
-    if (!byId.has(b.id)) {
+    if (!byId.has(b.id) && b.name.toLowerCase().includes(filter)) {
       byId.set(b.id, b)
     }
   }
   return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name))
 })
+
+const blocksTruncated = computed(() => blocksTotal.value > blocks.value.length)
+
+async function loadBlocks(search) {
+  const page = await blockSearchTask.run(() => blockService.getBlocks({search: search || undefined}))
+  if (page) {
+    blocks.value = page.items
+    blocksTotal.value = page.totalElements
+  }
+}
+
+watch(debouncedBlockSearch, (value) => loadBlocks(value.trim()))
 
 const assignedCount = computed(() => selectedBlockIds.value.length)
 
@@ -98,13 +124,12 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    const [, promoPage, blockPage] = await Promise.all([
+    const [, promoPage] = await Promise.all([
       loadUser(),
       promotionService.getPromotions().catch(() => ({items: []})),
-      blockService.getBlocks().catch(() => ({items: []}))
+      loadBlocks('')
     ])
     promotions.value = promoPage.items
-    blocks.value = blockPage.items
   } catch (err) {
     error.value = err.message || "Impossible de charger l'utilisateur."
   } finally {
@@ -302,7 +327,21 @@ onMounted(load)
         <p class="text-[13px] text-muted mb-4">
           {{ assignedCount }} bloc(s) assigné(s). Cochez pour assigner, décochez pour retirer, puis enregistrez.
         </p>
-        <p v-if="displayedBlocks.length === 0" class="text-[14px] text-muted">Aucun bloc disponible.</p>
+        <div class="relative mb-3">
+          <label for="user-detail-block-search" class="sr-only">Rechercher un bloc</label>
+          <Icon name="search" :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted"/>
+          <input id="user-detail-block-search" v-model="blockSearch" type="search" autocomplete="off"
+                 placeholder="Rechercher un bloc..."
+                 class="w-full h-10 pl-9 pr-3 rounded-[10px] border border-input bg-white text-[14px] text-ink outline-none focus:border-primary"/>
+        </div>
+        <p v-if="blockSearchTask.error.value" class="text-[13px] text-danger mb-2">{{ blockSearchTask.error.value }}</p>
+        <p v-if="blocksTruncated" class="text-[13px] text-[#b45309] mb-2">
+          {{ blocksTotal }} blocs correspondent, seuls les {{ blocks.length }} premiers sont affichés.
+          Affinez la recherche pour trouver les autres.
+        </p>
+        <p v-if="displayedBlocks.length === 0" class="text-[14px] text-muted">
+          {{ blockSearch.trim() ? 'Aucun bloc ne correspond à cette recherche.' : 'Aucun bloc disponible.' }}
+        </p>
         <div v-else class="flex flex-col gap-1 max-h-64 overflow-auto mb-4">
           <!-- Identifiants dérivés de l'identifiant du bloc : ils doivent rester uniques
                dans le document alors que la liste est construite dynamiquement. -->

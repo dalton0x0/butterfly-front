@@ -2,7 +2,7 @@
   Service des blocs de compétences.
 
   Correspondance avec le back :
-  - GET /api/blocks vers Page<BlockResponse> (id, name, description, cover)
+  - GET /api/blocks vers Page<BlockResponse> (id, name, description, cover), ?search= filtre le nom
   - GET /api/blocks/{id} vers BlockResponse (avec ses modules)
   - POST /api/blocks vers BlockResponse (création, ADMIN/TEACHER)
   - PUT /api/blocks/{id} vers BlockResponse (modification, ADMIN/TEACHER)
@@ -19,10 +19,14 @@ import {buildPageParams, normalizePage} from '@/utils/pagination.js'
 
 export const blockService = {
     /**
-     * Récupère la liste paginée des blocs.
+     * Récupère la liste paginée des blocs filtrée par nom si un terme est fourni.
      */
-    async getBlocks({page = 0, size = 100, sort} = {}) {
-        const envelope = await http.get('/blocks', {params: buildPageParams({page, size, sort})})
+    async getBlocks({page = 0, size = 100, sort, search} = {}) {
+        const params = buildPageParams({page, size, sort})
+        if (search) {
+            params.search = search
+        }
+        const envelope = await http.get('/blocks', {params})
         return normalizePage(envelope.data)
     },
 
