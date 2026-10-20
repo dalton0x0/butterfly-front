@@ -60,7 +60,8 @@ async function logout() {
 
 <template>
   <header class="fixed top-0 left-0 w-full z-50 bg-primary-dark shadow-sm h-16">
-    <div class="flex items-center justify-between px-6 max-w-[1200px] mx-auto w-full h-full">
+    <!-- relative : repère du champ de recherche, qui s'ouvre par-dessus la barre -->
+    <div class="relative flex items-center justify-between px-6 max-w-[1200px] mx-auto w-full h-full">
       <RouterLink :to="homeLink" class="flex items-center gap-2 text-white font-bold text-[17px] tracking-tight">
         <LogoIcon/>
         {{ config.appName }}
