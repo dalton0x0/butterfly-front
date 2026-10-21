@@ -8,14 +8,17 @@
   2. Déballer l'enveloppe ApiResponse renvoyée par le back
      ({ success, message, data, timestamp }) afin que les services manipulent
      directement l'objet utile.
-  3. Gérer l'expiration du jeton : sur une réponse 401, tenter un refresh puis
-     rejouer la requête d'origine. Le back applique une rotation du refresh token
-     donc on remplace bien le couple complet.
+  3. Gérer l'expiration du jeton. Un jeton déjà expiré est renouvelé avant l'envoi,
+     ce qui évite un aller-retour inutile et une erreur 401 dans la console après une
+     longue absence. Une réponse 401 reste traitée de la même façon (jeton révoqué,
+     horloge du poste en retard) : refresh puis rejeu de la requête d'origine. Le back
+     applique une rotation du refresh token donc on remplace bien le couple complet.
 */
 
 import axios from 'axios'
 import {ApiError} from './apiError'
 import {tokenStorage} from './tokenStorage'
+import {isAccessTokenExpiring} from '@/utils/jwt'
 
 const apiRoot = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
@@ -45,7 +48,13 @@ const http = axios.create({
 const refreshClient = axios.create({baseURL})
 
 // Intercepteur de requête : injection du jeton d'accès
-http.interceptors.request.use((config) => {
+http.interceptors.request.use(async (config) => {
+    // Jeton d'accès expiré ou sur le point de l'être : inutile d'envoyer une requête
+    // que le back refusera. On renouvelle d'abord la session. C'est le cas courant au
+    // rechargement de la page après une longue absence.
+    if (shouldRefreshBeforeSending(config)) {
+        await refreshSession()
+    }
     const accessToken = tokenStorage.getAccess()
     if (accessToken) {
         config.headers.Authorization = `Bearer ${accessToken}`
@@ -73,22 +82,10 @@ function isAuthEndpoint(config) {
     return typeof config?.url === 'string' && config.url.startsWith('/auth/')
 }
 
-// File d'attente pendant un refresh en cours
-// Si plusieurs requêtes tombent en 401 en même temps, on ne lance qu'un seul
-// refresh. Les autres attendent ici puis sont rejouées avec le nouveau jeton.
-let isRefreshing = false
-let pendingQueue = []
-
-function flushQueue(error) {
-    pendingQueue.forEach((promise) => {
-        if (error) {
-            promise.reject(error)
-        } else {
-            promise.resolve()
-        }
-    })
-    pendingQueue = []
-}
+// Refresh en cours dans cet onglet. Toutes les requêtes qui en ont besoin attendent la
+// même promesse : un seul appel à /auth/refresh part, même si plusieurs requêtes
+// tombent en 401 ou partent avec un jeton expiré en même temps.
+let refreshInFlight = null
 
 // Nom du verrou partagé par tous les onglets de la même origine.
 const REFRESH_LOCK = 'butterfly.token-refresh'
@@ -96,7 +93,7 @@ const REFRESH_LOCK = 'butterfly.token-refresh'
 /**
  * Exécute une opération en exclusion mutuelle entre les onglets ouverts.
  *
- * isRefreshing ne protège que l'onglet courant. Sans verrou partagé, deux onglets
+ * refreshInFlight ne protège que l'onglet courant. Sans verrou partagé, deux onglets
  * dont le jeton d'accès expire en même temps appellent /auth/refresh avec le même
  * refresh token. La rotation côté back invalide le premier jeton, le second onglet
  * présente donc un jeton déjà consommé, le back y voit une réutilisation et révoque
@@ -156,6 +153,52 @@ async function refreshTokens(previousRefreshToken) {
 }
 
 /**
+ * Renouvelle la session une seule fois pour toutes les requêtes en attente.
+ *
+ * En cas d'échec, la session est définitivement perdue : les jetons sont effacés et
+ * l'utilisateur est renvoyé vers la connexion. Ce nettoyage n'a lieu qu'une fois quel
+ * que soit le nombre de requêtes qui attendaient.
+ *
+ * @returns {Promise<void>} résolue quand les nouveaux jetons sont enregistrés, rejetée
+ * avec un ApiError sinon
+ */
+function refreshSession() {
+    if (!refreshInFlight) {
+        const refreshToken = tokenStorage.getRefresh()
+        refreshInFlight = withRefreshLock(() => refreshTokens(refreshToken))
+            .catch(async (refreshError) => {
+                // L'erreur est normalisée pour que toutes les requêtes en attente reçoivent
+                // un ApiError, comme les autres, et non l'erreur brute d'Axios.
+                const normalized = refreshError instanceof ApiError
+                    ? refreshError
+                    : await normalizeError(refreshError)
+                tokenStorage.clear()
+                // Le motif transmis dans l'URL permet à la vue de connexion d'expliquer la
+                // situation : session expirée naturellement ou révoquée par mesure de
+                // sécurité (rotation, détection de réutilisation).
+                redirectToLogin()
+                throw normalized
+            })
+            .finally(() => {
+                refreshInFlight = null
+            })
+    }
+    return refreshInFlight
+}
+
+/**
+ * Indique si le jeton d'accès doit être renouvelé avant l'envoi de la requête.
+ * Jamais pour les endpoints d'authentification, ni sans refresh token.
+ */
+function shouldRefreshBeforeSending(config) {
+    const accessToken = tokenStorage.getAccess()
+    return Boolean(accessToken)
+        && Boolean(tokenStorage.getRefresh())
+        && !isAuthEndpoint(config)
+        && isAccessTokenExpiring(accessToken)
+}
+
+/**
  * Renvoie l'utilisateur vers la connexion en conservant la page en cours, pour l'y
  * ramener une fois reconnecté. Le rechargement complet est volontaire : il repart
  * d'un état applicatif propre.
@@ -176,6 +219,12 @@ http.interceptors.response.use(
     (response) => response.data,
 
     async (error) => {
+        // Un refresh échoué dans l'intercepteur de requête arrive ici sans réponse HTTP.
+        // Il est déjà normalisé : le renormaliser remplacerait son message par le
+        // message générique.
+        if (error instanceof ApiError) {
+            throw error
+        }
         const original = error.config
         const status = error.response?.status
 
@@ -191,43 +240,11 @@ http.interceptors.response.use(
             throw await normalizeError(error)
         }
 
-        // Un refresh est déjà en cours dans cet onglet : on patiente puis on rejoue
-        // la requête. Le jeton n'est pas transmis ici, l'intercepteur de requête le
-        // relit dans tokenStorage au moment du rejeu.
-        if (isRefreshing) {
-            return new Promise((resolve, reject) => {
-                pendingQueue.push({resolve, reject})
-            }).then(() => {
-                original._retry = true
-                return http(original)
-            })
-        }
-
+        // Le jeton n'est pas transmis au rejeu : l'intercepteur de requête le relit
+        // dans tokenStorage. _retry empêche une boucle si le rejeu reçoit encore un 401.
         original._retry = true
-        isRefreshing = true
-
-        try {
-            await withRefreshLock(() => refreshTokens(refreshToken))
-            flushQueue(null)
-            return http(original)
-        } catch (refreshError) {
-            // Le refresh a échoué : la session est définitivement expirée.
-            // L'erreur est normalisée avant d'être diffusée pour que les requêtes mises
-            // en attente reçoivent un ApiError, comme toutes les autres, et non l'erreur
-            // brute d'Axios que leur code appelant ne sait pas lire.
-            const normalized = refreshError instanceof ApiError
-                ? refreshError
-                : await normalizeError(refreshError)
-            flushQueue(normalized)
-            tokenStorage.clear()
-            // Le motif transmis dans l'URL permet à la vue de connexion d'expliquer la
-            // situation : session expirée naturellement ou révoquée par mesure de
-            // sécurité (rotation, détection de réutilisation).
-            redirectToLogin()
-            throw normalized
-        } finally {
-            isRefreshing = false
-        }
+        await refreshSession()
+        return http(original)
     }
 )
 

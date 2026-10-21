@@ -143,11 +143,13 @@ L'authentification repose sur les jetons émis par le backend : un jeton d'accè
 un jeton de rafraîchissement de longue durée, avec rotation à chaque renouvellement.
 
 - `services/http.js` : instance Axios centrale. Un intercepteur de requête ajoute l'en-tête
-  d'autorisation. Un intercepteur de réponse déballe l'enveloppe `ApiResponse` du backend et sur un
-  code 401, tente un rafraîchissement puis rejoue la requête d'origine. Si plusieurs requêtes
-  échouent en même temps, un seul rafraîchissement est lancé : les autres patientent dans une file
-  d'attente puis sont rejouées avec le nouveau jeton, ce qui évite les rafraîchissements concurrents.
-  Cette file ne protège que l'onglet courant : un verrou `navigator.locks` sérialise l'appel entre
+  d'autorisation. Si le jeton d'accès est expiré ou expire dans les 30 secondes (date lue dans le
+  jeton par `utils/jwt.js`), il le renouvelle avant l'envoi : au rechargement après une longue
+  absence, aucune requête ne part plus vers un refus certain. Un intercepteur de réponse déballe
+  l'enveloppe `ApiResponse` du backend et sur un code 401 (jeton révoqué, horloge du poste en
+  retard), tente un rafraîchissement puis rejoue la requête d'origine. Les requêtes qui ont besoin
+  d'un rafraîchissement en même temps attendent la même promesse : un seul appel part.
+  Cette protection ne couvre que l'onglet courant : un verrou `navigator.locks` sérialise l'appel entre
   les onglets ouverts, faute de quoi deux onglets présenteraient le même jeton de rafraîchissement,
   le second serait vu comme un rejeu et le backend révoquerait toutes les sessions. Le jeton est
   relu après obtention du verrou, un verrou seul ne disant rien de ce qui s'est passé pendant
