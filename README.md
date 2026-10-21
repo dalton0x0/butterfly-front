@@ -470,7 +470,7 @@ contenu de la version.
 
 ## Historique des versions
 
-Version courante : **v2.0.1**.
+Version courante : **v3.0.0**.
 
 L'historique complet des versions avec le détail de chaque livraison est dans [CHANGELOG.md](CHANGELOG.md).
 
@@ -480,8 +480,6 @@ Prévu pour la suite du projet :
 
 - **tests de composants** (Vitest et Testing Library). Le défaut de bandeau invisible corrigé en
   1.3.0 dû à un champ absent d'une fonction de correspondance aurait été détecté immédiatement,
-- **ESLint et `eslint-plugin-vue`** dans le projet, afin de relever localement l'essentiel de ce que
-  SonarQube signale après coup,
 - **composants de formulaire réutilisables**, portant l'association étiquette-champ et le groupement
   sémantique par `fieldset` une fois pour toutes,
 - **titre de page par route**, complément d'accessibilité aujourd'hui absent,

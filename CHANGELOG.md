@@ -11,6 +11,32 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.0.0](https://github.com/dalton0x0/butterfly-front/compare/v2.0.1...v3.0.0) - 2026-10-21
+
+Rupture de compatibilité : cette version exige le backend v3.0.0 dont toutes les routes passent
+sous `/api/v1`. La version est écrite dans le client HTTP et non dans `VITE_API_URL` qui reste la
+racine `/api` : c'est le code qui dépend du contrat de l'API pas le serveur sur lequel il tourne.
+
+Le bas d'un cours ou d'un exercice propose l'élément précédent et le suivant du module dans
+l'ordre de l'onglet « Tous » et ramène au module en fin de parcours. Un élément verrouillé reste
+visible avec la raison du verrou, des deux côtés. La recherche de la barre de navigation s'ouvre
+par-dessus les liens au lieu de les pousser, ce qui supprime l'animation saccadée, laisse la place
+à la barre de l'administrateur et fonctionne sur mobile. Elle se pilote au clavier, ne s'affiche
+jamais vide pendant la saisie et montre les contenus verrouillés sans les rendre cliquables. Les
+formateurs et les administrateurs y trouvent aussi les utilisateurs et l'affectation des blocs
+d'un apprenant reçoit son propre champ de recherche. Le profil gagne une section de préférences de
+notifications.
+
+Un jeton d'accès expiré est renouvelé avant l'envoi de la requête : au rechargement après une
+longue absence, la console n'affiche plus de 401 et un aller-retour disparaît. Les requêtes qui ont
+besoin d'un renouvellement attendent toutes la même promesse, ce qui remplace la file d'attente.
+nginx garde en cache disque les images publiques, une journée au plus, et reprend l'adresse réelle
+du client derrière le proxy HTTPS de la pré-production : sans cela, la limitation de débit du
+backend aurait appliqué un seul quota à tous les utilisateurs. La feuille de route ne mentionne
+plus ESLint, déjà en place.
+
+---
+
 ## [v2.0.1](https://github.com/dalton0x0/butterfly-front/compare/v2.0.0...v2.0.1) - 2026-09-25
 
 En mode « verdict seul », le serveur retire le score d'une tentative échouée, mais trois écrans
