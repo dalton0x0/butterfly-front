@@ -419,7 +419,9 @@ est faite par l'orchestration.
 - **réécriture des routes** : toute adresse inconnue renvoie `index.html`, à charge pour Vue Router
   de résoudre la navigation. Sans cette règle, un rechargement sur `/profil` produit une erreur 404,
 - **en-tête `X-Forwarded-For`** : sans lui, la limitation de débit du backend verrait toutes les
-  requêtes venir de nginx et leur appliquerait un unique quota bloquant tous les utilisateurs,
+  requêtes venir de nginx et leur appliquerait un unique quota bloquant tous les utilisateurs.
+  Derrière le proxy HTTPS de la pré-production (Caddy), `set_real_ip_from` fait reprendre à nginx
+  l'adresse du client transmise par ce proxy, pour la même raison,
 - **taille de corps de requête** portée à 210 Mo, les vidéos pouvant atteindre 200 Mo côté applicatif
   alors que nginx rejette par défaut au-delà de 1 Mo.
 
