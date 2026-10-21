@@ -421,6 +421,11 @@ est faite par l'orchestration.
 - **taille de corps de requête** portée à 210 Mo, les vidéos pouvant atteindre 200 Mo côté applicatif
   alors que nginx rejette par défaut au-delà de 1 Mo.
 
+Nginx garde aussi en cache disque les images publiques (`/api/media/images/`), au plus une journée
+et 500 Mo. Leur nom étant un UUID, le contenu d'une adresse ne change jamais : nginx les sert
+sans solliciter le backend. Les vidéos ne sont pas mises en cache, elles sont lues par plages et
+rempliraient le cache. L'en-tête `X-Cache-Status` (`HIT` ou `MISS`) permet de le vérifier.
+
 Nginx réachemine aussi les chemins de Swagger (`/swagger-ui.html`, `/swagger-ui/`, `/v3/api-docs`),
 que le profil docker du backend active : la documentation de l'API reste consultable à travers le
 point d'entrée unique, sans port supplémentaire ouvert.
