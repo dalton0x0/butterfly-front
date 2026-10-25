@@ -9,6 +9,7 @@ import {useAuthStore} from '@/stores/auth'
 import {mapBackendError, validateMatch, validatePassword} from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
 import LogoIcon from '@/components/LogoIcon.vue'
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter.vue'
 
 const props = defineProps({
   // 'reset' : mot de passe oublié. 'activation' : premier mot de passe d'un compte invité.
@@ -182,7 +183,10 @@ async function goToLogin() {
               <Icon :name="showPassword ? 'visibility_off' : 'visibility'" :size="18"/>
             </button>
           </div>
+          <PasswordStrengthMeter :password="form.newPassword"/>
           <p v-if="errors.newPassword" class="text-[12px] text-danger">{{ errors.newPassword }}</p>
+          <p v-else class="text-[12px] text-muted">10 caractères minimum, une majuscule, une minuscule, un chiffre,
+            un caractère spécial</p>
         </div>
 
         <div class="flex flex-col gap-1.5">

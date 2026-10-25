@@ -1,9 +1,10 @@
 <script setup>
 // Changement de mot de passe.
-import {computed, reactive, ref} from 'vue'
+import {reactive, ref} from 'vue'
 import {profileService} from '@/services/profileService'
-import {mapBackendError, passwordStrength, validateMatch, validatePassword, validateRequired} from '@/utils/validators'
+import {mapBackendError, validateMatch, validatePassword, validateRequired} from '@/utils/validators'
 import {useAuthStore} from '@/stores/auth'
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter.vue'
 
 /*
   Une déconnexion suit ces opérations : le parent s'en charge, car c'est lui qui
@@ -18,21 +19,6 @@ const pwdErrors = reactive({currentPassword: '', newPassword: '', confirmPasswor
 const pwdLoading = ref(false)
 const passwordChanged = ref(false)
 
-const strength = computed(() => passwordStrength(pwdForm.newPassword))
-const strengthColor = computed(() => {
-  switch (strength.value) {
-    case 1:
-      return 'bg-danger'
-    case 2:
-      return 'bg-warning'
-    case 3:
-      return 'bg-primary'
-    case 4:
-      return 'bg-success'
-    default:
-      return 'bg-input'
-  }
-})
 
 function clearPwdError(field) {
   pwdErrors[field] = ''
@@ -126,14 +112,7 @@ async function submitPwd() {
             class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
             :class="pwdErrors.newPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
           />
-          <div class="mt-2 flex gap-1 h-1">
-            <div
-              v-for="bar in 4"
-              :key="bar"
-              class="flex-1 rounded-full transition-colors"
-              :class="bar <= strength ? strengthColor : 'bg-input'"
-            ></div>
-          </div>
+          <PasswordStrengthMeter :password="pwdForm.newPassword" class="mt-2"/>
           <p v-if="pwdErrors.newPassword" class="text-[12px] text-danger mt-1">{{ pwdErrors.newPassword }}</p>
         </div>
 

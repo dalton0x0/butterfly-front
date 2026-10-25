@@ -1,17 +1,17 @@
 <script setup>
 // Inscription.
-import {computed, reactive, ref} from 'vue'
+import {reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {
   mapBackendError,
-  passwordStrength,
   validateEmail,
   validateMatch,
   validatePassword,
   validateRequired
 } from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
+import PasswordStrengthMeter from '@/components/PasswordStrengthMeter.vue'
 import config from "@/utils/config.js";
 
 const router = useRouter()
@@ -35,22 +35,6 @@ const errors = reactive({
   global: ''
 })
 
-// Force du mot de passe (0 à 4) et habillage de la jauge.
-const strength = computed(() => passwordStrength(form.password))
-const strengthColor = computed(() => {
-  switch (strength.value) {
-    case 1:
-      return 'bg-danger'
-    case 2:
-      return 'bg-warning'
-    case 3:
-      return 'bg-primary'
-    case 4:
-      return 'bg-success'
-    default:
-      return 'bg-input'
-  }
-})
 
 function clearError(field) {
   errors[field] = ''
@@ -177,15 +161,7 @@ async function handleRegister() {
             <Icon :name="showPassword ? 'visibility_off' : 'visibility'" :size="20"/>
           </button>
         </div>
-        <!-- Jauge de force : se remplit selon les critères satisfaits -->
-        <div class="mt-3 flex gap-1 h-1">
-          <div
-            v-for="bar in 4"
-            :key="bar"
-            class="flex-1 rounded-full transition-colors"
-            :class="bar <= strength ? strengthColor : 'bg-input'"
-          ></div>
-        </div>
+        <PasswordStrengthMeter :password="form.password" class="mt-3"/>
         <p v-if="errors.password" class="text-[12px] text-danger mt-2">{{ errors.password }}</p>
         <p v-else class="text-[13px] text-muted mt-2">10 caractères minimum, une majuscule, une minuscule, un chiffre,
           un caractère spécial</p>
