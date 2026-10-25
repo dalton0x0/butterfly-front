@@ -226,6 +226,14 @@ const routes = [
         meta: {layout: 'auth'}
     },
     {
+        // Lien d'invitation reçu par un compte créé par un administrateur.
+        path: '/activation-compte',
+        name: 'activate-account',
+        component: () => import('@/views/ResetPasswordView.vue'),
+        props: {mode: 'activation'},
+        meta: {layout: 'auth'}
+    },
+    {
         path: '/verification-email',
         name: 'verify-email',
         component: () => import('@/views/VerifyEmailView.vue'),

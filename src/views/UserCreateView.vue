@@ -1,6 +1,7 @@
 <script setup>
 // Espace admin : création d'un utilisateur. POST /api/users.
 // La promotion n'est proposée que pour le rôle Apprenant (contrainte back).
+// Aucun mot de passe : le titulaire reçoit un lien d'invitation pour choisir le sien.
 import {computed, onMounted, reactive, ref} from 'vue'
 import {ROLES} from '@/utils/roles'
 import {useRouter} from 'vue-router'
@@ -14,7 +15,6 @@ const form = reactive({
   firstName: '',
   lastName: '',
   email: '',
-  password: '',
   role: ROLES.USER,
   promotionId: ''
 })
@@ -36,7 +36,7 @@ async function loadPromotions() {
 
 async function submit() {
   error.value = ''
-  if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim() || !form.password) {
+  if (!form.firstName.trim() || !form.lastName.trim() || !form.email.trim()) {
     error.value = 'Tous les champs obligatoires doivent être renseignés.'
     return
   }
@@ -46,7 +46,6 @@ async function submit() {
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
       email: form.email.trim(),
-      password: form.password,
       role: form.role
     }
     if (isLearner.value && form.promotionId !== '') {
@@ -92,11 +91,10 @@ onMounted(loadPromotions)
                class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
       </div>
 
-      <div>
-        <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-password">Mot de passe</label>
-        <input id="user-create-password" v-model="form.password" type="password"
-               class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
-      </div>
+      <p class="text-[13px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-2.5">
+        Un lien d'invitation sera envoyé à cette adresse. L'utilisateur y choisira lui-même son
+        mot de passe.
+      </p>
 
       <div class="grid grid-cols-2 gap-3">
         <div>

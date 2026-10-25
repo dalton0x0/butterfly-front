@@ -40,6 +40,7 @@ const selectedBlockIds = ref([])
 const savingIdentity = ref(false)
 const savingRole = ref(false)
 const savingStatus = ref(false)
+const savingInvitation = ref(false)
 const savingPromotion = ref(false)
 const savingBlocks = ref(false)
 
@@ -168,6 +169,10 @@ function toggleStatus() {
     user.value.enabled ? 'Compte désactivé.' : 'Compte activé.')
 }
 
+function resendInvitation() {
+  run(savingInvitation, () => userService.resendInvitation(userId.value), 'Invitation renvoyée.')
+}
+
 function savePromotion() {
   const promotionId = selectedPromotionId.value
   run(
@@ -216,6 +221,7 @@ onMounted(load)
               <span class="w-2 h-2 rounded-full" :class="user.enabled ? 'bg-[#16a34a]' : 'bg-muted'"></span>
               {{ user.enabled ? 'Actif' : 'Désactivé' }}
             </span>
+            <StatusChip v-if="user.pendingActivation" label="Invitation en attente" variant="warning"/>
           </div>
         </div>
       </div>
@@ -297,6 +303,21 @@ onMounted(load)
             </button>
             <p v-if="isSelf" class="text-[12px] text-muted mt-1.5">Vous ne pouvez pas désactiver votre propre
               compte.</p>
+          </div>
+
+          <div v-if="user.pendingActivation" class="border-t border-line-soft pt-4">
+            <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Invitation</p>
+            <p class="text-[13px] text-ink-soft mb-3">
+              Ce compte n'est pas encore activé. Un nouveau lien remplace le précédent.
+            </p>
+            <button
+              :disabled="savingInvitation"
+              class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
+              @click="resendInvitation"
+            >
+              <Icon name="forward_to_inbox" :size="18"/>
+              Renvoyer l'invitation
+            </button>
           </div>
         </div>
       </div>

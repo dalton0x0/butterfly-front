@@ -244,6 +244,7 @@ onMounted(load)
         <td class="px-5 py-3 text-ink-soft">{{ u.promotionName || '-' }}</td>
         <td class="px-5 py-3">
           <StatusChip v-if="showDeleted" label="Supprimé" variant="neutral"/>
+          <StatusChip v-else-if="u.pendingActivation" label="Invitation en attente" variant="warning"/>
           <span v-else class="flex items-center gap-1.5 text-[13px]"
                 :class="u.enabled ? 'text-[#16a34a]' : 'text-muted'">
               <span class="w-2 h-2 rounded-full" :class="u.enabled ? 'bg-[#16a34a]' : 'bg-muted'"></span>

@@ -13,6 +13,7 @@
   - POST /api/auth/resend-verification vers void
   - POST /api/auth/forgot-password vers void
   - POST /api/auth/reset-password vers void
+  - POST /api/auth/activate-account vers void
   - GET /api/profile vers UserResponse (profil complet)
 */
 
@@ -79,6 +80,14 @@ export const authService = {
      */
     async resetPassword(payload) {
         await http.post('/auth/reset-password', payload)
+    },
+
+    /**
+     * Active un compte créé par un administrateur à partir du lien d'invitation.
+     * @param {{ token: string, newPassword: string, confirmPassword: string }} payload
+     */
+    async activateAccount(payload) {
+        await http.post('/auth/activate-account', payload)
     },
 
     /**

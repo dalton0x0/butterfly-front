@@ -108,11 +108,20 @@ export const userService = {
     },
 
     /**
-     * Crée un utilisateur (ADMIN). payload : { firstName, lastName, email, password, role, promotionId? }.
+     * Crée un utilisateur (ADMIN). payload : { firstName, lastName, email, role, promotionId? }.
+     * Pas de mot de passe : le titulaire reçoit un lien d'invitation pour choisir le sien.
      */
     async createUser(payload) {
         const envelope = await http.post('/users', payload)
         return envelope.data
+    },
+
+    /**
+     * Renvoie le lien d'invitation d'un compte pas encore activé (ADMIN).
+     * Le nouveau lien invalide le précédent.
+     */
+    async resendInvitation(userId) {
+        await http.post(`/users/${userId}/invitation`)
     },
 
     /**

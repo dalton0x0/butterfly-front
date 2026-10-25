@@ -1,5 +1,7 @@
 <script setup>
-// Définition d'un nouveau mot de passe à partir du lien reçu par e-mail.
+// Définition d'un mot de passe à partir d'un lien reçu par e-mail.
+// La même page sert à la réinitialisation et à l'activation d'un compte créé par un
+// administrateur : seuls les textes et l'appel au serveur changent.
 import {computed, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {authService} from '@/services/authService'
@@ -7,6 +9,36 @@ import {useAuthStore} from '@/stores/auth'
 import {mapBackendError, validateMatch, validatePassword} from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
 import LogoIcon from '@/components/LogoIcon.vue'
+
+const props = defineProps({
+  // 'reset' : mot de passe oublié. 'activation' : premier mot de passe d'un compte invité.
+  mode: {type: String, default: 'reset'}
+})
+
+const isActivation = computed(() => props.mode === 'activation')
+
+const texts = computed(() => (isActivation.value
+  ? {
+      title: 'Activer votre compte',
+      passwordLabel: 'Mot de passe',
+      subtitle: 'Choisissez votre mot de passe pour activer votre compte.',
+      submit: 'Activer mon compte',
+      successTitle: 'Compte activé',
+      successText: 'Votre mot de passe a bien été enregistré. Vous pouvez maintenant vous connecter.',
+      missingToken: "Ce lien ne contient pas de jeton d'activation. Vérifiez que vous avez ouvert "
+        + "l'adresse complète, ou demandez un nouveau lien."
+    }
+  : {
+      title: 'Nouveau mot de passe',
+      passwordLabel: 'Nouveau mot de passe',
+      subtitle: 'Choisissez un mot de passe solide.',
+      submit: 'Enregistrer le mot de passe',
+      successTitle: 'Mot de passe modifié',
+      successText: 'Votre mot de passe a bien été enregistré. Par sécurité, toutes vos sessions ont été '
+        + 'déconnectées, y compris sur vos autres appareils.',
+      missingToken: "Ce lien ne contient pas de jeton de réinitialisation. Vérifiez que vous avez ouvert "
+        + "l'adresse complète, ou demandez un nouveau lien."
+    }))
 
 const route = useRoute()
 const router = useRouter()
@@ -43,11 +75,19 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await authService.resetPassword({
+    const payload = {
       token: token.value,
       newPassword: form.newPassword,
       confirmPassword: form.confirmPassword
-    })
+    }
+
+    if (isActivation.value) {
+      await authService.activateAccount(payload)
+      succeeded.value = true
+      return
+    }
+
+    await authService.resetPassword(payload)
     succeeded.value = true
 
     // Le serveur vient de révoquer toutes les sessions. Si la personne était connectée
@@ -92,11 +132,8 @@ async function goToLogin() {
     </div>
 
     <template v-if="succeeded">
-      <h2 class="text-[22px] font-semibold text-navy mb-1">Mot de passe modifié</h2>
-      <p class="text-[13px] text-ink-soft text-center mb-6 leading-relaxed">
-        Votre mot de passe a bien été enregistré. Par sécurité, toutes vos sessions ont été
-        déconnectées, y compris sur vos autres appareils.
-      </p>
+      <h2 class="text-[22px] font-semibold text-navy mb-1">{{ texts.successTitle }}</h2>
+      <p class="text-[13px] text-ink-soft text-center mb-6 leading-relaxed">{{ texts.successText }}</p>
       <button type="button"
               @click="goToLogin"
               class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity">
@@ -106,10 +143,7 @@ async function goToLogin() {
 
     <template v-else-if="!token">
       <h2 class="text-[22px] font-semibold text-navy mb-1">Lien incomplet</h2>
-      <p class="text-[13px] text-ink-soft text-center mb-6 leading-relaxed">
-        Ce lien ne contient pas de jeton de réinitialisation. Vérifiez que vous avez ouvert
-        l'adresse complète, ou demandez un nouveau lien.
-      </p>
+      <p class="text-[13px] text-ink-soft text-center mb-6 leading-relaxed">{{ texts.missingToken }}</p>
       <RouterLink to="/mot-de-passe-oublie"
                   class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity">
         Demander un nouveau lien
@@ -117,8 +151,8 @@ async function goToLogin() {
     </template>
 
     <template v-else>
-      <h2 class="text-[22px] font-semibold text-navy mb-1">Nouveau mot de passe</h2>
-      <p class="text-[13px] text-muted mb-6 text-center">Choisissez un mot de passe solide.</p>
+      <h2 class="text-[22px] font-semibold text-navy mb-1">{{ texts.title }}</h2>
+      <p class="text-[13px] text-muted mb-6 text-center">{{ texts.subtitle }}</p>
 
       <form class="w-full flex flex-col gap-5" @submit.prevent="handleSubmit" novalidate>
         <div v-if="errors.global" class="flex flex-col gap-2">
@@ -129,7 +163,7 @@ async function goToLogin() {
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <label for="reset-new-password" class="text-[13px] text-ink-soft font-medium">Nouveau mot de passe</label>
+          <label for="reset-new-password" class="text-[13px] text-ink-soft font-medium">{{ texts.passwordLabel }}</label>
           <div class="relative">
             <input
               id="reset-new-password"
@@ -175,7 +209,7 @@ async function goToLogin() {
           :disabled="loading"
           class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {{ loading ? 'Enregistrement...' : 'Enregistrer le mot de passe' }}
+          {{ loading ? 'Enregistrement...' : texts.submit }}
         </button>
 
         <RouterLink to="/connexion" class="text-[13px] text-primary font-semibold hover:underline text-center">
