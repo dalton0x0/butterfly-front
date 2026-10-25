@@ -41,6 +41,7 @@ const savingIdentity = ref(false)
 const savingRole = ref(false)
 const savingStatus = ref(false)
 const savingInvitation = ref(false)
+const savingPasswordReset = ref(false)
 const savingPromotion = ref(false)
 const savingBlocks = ref(false)
 
@@ -171,6 +172,10 @@ function toggleStatus() {
 
 function resendInvitation() {
   run(savingInvitation, () => userService.resendInvitation(userId.value), 'Invitation renvoyée.')
+}
+
+function sendPasswordReset() {
+  run(savingPasswordReset, () => userService.sendPasswordReset(userId.value), 'Lien de réinitialisation envoyé.')
 }
 
 function savePromotion() {
@@ -317,6 +322,23 @@ onMounted(load)
             >
               <Icon name="forward_to_inbox" :size="18"/>
               Renvoyer l'invitation
+            </button>
+          </div>
+
+          <!-- Compte activé et actif : le serveur refuse l'envoi dans les autres cas -->
+          <div v-else-if="user.enabled" class="border-t border-line-soft pt-4">
+            <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Mot de passe</p>
+            <p class="text-[13px] text-ink-soft mb-3">
+              L'utilisateur reçoit un lien pour choisir un nouveau mot de passe. L'actuel reste valable
+              tant que le lien n'est pas utilisé.
+            </p>
+            <button
+              :disabled="savingPasswordReset"
+              class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
+              @click="sendPasswordReset"
+            >
+              <Icon name="lock_reset" :size="18"/>
+              Envoyer un lien de réinitialisation
             </button>
           </div>
         </div>

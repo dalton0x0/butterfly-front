@@ -125,6 +125,14 @@ export const userService = {
     },
 
     /**
+     * Envoie à un utilisateur un lien pour définir un nouveau mot de passe (ADMIN).
+     * L'administrateur ne voit jamais le mot de passe.
+     */
+    async sendPasswordReset(userId) {
+        await http.post(`/users/${userId}/password-reset`)
+    },
+
+    /**
      * Met à jour l'identité d'un utilisateur (ADMIN). payload : { firstName, lastName, email }.
      */
     async updateUser(userId, payload) {
