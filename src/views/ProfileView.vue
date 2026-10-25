@@ -31,7 +31,8 @@ async function reconnect() {
   <Breadcrumb :items="[{ label: 'Accueil', to: '/' }, { label: 'Mon profil' }]"/>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <ProfileSummaryCard/>
+    <!-- self-start : la carte garde sa hauteur au lieu de s'étirer sur celle de la colonne voisine -->
+    <ProfileSummaryCard class="lg:self-start"/>
 
     <div class="lg:col-span-2 flex flex-col gap-6">
       <ProfileInfoForm @reconnect="reconnect"/>

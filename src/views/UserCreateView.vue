@@ -66,67 +66,69 @@ onMounted(loadPromotions)
 <template>
   <Breadcrumb :items="[{ label: 'Utilisateurs', to: '/admin/utilisateurs' }, { label: 'Nouvel utilisateur' }]"/>
 
-  <h1 class="text-[30px] font-semibold text-navy mb-6">Nouvel utilisateur</h1>
+  <div class="max-w-2xl mx-auto">
+    <h1 class="text-[30px] font-semibold text-navy mb-6">Nouvel utilisateur</h1>
 
-  <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 max-w-2xl">
-    <p v-if="error" class="text-[14px] text-danger bg-danger/8 rounded-[10px] px-4 py-2.5 mb-5">{{ error }}</p>
+    <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+      <p v-if="error" class="text-[14px] text-danger bg-danger/8 rounded-[10px] px-4 py-2.5 mb-5">{{ error }}</p>
 
-    <div class="flex flex-col gap-4">
-      <div class="grid grid-cols-2 gap-3">
+      <div class="flex flex-col gap-4">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-first-name">Prénom</label>
+            <input id="user-create-first-name" v-model="form.firstName"
+                   class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+          </div>
+          <div>
+            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-last-name">Nom</label>
+            <input id="user-create-last-name" v-model="form.lastName"
+                   class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+          </div>
+        </div>
+
         <div>
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-first-name">Prénom</label>
-          <input id="user-create-first-name" v-model="form.firstName"
+          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-email">E-mail</label>
+          <input id="user-create-email" v-model="form.email" type="email"
                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
         </div>
-        <div>
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-last-name">Nom</label>
-          <input id="user-create-last-name" v-model="form.lastName"
-                 class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+
+        <p class="text-[13px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-2.5">
+          Un lien d'invitation sera envoyé à cette adresse. L'utilisateur y choisira lui-même son
+          mot de passe.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-role">Rôle</label>
+            <select id="user-create-role" v-model="form.role"
+                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
+              <option value="USER">Apprenant</option>
+              <option value="TEACHER">Formateur</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+          </div>
+          <div v-if="isLearner">
+            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-promotion-id">Promotion
+              (facultatif)</label>
+            <select id="user-create-promotion-id" v-model="form.promotionId"
+                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
+              <option value="">Aucune</option>
+              <option v-for="p in promotions" :key="p.id" :value="p.id">{{ p.name }}</option>
+            </select>
+          </div>
         </div>
-      </div>
 
-      <div>
-        <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-email">E-mail</label>
-        <input id="user-create-email" v-model="form.email" type="email"
-               class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
-      </div>
-
-      <p class="text-[13px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-2.5">
-        Un lien d'invitation sera envoyé à cette adresse. L'utilisateur y choisira lui-même son
-        mot de passe.
-      </p>
-
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-role">Rôle</label>
-          <select id="user-create-role" v-model="form.role"
-                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
-            <option value="USER">Apprenant</option>
-            <option value="TEACHER">Formateur</option>
-            <option value="ADMIN">Admin</option>
-          </select>
+        <div class="flex justify-end gap-3 mt-2">
+          <RouterLink to="/admin/utilisateurs"
+                      class="h-10 px-5 rounded-[10px] border border-line text-ink-soft text-sm font-semibold hover:bg-surface-tint transition-colors flex items-center">
+            Annuler
+          </RouterLink>
+          <button :disabled="saving"
+                  class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                  @click="submit">
+            Créer l'utilisateur
+          </button>
         </div>
-        <div v-if="isLearner">
-          <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-promotion-id">Promotion
-            (facultatif)</label>
-          <select id="user-create-promotion-id" v-model="form.promotionId"
-                  class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
-            <option value="">Aucune</option>
-            <option v-for="p in promotions" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="flex justify-end gap-3 mt-2">
-        <RouterLink to="/admin/utilisateurs"
-                    class="h-10 px-5 rounded-[10px] border border-line text-ink-soft text-sm font-semibold hover:bg-surface-tint transition-colors flex items-center">
-          Annuler
-        </RouterLink>
-        <button :disabled="saving"
-                class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-                @click="submit">
-          Créer l'utilisateur
-        </button>
       </div>
     </div>
   </div>
