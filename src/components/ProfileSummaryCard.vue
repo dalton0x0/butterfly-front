@@ -25,18 +25,23 @@ const memberSince = computed(() => {
 </script>
 
 <template>
-  <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6 flex flex-col items-center text-center">
-    <div class="w-24 h-24 rounded-full bg-surface-tint flex items-center justify-center text-primary overflow-hidden">
-      <img v-if="auth.user?.avatar" :src="mediaUrl(auth.user.avatar)" alt="Avatar"
-           class="w-full h-full object-cover"/>
-      <Icon v-else name="account_circle" :size="64"/>
+  <!-- En-tête horizontal, sur le modèle de la fiche utilisateur côté administration -->
+  <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-5">
+      <div class="w-[72px] h-[72px] shrink-0 rounded-full bg-surface-tint flex items-center justify-center text-primary overflow-hidden">
+        <img v-if="auth.user?.avatar" :src="mediaUrl(auth.user.avatar)" alt="Avatar"
+             class="w-full h-full object-cover"/>
+        <Icon v-else name="account_circle" :size="56"/>
+      </div>
+      <div class="flex-1 min-w-0">
+        <h1 class="text-[26px] font-semibold text-navy truncate">{{ auth.fullName }}</h1>
+        <p class="text-ink-soft truncate">{{ auth.user?.email }}</p>
+        <div class="flex flex-wrap items-center gap-2 mt-2">
+          <StatusChip :label="roleLabel" :variant="roleVariant"/>
+          <StatusChip v-if="auth.user?.promotionName" :label="auth.user.promotionName" variant="neutral"/>
+          <span v-if="memberSince" class="text-[13px] text-muted">Membre depuis {{ memberSince }}</span>
+        </div>
+      </div>
     </div>
-    <h3 class="text-[17px] font-semibold text-ink mt-4">{{ auth.fullName }}</h3>
-    <p class="text-[13px] text-muted">{{ auth.user?.email }}</p>
-    <div class="flex gap-2 mt-3 flex-wrap justify-center">
-      <StatusChip :label="roleLabel" :variant="roleVariant"/>
-      <StatusChip v-if="auth.user?.promotionName" :label="auth.user.promotionName" variant="neutral"/>
-    </div>
-    <p v-if="memberSince" class="text-[13px] text-muted mt-3">Membre depuis {{ memberSince }}</p>
   </div>
 </template>

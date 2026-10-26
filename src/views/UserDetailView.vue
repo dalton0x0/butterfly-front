@@ -235,175 +235,182 @@ onMounted(load)
     <p v-if="message" class="text-[14px] text-success bg-success/10 rounded-[10px] px-4 py-2.5 mb-5">{{ message }}</p>
     <p v-if="error" class="text-[14px] text-danger bg-danger/8 rounded-[10px] px-4 py-2.5 mb-5">{{ error }}</p>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Identité -->
-      <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
-        <h2 class="text-[17px] font-semibold text-ink mb-4">Identité</h2>
-        <div class="flex flex-col gap-3">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
-                     for="user-detail-first-name">Prénom</label>
-              <input id="user-detail-first-name" v-model="identity.firstName"
-                     class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+    <!-- Deux colonnes indépendantes plutôt qu'une grille : chaque carte garde sa hauteur
+         au lieu de s'aligner sur sa voisine, ce qui laissait un vide en bas des plus courtes. -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+      <div class="flex flex-col gap-6">
+        <!-- Identité -->
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+          <h2 class="text-[17px] font-semibold text-ink mb-4">Identité</h2>
+          <div class="flex flex-col gap-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
+                       for="user-detail-first-name">Prénom</label>
+                <input id="user-detail-first-name" v-model="identity.firstName"
+                       class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+              </div>
+              <div>
+                <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
+                       for="user-detail-last-name">Nom</label>
+                <input id="user-detail-last-name" v-model="identity.lastName"
+                       class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+              </div>
             </div>
             <div>
               <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
-                     for="user-detail-last-name">Nom</label>
-              <input id="user-detail-last-name" v-model="identity.lastName"
+                     for="user-detail-email">E-mail</label>
+              <input id="user-detail-email" v-model="identity.email" type="email"
                      class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
             </div>
-          </div>
-          <div>
-            <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
-                   for="user-detail-email">E-mail</label>
-            <input id="user-detail-email" v-model="identity.email" type="email"
-                   class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
-          </div>
-          <div class="flex justify-end">
-            <button :disabled="savingIdentity"
-                    class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-                    @click="saveIdentity">
-              Enregistrer
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Rôle et statut -->
-      <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
-        <h2 class="text-[17px] font-semibold text-ink mb-4">Rôle et statut</h2>
-        <div class="flex flex-col gap-4">
-          <div>
-            <label for="user-detail-role"
-                   class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Rôle</label>
-            <div class="flex gap-2">
-              <select id="user-detail-role" v-model="selectedRole" :disabled="isSelf"
-                      class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white disabled:bg-surface-tint disabled:text-muted">
-                <option value="USER">Apprenant</option>
-                <option value="TEACHER">Formateur</option>
-                <option value="ADMIN">Admin</option>
-              </select>
-              <button :disabled="savingRole || isSelf || selectedRole === user.role"
-                      class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-                      @click="saveRole">
-                Appliquer
+            <div class="flex justify-end">
+              <button :disabled="savingIdentity"
+                      class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                      @click="saveIdentity">
+                Enregistrer
               </button>
             </div>
-            <p v-if="isSelf" class="text-[12px] text-muted mt-1.5">Vous ne pouvez pas modifier votre propre rôle.</p>
           </div>
+        </div>
 
-          <div class="border-t border-line-soft pt-4">
-            <!-- Intitulé et non étiquette de formulaire -->
-            <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Statut du
-              compte</p>
-            <button
-              :disabled="savingStatus || isSelf"
-              class="h-10 px-4 rounded-[10px] text-sm font-semibold border transition-colors flex items-center gap-2 disabled:opacity-50"
-              :class="user.enabled ? 'border-danger text-danger hover:bg-danger/8' : 'border-[#16a34a] text-[#16a34a] hover:bg-[#16a34a]/8'"
-              @click="toggleStatus"
-            >
-              <Icon name="power_settings_new" :size="18"/>
-              {{ user.enabled ? 'Désactiver le compte' : 'Activer le compte' }}
-            </button>
-            <p v-if="isSelf" class="text-[12px] text-muted mt-1.5">Vous ne pouvez pas désactiver votre propre
-              compte.</p>
-          </div>
-
-          <div v-if="user.pendingActivation" class="border-t border-line-soft pt-4">
-            <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Invitation</p>
-            <p class="text-[13px] text-ink-soft mb-3">
-              Ce compte n'est pas encore activé. Un nouveau lien remplace le précédent.
-            </p>
-            <button
-              :disabled="savingInvitation"
-              class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
-              @click="resendInvitation"
-            >
-              <Icon name="forward_to_inbox" :size="18"/>
-              Renvoyer l'invitation
-            </button>
-          </div>
-
-          <!-- Compte activé et actif : le serveur refuse l'envoi dans les autres cas -->
-          <div v-else-if="user.enabled" class="border-t border-line-soft pt-4">
-            <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Mot de passe</p>
-            <p class="text-[13px] text-ink-soft mb-3">
-              L'utilisateur reçoit un lien pour choisir un nouveau mot de passe. L'actuel reste valable
-              tant que le lien n'est pas utilisé.
-            </p>
-            <button
-              :disabled="savingPasswordReset"
-              class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
-              @click="sendPasswordReset"
-            >
-              <Icon name="lock_reset" :size="18"/>
-              Envoyer un lien de réinitialisation
+        <!-- Promotion (apprenant) -->
+        <div v-if="user.role === ROLES.USER" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+          <h2 class="text-[17px] font-semibold text-ink mb-4">Promotion</h2>
+          <label for="user-detail-promotion" class="sr-only">Promotion de l'apprenant</label>
+          <div class="flex gap-2">
+            <select id="user-detail-promotion" v-model="selectedPromotionId"
+                    class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
+              <option value="">Aucune promotion</option>
+              <option v-for="p in promotions" :key="p.id" :value="p.id">{{ p.name }}</option>
+            </select>
+            <button :disabled="savingPromotion"
+                    class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
+                    @click="savePromotion">
+              Appliquer
             </button>
           </div>
         </div>
+
       </div>
 
-      <!-- Promotion (apprenant) -->
-      <div v-if="user.role === ROLES.USER" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
-        <h2 class="text-[17px] font-semibold text-ink mb-4">Promotion</h2>
-        <label for="user-detail-promotion" class="sr-only">Promotion de l'apprenant</label>
-        <div class="flex gap-2">
-          <select id="user-detail-promotion" v-model="selectedPromotionId"
-                  class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
-            <option value="">Aucune promotion</option>
-            <option v-for="p in promotions" :key="p.id" :value="p.id">{{ p.name }}</option>
-          </select>
-          <button :disabled="savingPromotion"
-                  class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
-                  @click="savePromotion">
-            Appliquer
-          </button>
-        </div>
-      </div>
+      <div class="flex flex-col gap-6">
+        <!-- Rôle et statut -->
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+          <h2 class="text-[17px] font-semibold text-ink mb-4">Rôle et statut</h2>
+          <div class="flex flex-col gap-4">
+            <div>
+              <label for="user-detail-role"
+                     class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Rôle</label>
+              <div class="flex gap-2">
+                <select id="user-detail-role" v-model="selectedRole" :disabled="isSelf"
+                        class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white disabled:bg-surface-tint disabled:text-muted">
+                  <option value="USER">Apprenant</option>
+                  <option value="TEACHER">Formateur</option>
+                  <option value="ADMIN">Admin</option>
+                </select>
+                <button :disabled="savingRole || isSelf || selectedRole === user.role"
+                        class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+                        @click="saveRole">
+                  Appliquer
+                </button>
+              </div>
+              <p v-if="isSelf" class="text-[12px] text-muted mt-1.5">Vous ne pouvez pas modifier votre propre rôle.</p>
+            </div>
 
-      <!-- Blocs assignés -->
-      <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
-        <h2 class="text-[17px] font-semibold text-ink mb-1">Blocs assignés</h2>
-        <p class="text-[13px] text-muted mb-1">Pour un formateur, définit sa portée pédagogique. Pour un apprenant, son
-          inscription.</p>
-        <p class="text-[13px] text-muted mb-4">
-          {{ assignedCount }} bloc(s) assigné(s). Cochez pour assigner, décochez pour retirer, puis enregistrez.
-        </p>
-        <div class="relative mb-3">
-          <label for="user-detail-block-search" class="sr-only">Rechercher un bloc</label>
-          <Icon name="search" :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted"/>
-          <input id="user-detail-block-search" v-model="blockSearch" type="search" autocomplete="off"
-                 placeholder="Rechercher un bloc..."
-                 class="w-full h-10 pl-9 pr-3 rounded-[10px] border border-input bg-white text-[14px] text-ink outline-none focus:border-primary"/>
+            <div class="border-t border-line-soft pt-4">
+              <!-- Intitulé et non étiquette de formulaire -->
+              <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Statut du
+                compte</p>
+              <button
+                :disabled="savingStatus || isSelf"
+                class="h-10 px-4 rounded-[10px] text-sm font-semibold border transition-colors flex items-center gap-2 disabled:opacity-50"
+                :class="user.enabled ? 'border-danger text-danger hover:bg-danger/8' : 'border-[#16a34a] text-[#16a34a] hover:bg-[#16a34a]/8'"
+                @click="toggleStatus"
+              >
+                <Icon name="power_settings_new" :size="18"/>
+                {{ user.enabled ? 'Désactiver le compte' : 'Activer le compte' }}
+              </button>
+              <p v-if="isSelf" class="text-[12px] text-muted mt-1.5">Vous ne pouvez pas désactiver votre propre
+                compte.</p>
+            </div>
+
+            <div v-if="user.pendingActivation" class="border-t border-line-soft pt-4">
+              <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Invitation</p>
+              <p class="text-[13px] text-ink-soft mb-3">
+                Ce compte n'est pas encore activé. Un nouveau lien remplace le précédent.
+              </p>
+              <button
+                :disabled="savingInvitation"
+                class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
+                @click="resendInvitation"
+              >
+                <Icon name="forward_to_inbox" :size="18"/>
+                Renvoyer l'invitation
+              </button>
+            </div>
+
+            <!-- Compte activé et actif : le serveur refuse l'envoi dans les autres cas -->
+            <div v-else-if="user.enabled" class="border-t border-line-soft pt-4">
+              <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Mot de passe</p>
+              <p class="text-[13px] text-ink-soft mb-3">
+                L'utilisateur reçoit un lien pour choisir un nouveau mot de passe. L'actuel reste valable
+                tant que le lien n'est pas utilisé.
+              </p>
+              <button
+                :disabled="savingPasswordReset"
+                class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
+                @click="sendPasswordReset"
+              >
+                <Icon name="lock_reset" :size="18"/>
+                Envoyer un lien de réinitialisation
+              </button>
+            </div>
+          </div>
         </div>
-        <p v-if="blockSearchTask.error.value" class="text-[13px] text-danger mb-2">{{ blockSearchTask.error.value }}</p>
-        <p v-if="blocksTruncated" class="text-[13px] text-[#b45309] mb-2">
-          {{ blocksTotal }} blocs correspondent, seuls les {{ blocks.length }} premiers sont affichés.
-          Affinez la recherche pour trouver les autres.
-        </p>
-        <p v-if="displayedBlocks.length === 0" class="text-[14px] text-muted">
-          {{ blockSearch.trim() ? 'Aucun bloc ne correspond à cette recherche.' : 'Aucun bloc disponible.' }}
-        </p>
-        <div v-else class="flex flex-col gap-1 max-h-64 overflow-auto mb-4">
-          <!-- Identifiants dérivés de l'identifiant du bloc : ils doivent rester uniques
-               dans le document alors que la liste est construite dynamiquement. -->
-          <label v-for="b in displayedBlocks" :key="b.id" :for="`user-detail-block-${b.id}`"
-                 class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
-                 :class="selectedBlockIds.includes(b.id) ? 'bg-accent/10 hover:bg-accent/15' : 'hover:bg-surface-tint'">
-            <input :id="`user-detail-block-${b.id}`" type="checkbox" class="w-4 h-4 rounded accent-[#0047ab]"
-                   :checked="selectedBlockIds.includes(b.id)"
-                   @change="toggleBlock(b.id)"/>
-            <span class="text-[14px] text-ink">{{ b.name }}</span>
-          </label>
-        </div>
-        <div class="flex items-center justify-end gap-3">
-          <span v-if="blocksDirty" class="text-[13px] text-[#b45309]">Modifications non enregistrées</span>
-          <button :disabled="savingBlocks || !blocksDirty"
-                  class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
-                  @click="saveBlocks">
-            Enregistrer les blocs
-          </button>
+
+        <!-- Blocs assignés -->
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+          <h2 class="text-[17px] font-semibold text-ink mb-1">Blocs assignés</h2>
+          <p class="text-[13px] text-muted mb-1">Pour un formateur, définit sa portée pédagogique. Pour un apprenant, son
+            inscription.</p>
+          <p class="text-[13px] text-muted mb-4">
+            {{ assignedCount }} bloc(s) assigné(s). Cochez pour assigner, décochez pour retirer, puis enregistrez.
+          </p>
+          <div class="relative mb-3">
+            <label for="user-detail-block-search" class="sr-only">Rechercher un bloc</label>
+            <Icon name="search" :size="18" class="absolute left-3 top-1/2 -translate-y-1/2 text-muted"/>
+            <input id="user-detail-block-search" v-model="blockSearch" type="search" autocomplete="off"
+                   placeholder="Rechercher un bloc..."
+                   class="w-full h-10 pl-9 pr-3 rounded-[10px] border border-input bg-white text-[14px] text-ink outline-none focus:border-primary"/>
+          </div>
+          <p v-if="blockSearchTask.error.value" class="text-[13px] text-danger mb-2">{{ blockSearchTask.error.value }}</p>
+          <p v-if="blocksTruncated" class="text-[13px] text-[#b45309] mb-2">
+            {{ blocksTotal }} blocs correspondent, seuls les {{ blocks.length }} premiers sont affichés.
+            Affinez la recherche pour trouver les autres.
+          </p>
+          <p v-if="displayedBlocks.length === 0" class="text-[14px] text-muted">
+            {{ blockSearch.trim() ? 'Aucun bloc ne correspond à cette recherche.' : 'Aucun bloc disponible.' }}
+          </p>
+          <div v-else class="flex flex-col gap-1 max-h-64 overflow-auto mb-4">
+            <!-- Identifiants dérivés de l'identifiant du bloc : ils doivent rester uniques
+                 dans le document alors que la liste est construite dynamiquement. -->
+            <label v-for="b in displayedBlocks" :key="b.id" :for="`user-detail-block-${b.id}`"
+                   class="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
+                   :class="selectedBlockIds.includes(b.id) ? 'bg-accent/10 hover:bg-accent/15' : 'hover:bg-surface-tint'">
+              <input :id="`user-detail-block-${b.id}`" type="checkbox" class="w-4 h-4 rounded accent-[#0047ab]"
+                     :checked="selectedBlockIds.includes(b.id)"
+                     @change="toggleBlock(b.id)"/>
+              <span class="text-[14px] text-ink">{{ b.name }}</span>
+            </label>
+          </div>
+          <div class="flex items-center justify-end gap-3">
+            <span v-if="blocksDirty" class="text-[13px] text-[#b45309]">Modifications non enregistrées</span>
+            <button :disabled="savingBlocks || !blocksDirty"
+                    class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+                    @click="saveBlocks">
+              Enregistrer les blocs
+            </button>
+          </div>
         </div>
       </div>
     </div>

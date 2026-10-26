@@ -30,13 +30,16 @@ async function reconnect() {
 <template>
   <Breadcrumb :items="[{ label: 'Accueil', to: '/' }, { label: 'Mon profil' }]"/>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- self-start : la carte garde sa hauteur au lieu de s'étirer sur celle de la colonne voisine -->
-    <ProfileSummaryCard class="lg:self-start"/>
+  <ProfileSummaryCard class="mb-6"/>
 
-    <div class="lg:col-span-2 flex flex-col gap-6">
+  <!-- Deux colonnes indépendantes : chaque encart garde sa hauteur, sans vide sous les plus
+       courts. Sur mobile, l'ordre de lecture reste celui des colonnes, de gauche à droite. -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+    <div class="flex flex-col gap-6">
       <ProfileInfoForm @reconnect="reconnect"/>
       <ProfilePasswordForm @reconnect="reconnect"/>
+    </div>
+    <div class="flex flex-col gap-6">
       <ProfileNotifications/>
       <ProfileSessions @reconnect="reconnect"/>
     </div>
