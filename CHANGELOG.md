@@ -11,6 +11,32 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.1.0](https://github.com/dalton0x0/butterfly-front/compare/v3.0.0...v3.1.0) - 2026-10-26
+
+Invitation des comptes créés par un administrateur. Le formulaire de création ne demande plus de mot
+de passe et annonce l'envoi d'un lien d'invitation. La page `/activation-compte` reprend celle de
+réinitialisation avec ses propres textes et appelle `POST /auth/activate-account`. Un compte non
+activé affiche « Invitation en attente » dans la liste et la fiche utilisateur où un bouton renvoie
+le lien. Cette version exige le backend v3.1.0.
+
+La fiche d'un utilisateur actif propose aussi « Envoyer un lien de réinitialisation ». La jauge de
+force du mot de passe jusqu'ici copiée dans l'inscription et le profil devient le composant
+`PasswordStrengthMeter` et s'affiche aussi sur les pages de réinitialisation et d'activation. Le
+profil s'ouvre sur un en-tête horizontal comme la fiche utilisateur de l'administration avec
+les informations personnelles et la sécurité côte à côte puis les notifications et les appareils
+connectés en pleine largeur. Les encarts de la fiche utilisateur se répartissent en deux colonnes
+indépendantes : une carte ne s'étire plus sur la hauteur de sa voisine. Le formulaire de création
+d'un utilisateur est centré.
+
+Analyse SonarQube outillée (`sonar-project.properties`, scanner en conteneur) puis traitement des
+signalements. Les deux menus de navigation reçoivent un libellé accessible. Les conditions inversées,
+`window`, `replace` à expression globale et `forEach` laissent place à `??`, `globalThis`,
+`replaceAll` et `for…of` sans changement de comportement. Les attributs ARIA liés par Vue, les rôles
+de la recherche et du message flottant, `autocomplete` sur un champ au type dynamique et les
+sous-titres des vidéos sont acceptés avec leur motif consigné dans le README.
+
+---
+
 ## [v3.0.0](https://github.com/dalton0x0/butterfly-front/compare/v2.0.1...v3.0.0) - 2026-10-21
 
 Rupture de compatibilité : cette version exige le backend v3.0.0 dont toutes les routes passent

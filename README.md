@@ -500,7 +500,7 @@ contenu de la version.
 
 ## Historique des versions
 
-Version courante : **v3.0.0**.
+Version courante : **v3.1.0**.
 
 L'historique complet des versions avec le détail de chaque livraison est dans [CHANGELOG.md](CHANGELOG.md).
 
