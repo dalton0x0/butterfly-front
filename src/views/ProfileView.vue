@@ -32,15 +32,16 @@ async function reconnect() {
 
   <ProfileSummaryCard class="mb-6"/>
 
-  <!-- Deux colonnes indépendantes : chaque encart garde sa hauteur, sans vide sous les plus
-       courts. Sur mobile, l'ordre de lecture reste celui des colonnes, de gauche à droite. -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-    <div class="flex flex-col gap-6">
-      <ProfileInfoForm @reconnect="reconnect"/>
-      <ProfilePasswordForm @reconnect="reconnect"/>
-    </div>
-    <div class="flex flex-col gap-6">
-      <ProfileNotifications/>
+  <!-- Informations et Sécurité côte à côte : de hauteurs proches, elles forment une ligne
+       régulière. Notifications et sessions, de hauteur variable, prennent toute la largeur
+       pour ne pas étirer une voisine. Sur mobile, les encarts s'empilent dans cet ordre. -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <ProfileInfoForm @reconnect="reconnect"/>
+    <ProfilePasswordForm @reconnect="reconnect"/>
+    <ProfileNotifications class="lg:col-span-2"/>
+    <!-- Enveloppe nécessaire : ProfileSessions a deux racines (carte et fenêtre de
+         confirmation), Vue ne saurait pas à laquelle appliquer la classe. -->
+    <div class="lg:col-span-2">
       <ProfileSessions @reconnect="reconnect"/>
     </div>
   </div>
