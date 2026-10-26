@@ -179,19 +179,26 @@ reconnexion ramène donc l'utilisateur là où il travaillait plutôt que sur le
 
 ## Parcours e-mail
 
-Trois écrans complètent l'authentification, tous servis par `AuthLayout`.
+Quatre routes complètent l'authentification, toutes servies par `AuthLayout`.
 
 | Route                   | Écran                | Rôle                                      |
 |-------------------------|----------------------|-------------------------------------------|
 | `/mot-de-passe-oublie`  | `ForgotPasswordView` | Saisie de l'adresse, confirmation neutre  |
 | `/nouveau-mot-de-passe` | `ResetPasswordView`  | Saisie du nouveau mot de passe            |
 | `/verification-email`   | `VerifyEmailView`    | Confirmation automatique, renvoi si échec |
+| `/activation-compte`    | `ResetPasswordView`  | Premier mot de passe d'un compte invité   |
 
 Les chemins doivent correspondre aux valeurs configurées côté backend
-(`butterfly.mail.verification-path` et `butterfly.mail.password-reset-path`) : ce sont eux qui
+(`butterfly.mail.verification-path`, `butterfly.mail.password-reset-path` et
+`butterfly.mail.account-activation-path`) : ce sont eux qui
 composent les liens envoyés par message. Toute modification se répercute des deux côtés.
 
 ### Points de conception
+
+**`/activation-compte` réutilise `ResetPasswordView`** avec la prop `mode: 'activation'` posée par le
+routeur. Le formulaire, la validation et la lecture du jeton sont identiques : seuls les textes et
+l'appel au serveur changent. Un lien expiré se rattrape par « mot de passe oublié », que le serveur
+accepte aussi pour un compte pas encore activé.
 
 **`/verification-email` n'est pas réservée aux visiteurs anonymes** contrairement aux deux autres.
 La politique de vérification étant souple côté serveur, un utilisateur est souvent connecté au moment
@@ -299,6 +306,18 @@ Trois situations ont demandé un traitement particulier :
 
 ### Analyse statique
 
+L'analyse se lance avec le scanner SonarQube en conteneur, rien n'est à installer. SonarQube doit
+tourner (profil `tools` du dépôt de déploiement) et un jeton d'analyse avoir été créé dans
+**Mon compte, Sécurité**. Depuis la racine de ce dépôt, en une seule ligne :
+
+```bash
+docker run --rm -e SONAR_HOST_URL=http://host.docker.internal:9000 -e SONAR_TOKEN=<jeton> -v "$(pwd):/usr/src" sonarsource/sonar-scanner-cli
+```
+
+Les paramètres du projet sont dans `sonar-project.properties`. `host.docker.internal` désigne la
+machine hôte depuis le conteneur : `localhost` y désignerait le conteneur lui-même. Le scanner
+écrit son dossier de travail `.scannerwork/`, ignoré par Git.
+
 Les signalements SonarQube ont été traités par lots :
 
 - **sous-titres des vidéos** : les vidéos sont téléversées par les formateurs et le modèle ne prévoit
@@ -313,6 +332,17 @@ Les signalements SonarQube ont été traités par lots :
   signalement est neutralisé par un `NOSONAR` accompagné du motif, jamais seul,
 - **groupement sémantique des listes d'options** : écart relevé en revue et non signalé par l'outil,
   reporté avec la refonte des composants de formulaire.
+- **attributs ARIA liés par Vue** : `aria-expanded`, `aria-selected` ou `aria-checked` écrits
+  `:aria-checked="..."` sont invisibles pour l'analyseur HTML qui les déclare manquants. Ils sont
+  bien présents dans la page rendue : signalements marqués faux positifs,
+- **éléments natifs à la place des rôles ARIA** : un `<datalist>` ou un `<select>` ne sait pas
+  afficher des résultats de recherche groupés avec icône et état verrouillé. Le motif ARIA
+  combobox et listbox est le standard pour ce cas. Pour le message flottant, `role="status"` sur
+  un bloc est plus largement annoncé par les lecteurs d'écran que l'élément `<output>`, conçu pour
+  le résultat d'un calcul,
+- **`autocomplete="new-password"` sur un champ au type dynamique** : le bouton d'affichage fait
+  passer le champ de `password` à `text`. L'analyseur ne voit pas le type et suppose un champ texte,
+  alors que la spécification HTML autorise cette valeur sur les deux types.
 
 Un signalement d'analyse statique décrit un symptôme avec justesse et propose un remède avec
 approximation : il voit le motif syntaxique, pas le contexte d'exécution. Comprendre la raison de la
