@@ -104,8 +104,8 @@ onMounted(load)
         </div>
         <div class="flex items-center gap-3 shrink-0">
           <span v-if="savedCategory === item.category" class="text-[12px] text-success">Enregistré</span>
-          <!-- Interrupteur accessible : role="switch" et aria-checked annoncent l'état
-               aux lecteurs d'écran, le libellé est relié par aria-labelledby. -->
+          <!-- Interrupteur accessible : le rôle d'interrupteur et son état coché sont annoncés
+               aux lecteurs d'écran, le libellé est relié par son identifiant. -->
           <button
             type="button"
             role="switch"

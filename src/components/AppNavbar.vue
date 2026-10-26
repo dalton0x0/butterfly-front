@@ -68,7 +68,7 @@ async function logout() {
       </RouterLink>
 
       <!-- Liens (desktop) -->
-      <nav class="hidden md:flex items-center gap-6 h-full">
+      <nav class="hidden md:flex items-center gap-6 h-full" aria-label="Navigation principale">
         <RouterLink
           v-for="link in links"
           :key="link.to"
@@ -157,7 +157,8 @@ async function logout() {
     </div>
 
     <!-- Menu mobile déroulant -->
-    <nav v-if="menuOpen" class="md:hidden bg-primary-dark border-t border-white/10 px-6 py-3 flex flex-col gap-1">
+    <nav v-if="menuOpen" class="md:hidden bg-primary-dark border-t border-white/10 px-6 py-3 flex flex-col gap-1"
+         aria-label="Navigation principale">
       <RouterLink
         v-for="link in links"
         :key="link.to"
