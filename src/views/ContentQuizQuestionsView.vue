@@ -92,9 +92,9 @@ function removeOption(question, index) {
 // En choix simple, une seule bonne réponse. En choix multiple, on bascule.
 function setCorrect(question, index) {
   if (question.type === 'SINGLE_CHOICE') {
-    question.options.forEach((option, i) => {
+    for (const [i, option] of question.options.entries()) {
       option.correct = i === index
-    })
+    }
   } else {
     question.options[index].correct = !question.options[index].correct
   }
@@ -103,9 +103,9 @@ function setCorrect(question, index) {
 function onTypeChange(question) {
   if (question.type === 'SINGLE_CHOICE') {
     const firstCorrect = question.options.findIndex((option) => option.correct)
-    question.options.forEach((option, i) => {
+    for (const [i, option] of question.options.entries()) {
       option.correct = i === firstCorrect
-    })
+    }
   }
 }
 

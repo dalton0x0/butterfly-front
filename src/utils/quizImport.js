@@ -89,14 +89,14 @@ export function parseQuestionsFile(text) {
   const questions = []
   const errors = []
 
-  rawQuestions.forEach((raw, index) => {
+  for (const [index, raw] of rawQuestions.entries()) {
     const {question, error} = normalizeQuestion(raw, index)
     if (error) {
       errors.push(error)
     } else {
       questions.push(question)
     }
-  })
+  }
 
   return {questions, errors}
 }

@@ -27,7 +27,7 @@ const SESSION_ID_KEY = 'butterfly.sessionId'
 // Détermine le support où vivent actuellement les jetons (utile lors d'un
 // refresh, où le choix initial "Se souvenir de moi" doit être conservé).
 function currentStore() {
-    return sessionStorage.getItem(REFRESH_KEY) !== null ? sessionStorage : localStorage
+    return sessionStorage.getItem(REFRESH_KEY) === null ? localStorage : sessionStorage
 }
 
 // Efface les jetons des deux supports pour éviter tout doublon.

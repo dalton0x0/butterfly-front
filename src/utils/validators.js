@@ -101,13 +101,13 @@ export function mapBackendError(
     let globalError = ''
 
     if (err?.validationErrors) {
-        Object.entries(err.validationErrors).forEach(([field, message]) => {
+        for (const [field, message] of Object.entries(err.validationErrors)) {
             if (knownFields.includes(field)) {
                 fieldErrors[field] = message
             } else {
                 globalError = message
             }
-        })
+        }
     } else if (err?.status === 409) {
         fieldErrors.email = err.message || 'Cette adresse e-mail est déjà utilisée.'
     } else if (err?.status === 401) {

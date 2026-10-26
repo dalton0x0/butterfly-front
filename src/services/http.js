@@ -204,12 +204,12 @@ function shouldRefreshBeforeSending(config) {
  * d'un état applicatif propre.
  */
 function redirectToLogin() {
-    if (window.location.pathname === '/connexion') {
+    if (globalThis.location.pathname === '/connexion') {
         return
     }
-    const target = window.location.pathname + window.location.search
+    const target = globalThis.location.pathname + globalThis.location.search
     const params = new URLSearchParams({motif: 'session-invalide', redirect: target})
-    window.location.href = `/connexion?${params}`
+    globalThis.location.href = `/connexion?${params}`
 }
 
 // Intercepteur de réponse : déballage + refresh sur 401

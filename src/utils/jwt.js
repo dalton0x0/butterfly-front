@@ -17,7 +17,7 @@ const EXPIRY_MARGIN_MS = 30_000
 function readExpiry(token) {
     try {
         const payload = token.split('.')[1]
-        const json = atob(payload.replace(/-/g, '+').replace(/_/g, '/'))
+        const json = atob(payload.replaceAll('-', '+').replaceAll('_', '/'))
         const exp = JSON.parse(json).exp
         return Number.isFinite(exp) ? exp * 1000 : null
     } catch {

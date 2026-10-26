@@ -52,7 +52,7 @@ const kpis = computed(() => {
 
 const averageGrade = computed(() => {
   const value = overview.value?.averageGrade
-  return value != null ? `${value.toFixed(1)} / ${maxGrade.value}` : '-'
+  return value == null ? '-' : `${value.toFixed(1)} / ${maxGrade.value}`
 })
 
 const recentActivity = computed(() => buildRecentActivity(overview.value, 12))

@@ -168,7 +168,9 @@ onBeforeUnmount(() => {
     mediaService.deleteMedia(pendingVideo.value)
   }
   const uploaded = editorRef.value?.getSessionUploads?.() || []
-  uploaded.forEach((url) => mediaService.deleteMedia(url))
+  for (const url of uploaded) {
+    mediaService.deleteMedia(url)
+  }
 })
 
 onMounted(load)

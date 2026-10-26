@@ -108,7 +108,9 @@ async function cleanupUnusedSessionMedia(finalContent) {
 // Si on quitte la page sans enregistrer, on nettoie les images uploadées cette session.
 onBeforeUnmount(() => {
   const uploaded = editorRef.value?.getSessionUploads?.() || []
-  uploaded.forEach((url) => mediaService.deleteMedia(url))
+  for (const url of uploaded) {
+    mediaService.deleteMedia(url)
+  }
 })
 
 onMounted(load)

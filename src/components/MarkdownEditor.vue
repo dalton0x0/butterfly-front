@@ -105,7 +105,7 @@ function updateValue(next, afterUpdate) {
 // que l'utilisateur va vouloir remplacer tout de suite (un libellé, une URL).
 function replaceRange(start, end, snippet, selectionStart, selectionLength) {
   const next = props.modelValue.slice(0, start) + snippet + props.modelValue.slice(end)
-  const from = selectionStart != null ? selectionStart : start + snippet.length
+  const from = selectionStart ?? start + snippet.length
   updateValue(next, (el) => {
     // preventScroll empêche le navigateur de faire défiler la page entière
     // pour ramener le champ dans le viewport.
@@ -117,7 +117,7 @@ function replaceRange(start, end, snippet, selectionStart, selectionLength) {
 // Insère un texte à la position du curseur, puis replace le curseur juste après.
 function insertAtCursor(snippet, caretOffset) {
   const {start, end} = currentSelection()
-  const caret = start + (caretOffset != null ? caretOffset : snippet.length)
+  const caret = start + (caretOffset ?? snippet.length)
   replaceRange(start, end, snippet, caret, 0)
 }
 

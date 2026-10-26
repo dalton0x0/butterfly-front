@@ -36,7 +36,7 @@ import createDOMPurify from 'dompurify'
 
   Une instance dédiée garde le traitement là où il sert.
 */
-const purifier = createDOMPurify(window)
+const purifier = createDOMPurify(globalThis)
 import {mediaUrl} from './media'
 
 // Enregistrement des langages (le nom sert d'identifiant dans les blocs ```lang).
