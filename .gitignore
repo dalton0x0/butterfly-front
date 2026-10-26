@@ -10,3 +10,6 @@ dist-ssr
 .vite
 .idea
 .vscode
+
+# Dossier de travail du scanner SonarQube
+.scannerwork/
