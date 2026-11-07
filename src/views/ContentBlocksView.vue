@@ -258,7 +258,7 @@ onMounted(load)
       class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden flex flex-col"
     >
       <div class="h-[200px]">
-        <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.name" class="w-full h-[200px] object-cover"/>
+        <img v-if="block.cover" :src="mediaUrl(block.cover)" loading="lazy" :alt="block.name" class="w-full h-[200px] object-cover"/>
         <BlockCover v-else :height="200"/>
       </div>
       <div class="p-5 flex flex-col gap-2 flex-1">

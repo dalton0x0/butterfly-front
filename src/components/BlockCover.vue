@@ -1,6 +1,6 @@
 <script setup>
 // Cover par défaut affichée pour un bloc qui n'a pas d'image personnalisée.
-import defaultCover from '@/assets/default-block-cover.png'
+import defaultCover from '@/assets/default-block-cover.webp'
 
 defineProps({
   height: {type: [Number, String], default: 200}
@@ -12,6 +12,6 @@ defineProps({
     class="w-full bg-primary-dark overflow-hidden"
     :style="{ height: typeof height === 'number' ? height + 'px' : height }"
   >
-    <img :src="defaultCover" alt="" class="w-full h-full object-cover"/>
+    <img :src="defaultCover" alt="" loading="lazy" decoding="async" class="w-full h-full object-cover"/>
   </div>
 </template>

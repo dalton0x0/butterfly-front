@@ -107,7 +107,7 @@ onMounted(load)
         class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
       >
         <div class="w-30 h-16 rounded-xl overflow-hidden shrink-0 relative">
-          <img v-if="block.cover" :src="mediaUrl(block.cover)" :alt="block.blockName"
+          <img v-if="block.cover" :src="mediaUrl(block.cover)" loading="lazy" :alt="block.blockName"
                class="w-30 h-16 object-cover" :class="{ 'opacity-60': block.locked }"/>
           <BlockCover v-else :height="64"/>
           <div v-if="block.locked" class="absolute inset-0 flex items-center justify-center bg-navy/30">

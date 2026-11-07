@@ -83,6 +83,8 @@ purifier.addHook('afterSanitizeAttributes', (node) => {
     // On le transforme en URL absolue du back sinon le navigateur le résout contre
     // l'origine du front et l'image apparaît cassée.
     if (node.tagName === 'IMG') {
+        // Une image en bas d'un long cours ne se charge que lorsqu'on s'en approche.
+        node.setAttribute('loading', 'lazy')
         const src = node.getAttribute('src')
         if (src && !/^https?:\/\//i.test(src) && !src.startsWith('data:')) {
             node.setAttribute('src', mediaUrl(src))
