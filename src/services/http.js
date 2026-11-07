@@ -255,9 +255,15 @@ http.interceptors.response.use(
  */
 async function normalizeError(error) {
     const body = await readErrorBody(error)
+    const status = error.response?.status ?? 0
+    // Un envoi trop gros est refusé par nginx avant le back : la réponse est une page
+    // HTML sans message exploitable.
+    const fallbackMessage = status === 413
+        ? 'Le fichier envoyé est trop volumineux.'
+        : 'Une erreur est survenue. Veuillez réessayer.'
     return new ApiError({
-        status: error.response?.status ?? 0,
-        message: body?.message || 'Une erreur est survenue. Veuillez réessayer.',
+        status,
+        message: body?.message || fallbackMessage,
         validationErrors: body?.validationErrors || null,
         cause: error
     })
