@@ -55,10 +55,15 @@ serveur, jamais présumé côté client.
 | DOMPurify             | 3.4     | Assainissement du HTML rendu (anti-XSS)       |
 
 Les polices sont hébergées par l'application et livrées dans le bundle : Inter et Fira Code via
-`@fontsource-variable`, les icônes via `material-symbols`. Elles étaient auparavant chargées
-depuis Google Fonts. Les rapatrier supprime une dépendance externe au premier rendu, permet un
-fonctionnement sur un réseau sans accès Internet et évite de transmettre l'adresse IP des
-utilisateurs à un tiers. La palette « Cobalt sky » est définie dans `src/style.css`.
+`@fontsource-variable`. Elles étaient auparavant chargées depuis Google Fonts. Les rapatrier
+supprime une dépendance externe au premier rendu, permet un fonctionnement sur un réseau sans
+accès Internet et évite de transmettre l'adresse IP des utilisateurs à un tiers. La palette
+« Cobalt sky » est définie dans `src/style.css`.
+
+Les icônes sont des SVG Material Symbols importés un par un depuis `@material-symbols/svg-400`
+et listés dans `src/icons/registry.js`. Seules les icônes utilisées partent dans le bundle,
+environ 45 Ko contre 3,8 Mo pour la police complète. Pour en ajouter une, l'importer dans ce
+registre : le test `src/icons/icons.test.js` signale tout nom utilisé dans le code mais absent.
 
 ## Fonctionnalités
 

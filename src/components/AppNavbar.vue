@@ -100,7 +100,7 @@ async function logout() {
             <span class="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center ring-1 ring-white/30">
               <Avatar :src="auth.user?.avatar" :name="auth.fullName" :size="32"/>
             </span>
-            <Icon name="expand_more" :size="18" class="hidden sm:block transition-transform"
+            <Icon name="keyboard_arrow_down" :size="18" class="hidden sm:block transition-transform"
                   :class="{ 'rotate-180': userMenuOpen }"/>
           </button>
 

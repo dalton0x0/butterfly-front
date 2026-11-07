@@ -10,7 +10,7 @@ import {badgeService} from '@/services/badgeService'
 import {userService} from '@/services/userService'
 import Icon from '@/components/Icon.vue'
 import Modal from '@/components/Modal.vue'
-import {badgeIcon} from '@/utils/badgeIcons'
+import {BADGE_ICON_CHOICES, badgeIcon} from '@/utils/badgeIcons'
 
 // Badges dont l'obtention est événementielle : le seuil y a un effet limité.
 const EVENT_CODES = new Set(['PERFECT_SCORE', 'TOP_GRADE', 'EARLY_BIRD', 'NIGHT_OWL', 'COMEBACK'])
@@ -70,7 +70,8 @@ function openEdit(badge) {
   editing.value = badge
   form.name = badge.name
   form.description = badge.description
-  form.icon = badge.icon
+  // Un ancien code Lucide est converti : la grille ne propose que des noms Material.
+  form.icon = badgeIcon(badge.icon)
   form.xpReward = badge.xpReward ?? 0
   form.thresholdValue = badge.thresholdValue ?? 1
   form.active = badge.active !== false
@@ -93,7 +94,7 @@ async function saveEdit() {
     const updated = await badgeService.updateBadge(editing.value.code, {
       name: form.name.trim(),
       description: form.description.trim(),
-      icon: form.icon.trim(),
+      icon: form.icon,
       xpReward: Number(form.xpReward),
       thresholdValue: Number(form.thresholdValue),
       active: form.active
@@ -225,20 +226,18 @@ onMounted(load)
           <textarea id="badges-admin-description" v-model="form.description" rows="2" maxlength="255"
                     class="w-full border border-input rounded-[10px] px-3 py-2 text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"></textarea>
         </div>
-        <div>
-          <label for="badges-admin-icon" class="block text-[13px] font-medium text-ink-soft mb-1.5">Icône du
-            badge</label>
-          <div class="flex items-center gap-2">
-            <span
-              class="w-10 h-10 rounded-[10px] bg-surface-tint text-primary flex items-center justify-center shrink-0"><Icon
-              :name="badgeIcon(form.icon)" :size="22"/></span>
-            <input id="badges-admin-icon" v-model="form.icon" type="text" maxlength="100"
-                   placeholder="ex : flame, star, rocket"
-                   class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
+        <fieldset>
+          <legend class="block text-[13px] font-medium text-ink-soft mb-1.5">Icône du badge</legend>
+          <div class="grid grid-cols-6 sm:grid-cols-8 gap-1.5">
+            <label v-for="choice in BADGE_ICON_CHOICES" :key="choice"
+                   class="h-10 rounded-[10px] border flex items-center justify-center cursor-pointer transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-primary"
+                   :class="form.icon === choice ? 'border-primary bg-primary/10 text-primary' : 'border-input text-ink-soft hover:bg-surface-tint'">
+              <input v-model="form.icon" type="radio" name="badge-icon" :value="choice" class="sr-only"
+                     :aria-label="choice.replaceAll('_', ' ')"/>
+              <Icon :name="choice" :size="22"/>
+            </label>
           </div>
-          <p class="text-[12px] text-muted mt-1.5">Code d'icône du badge (convention Lucide). L'aperçu à gauche montre
-            le rendu réel.</p>
-        </div>
+        </fieldset>
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-[13px] font-medium text-ink-soft mb-1.5" for="badges-admin-xp-reward">Bonus

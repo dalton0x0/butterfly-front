@@ -233,7 +233,7 @@ onMounted(load)
                 {{ formatDate(item.validatedAt || item.submittedAt || item.updatedAt, {fallback: '-'}) }}
               </span>
               <Icon
-                :name="expandedExerciseId === item.exerciseId ? 'expand_less' : 'expand_more'"
+                :name="expandedExerciseId === item.exerciseId ? 'keyboard_arrow_up' : 'keyboard_arrow_down'"
                 :size="18"
                 class="text-muted shrink-0"
               />
