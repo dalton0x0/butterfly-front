@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url'
 import {describe, expect, it} from 'vitest'
 import {FALLBACK_ICON, hasIcon, iconPath} from './index'
 import {BADGE_ICON_CHOICES, badgeIcon} from '@/utils/badgeIcons'
-import {attachmentIcon} from '@/utils/attachment'
+import {ALLOWED_FILE_ACCEPT, fileIcon} from '@/utils/fileFormats'
 
 const SRC_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -61,9 +61,9 @@ describe('registre des icônes', () => {
         expect(BADGE_ICON_CHOICES.filter((name) => !hasIcon(name))).toEqual([])
     })
 
-    it('contient les icônes des pièces jointes', () => {
-        const types = ['', 'image/png', 'application/pdf', 'application/zip', 'text/plain']
-        expect(types.map(attachmentIcon).filter((name) => !hasIcon(name))).toEqual([])
+    it('contient les icônes des formats de fichier', () => {
+        const filenames = ['sans-extension', ...ALLOWED_FILE_ACCEPT.split(',').map((ext) => `fichier${ext}`)]
+        expect(filenames.map(fileIcon).filter((name) => !hasIcon(name))).toEqual([])
     })
 
     it('renvoie le tracé de repli pour un nom inconnu', () => {

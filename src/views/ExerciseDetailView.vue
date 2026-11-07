@@ -9,7 +9,13 @@ import {formatDate} from '@/utils/date'
 import {useRoute} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {exerciseService} from '@/services/exerciseService'
-import {ALLOWED_UPLOAD_ACCEPT, formatFileSize, validateUploadFile} from '@/utils/upload'
+import {
+  ALLOWED_UPLOAD_ACCEPT,
+  ALLOWED_UPLOAD_LABEL,
+  fitsInOneSubmission,
+  formatFileSize,
+  validateUploadFile
+} from '@/utils/upload'
 import {saveBlobAs} from '@/utils/download'
 import {formatGrade} from '@/utils/grading'
 import Icon from '@/components/Icon.vue'
@@ -104,6 +110,10 @@ function addFiles(files) {
     const validationError = validateUploadFile(file)
     if (validationError) {
       submitError.value = `${file.name} : ${validationError}`
+      continue
+    }
+    if (!fitsInOneSubmission([...selectedFiles.value, file])) {
+      submitError.value = `${file.name} : l'ensemble des fichiers dépasserait 50 Mo pour une même soumission.`
       continue
     }
     selectedFiles.value.push(file)
@@ -305,7 +315,8 @@ onMounted(load)
           >
             <Icon name="cloud_upload" :size="32" class="text-primary"/>
             <p class="text-[14px] text-ink">Glissez vos fichiers ici ou cliquez pour parcourir</p>
-            <p class="text-[13px] text-muted">PDF, PNG, JPEG, TXT, ZIP - 5 Mo max</p>
+            <p class="text-[13px] text-muted">{{ ALLOWED_UPLOAD_LABEL }} - 20 Mo max par fichier</p>
+            <p class="text-[12px] text-muted">Google Docs : exportez en PDF ou DOCX (Fichier, puis Télécharger).</p>
           </div>
 
           <div v-if="selectedFiles.length" class="flex flex-col gap-2 mb-4">

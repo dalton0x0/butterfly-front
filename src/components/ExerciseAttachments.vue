@@ -220,7 +220,7 @@ onMounted(load)
         :key="attachment.id"
         class="flex items-center gap-3 bg-background rounded-[10px] px-3 py-2.5"
       >
-        <Icon :name="attachmentIcon(attachment.contentType)" :size="20" class="text-ink-soft shrink-0"/>
+        <Icon :name="attachmentIcon(attachment.filename)" :size="20" class="text-ink-soft shrink-0"/>
 
         <div class="flex-1 min-w-0">
           <p class="text-[14px] text-ink truncate">{{ attachment.filename }}</p>
@@ -258,7 +258,7 @@ onMounted(load)
         :key="`pending-${item.key}`"
         class="flex items-center gap-3 bg-background rounded-[10px] px-3 py-2.5 border border-dashed border-input"
       >
-        <Icon :name="attachmentIcon(item.file.type)" :size="20" class="text-ink-soft shrink-0"/>
+        <Icon :name="attachmentIcon(item.file.name)" :size="20" class="text-ink-soft shrink-0"/>
 
         <div class="flex-1 min-w-0">
           <p class="text-[14px] text-ink truncate">{{ item.file.name }}</p>

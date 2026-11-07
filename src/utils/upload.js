@@ -1,38 +1,43 @@
 /*
-  Contraintes d'upload de fichiers alignées sur le back (StorageProperties).
+  Contraintes d'upload des rendus d'exercices, alignées sur le back (StorageProperties).
 
-  Types autorisés : PDF, PNG, JPEG, TXT, ZIP. Taille maximale : 5 Mo.
+  Formats autorisés : voir fileFormats.js. Taille maximale : 20 Mo par fichier.
   Le champ multipart attendu par le back s'appelle "file".
 */
 
-const ALLOWED_UPLOAD_TYPES = new Set([
-    'application/pdf',
-    'image/png',
-    'image/jpeg',
-    'text/plain',
-    'application/zip'
-])
+import {ALLOWED_FILE_LABEL, isAllowedFile} from './fileFormats'
 
-// Valeur de l'attribut accept de l'input fichier.
-export const ALLOWED_UPLOAD_ACCEPT = '.pdf,.png,.jpg,.jpeg,.txt,.zip'
+export {ALLOWED_FILE_ACCEPT as ALLOWED_UPLOAD_ACCEPT, ALLOWED_FILE_LABEL as ALLOWED_UPLOAD_LABEL} from './fileFormats'
 
-// 5 Mo, comme STORAGE_MAX_FILE_SIZE_BYTES côté back.
-const MAX_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024
+// 20 Mo, comme STORAGE_MAX_FILE_SIZE_BYTES côté back.
+const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024
 
-const TYPES_LABEL = 'PDF, PNG, JPEG, TXT, ZIP'
+// 50 Mo pour l'ensemble des fichiers d'une soumission, comme client_max_body_size dans
+// nginx.conf. Au-delà, nginx refuse la requête avant qu'elle n'atteigne le back.
+const MAX_SUBMISSION_SIZE_BYTES = 50 * 1024 * 1024
 
 /**
  * Valide un fichier avant envoi.
  * @returns {string} message d'erreur, ou chaîne vide si valide.
  */
 export function validateUploadFile(file) {
-    if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
-        return `type non autorisé (${TYPES_LABEL} uniquement).`
+    if (!isAllowedFile(file.name)) {
+        return `format non autorisé (${ALLOWED_FILE_LABEL}).`
     }
     if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-        return 'le fichier dépasse la taille maximale de 5 Mo.'
+        return 'le fichier dépasse la taille maximale de 20 Mo.'
     }
     return ''
+}
+
+/**
+ * Indique si un ensemble de fichiers peut partir dans une seule soumission.
+ * @param {File[]} files les fichiers sélectionnés
+ * @returns {boolean}
+ */
+export function fitsInOneSubmission(files) {
+    const totalSize = files.reduce((sum, file) => sum + file.size, 0)
+    return totalSize <= MAX_SUBMISSION_SIZE_BYTES
 }
 
 /**

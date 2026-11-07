@@ -93,6 +93,7 @@ import scheduleIcon from '@material-symbols/svg-400/outlined/schedule.svg?raw'
 import schoolIcon from '@material-symbols/svg-400/outlined/school.svg?raw'
 import searchIcon from '@material-symbols/svg-400/outlined/search.svg?raw'
 import shieldPersonIcon from '@material-symbols/svg-400/outlined/shield_person.svg?raw'
+import slideshowIcon from '@material-symbols/svg-400/outlined/slideshow.svg?raw'
 import speedIcon from '@material-symbols/svg-400/outlined/speed.svg?raw'
 import starIcon from '@material-symbols/svg-400/outlined/star.svg?raw'
 import tableIcon from '@material-symbols/svg-400/outlined/table.svg?raw'
@@ -199,6 +200,7 @@ export const ICONS = {
     school: schoolIcon,
     search: searchIcon,
     shield_person: shieldPersonIcon,
+    slideshow: slideshowIcon,
     speed: speedIcon,
     star: starIcon,
     table: tableIcon,
