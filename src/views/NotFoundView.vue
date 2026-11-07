@@ -1,6 +1,10 @@
 <script setup>
-// Page 404 : message clair et invitation à revenir au tableau de bord.
+// Page 404 : message clair et invitation à revenir au tableau de bord ou à la connexion
+// pour un visiteur.
 import Icon from '@/components/Icon.vue'
+import {useAuthStore} from '@/stores/auth'
+
+const auth = useAuthStore()
 </script>
 
 <template>
@@ -10,10 +14,15 @@ import Icon from '@/components/Icon.vue'
     </div>
     <h1 class="text-[30px] font-semibold text-navy mb-2">Page introuvable</h1>
     <p class="text-ink-soft mb-6">La page que vous cherchez n'existe pas ou a été déplacée.</p>
-    <RouterLink to="/"
+    <RouterLink v-if="auth.isAuthenticated" to="/"
                 class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity">
       <Icon name="home" :size="18"/>
       Retour au tableau de bord
+    </RouterLink>
+    <RouterLink v-else :to="{ name: 'login' }"
+                class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity">
+      <Icon name="login" :size="18"/>
+      Se connecter
     </RouterLink>
   </div>
 </template>

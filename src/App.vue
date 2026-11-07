@@ -3,10 +3,20 @@ import {computed} from 'vue'
 import {useRoute} from 'vue-router'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import AuthLayout from '@/layouts/AuthLayout.vue'
+import {useAuthStore} from '@/stores/auth'
+
+const route = useRoute()
+const auth = useAuthStore()
 
 // On choisit le layout en fonction de la meta "layout" définie sur chaque route.
-const route = useRoute()
-const layout = computed(() => (route.meta.layout === 'auth' ? AuthLayout : DefaultLayout))
+// Une page publique vue par un visiteur (la 404) prend aussi le layout épuré : le layout
+// par défaut affiche la navigation et le menu d'un utilisateur connecté.
+// Le garde du routeur restaure la session avant tout affichage : isAuthenticated est
+// donc déjà fiable ici.
+const layout = computed(() => {
+  const isPublicPageForVisitor = !route.meta.requiresAuth && !auth.isAuthenticated
+  return route.meta.layout === 'auth' || isPublicPageForVisitor ? AuthLayout : DefaultLayout
+})
 </script>
 
 <template>
