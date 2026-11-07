@@ -1,0 +1,29 @@
+# Mises à jour automatiques des dépendances.
+#
+# Dependabot ouvre une pull request quand une version plus récente existe, et
+# immédiatement quand une faille connue touche une dépendance. La CI vérifie chaque
+# pull request avant fusion.
+#
+# Les mises à jour mineures et correctives sont regroupées en une seule pull request
+# par semaine. Les versions majeures arrivent séparément : elles demandent souvent
+# une adaptation du code.
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [ minor, patch ]
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
