@@ -11,6 +11,38 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.2.0](https://github.com/dalton0x0/butterfly-front/compare/v3.1.0...v3.2.0) - 2026-11-08
+
+Formats de fichier élargis pour les rendus et les pièces jointes : Word, Excel, PowerPoint et
+OpenDocument rejoignent PDF, texte, images et ZIP. La liste vit dans `utils/fileFormats.js`, partagée
+par les rendus et les pièces jointes et le format est reconnu à l'extension comme côté serveur :
+un `.docx` choisi sur un poste sans Office n'est plus refusé. Un rendu accepte 20 Mo par fichier et
+50 Mo au total, la limite de nginx. Une aide rappelle d'exporter un Google Docs en PDF ou DOCX.
+L'icône d'un fichier suit son format. Cette version exige le backend v3.2.0.
+
+Un lien ouvert depuis un e-mail, par exemple « Ouvrir les corrections », menait à la connexion quand
+« Se souvenir de moi » n'était pas cochée : les jetons vivaient dans le `sessionStorage`, propre à
+chaque onglet. Ils sont désormais toujours dans le `localStorage` et un cookie de session efface la
+session à la réouverture du navigateur. La limite « Dupliquer l'onglet » qui pouvait fermer toutes
+les sessions disparaît avec. Les utilisateurs connectés sans cette option se reconnectent une fois.
+
+Performances : la police Material Symbols (3,8 Mo) laisse place à des SVG importés un par un
+(`src/icons`, environ 45 Ko). Un test vérifie que chaque icône utilisée est dans le registre. Les
+icônes ne sont plus lues à voix haute par les lecteurs d'écran. L'icône d'un badge se choisit dans
+une grille au lieu d'un champ libre qui laissait passer des noms inexistants. L'image de couverture
+par défaut passe en WebP (475 Ko à 37 Ko) et les couvertures et images des cours se chargent à la
+demande. Le build passe de 5,3 Mo à 1,4 Mo.
+
+Sécurité : la politique de sécurité du contenu devient bloquante, nginx masque sa version et limite
+le corps d'une requête à 50 Mo hors envoi de vidéo (210 Mo). Une réponse 413 affiche « Le fichier
+envoyé est trop volumineux ». Dependabot surveille les dépendances npm, l'image Docker et les actions
+GitHub, la faille de `follow-redirects` est corrigée.
+
+La page 404 vue par un visiteur prend le layout épuré avec un bouton de connexion au lieu de la
+navigation d'un utilisateur connecté.
+
+---
+
 ## [v3.1.0](https://github.com/dalton0x0/butterfly-front/compare/v3.0.0...v3.1.0) - 2026-10-26
 
 Invitation des comptes créés par un administrateur. Le formulaire de création ne demande plus de mot

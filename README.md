@@ -159,9 +159,10 @@ un jeton de rafraîchissement de longue durée, avec rotation à chaque renouvel
   le second serait vu comme un rejeu et le backend révoquerait toutes les sessions. Le jeton est
   relu après obtention du verrou, un verrou seul ne disant rien de ce qui s'est passé pendant
   l'attente.
-- `services/tokenStorage.js` : persistance des jetons. Selon l'option « Se souvenir de moi », ils
-  sont stockés dans le `localStorage` (la session survit à la fermeture du navigateur) ou dans le
-  `sessionStorage`.
+- `services/tokenStorage.js` : persistance des jetons, toujours dans le `localStorage` partagé par
+  les onglets. Un lien ouvert depuis un e-mail retrouve ainsi la session. Sans « Se souvenir de
+  moi », un cookie de session sert de témoin : quand le navigateur a été fermé, il a disparu et les
+  jetons sont effacés avant tout usage.
 - `stores/auth.js` : store Pinia exposant l'utilisateur courant et des accesseurs dérivés
   (`isAuthenticated`, `role`, `isAdmin`, `isTeacher`, `fullName`). La session est restaurée au
   rechargement de la page à partir du jeton de rafraîchissement persisté.
@@ -505,7 +506,7 @@ contenu de la version.
 
 ## Historique des versions
 
-Version courante : **v3.1.0**.
+Version courante : **v3.2.0**.
 
 L'historique complet des versions avec le détail de chaque livraison est dans [CHANGELOG.md](CHANGELOG.md).
 
