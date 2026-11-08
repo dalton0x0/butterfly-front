@@ -1,9 +1,9 @@
-import {describe, it, expect, beforeEach} from 'vitest'
+import {describe, it, expect, beforeEach, afterEach} from 'vitest'
 import {tokenStorage} from '@/services/tokenStorage.js'
 
 /*
-  Le module lit localStorage et sessionStorage comme des variables globales, au
-  moment de l'appel et non à l'import. Deux implantations en mémoire suffisent
+  Le module lit localStorage et document.cookie comme des variables globales au
+  moment de l'appel et non à l'import. Des implantations en mémoire suffisent
   donc, sans avoir à charger un DOM complet.
 */
 function createStorage() {
@@ -18,54 +18,102 @@ function createStorage() {
     }
 }
 
+// Imite document.cookie : l'écriture ajoute un cookie, la lecture les rend tous.
+function createDocument() {
+    const cookies = new Map()
+    return {
+        get cookie() {
+            return [...cookies].map(([name, value]) => `${name}=${value}`).join('; ')
+        },
+        set cookie(text) {
+            const [name, value] = text.split(';')[0].split('=')
+            cookies.set(name.trim(), value)
+        }
+    }
+}
+
+// Simule la fermeture puis la réouverture du navigateur : les cookies de session disparaissent.
+function restartBrowser() {
+    globalThis.document = createDocument()
+}
+
 const ACCESS_KEY = 'butterfly.accessToken'
 const REFRESH_KEY = 'butterfly.refreshToken'
 const SESSION_ID_KEY = 'butterfly.sessionId'
 
 beforeEach(() => {
     globalThis.localStorage = createStorage()
-    globalThis.sessionStorage = createStorage()
+    globalThis.document = createDocument()
 })
 
-describe('choix du support selon "Se souvenir de moi"', () => {
-    it('écrit dans le localStorage quand la case est cochée', () => {
+afterEach(() => {
+    delete globalThis.document
+})
+
+describe('"Se souvenir de moi" cochée', () => {
+    it('écrit les jetons dans le localStorage sans cookie témoin', () => {
         tokenStorage.set('acces', 'refresh', true, 7)
 
         expect(localStorage.getItem(REFRESH_KEY)).toBe('refresh')
-        expect(sessionStorage.getItem(REFRESH_KEY)).toBeNull()
+        expect(document.cookie).toBe('')
     })
 
-    it('écrit dans le sessionStorage quand la case est décochée', () => {
+    it('garde la session après la fermeture du navigateur', () => {
+        tokenStorage.set('acces', 'refresh', true, 7)
+        restartBrowser()
+
+        expect(tokenStorage.getRefresh()).toBe('refresh')
+    })
+})
+
+describe('"Se souvenir de moi" décochée', () => {
+    it('écrit aussi les jetons dans le localStorage, partagé entre onglets', () => {
         tokenStorage.set('acces', 'refresh', false, 7)
 
-        expect(sessionStorage.getItem(REFRESH_KEY)).toBe('refresh')
-        expect(localStorage.getItem(REFRESH_KEY)).toBeNull()
+        expect(localStorage.getItem(REFRESH_KEY)).toBe('refresh')
+        expect(document.cookie).toContain('butterfly_browser_session=1')
     })
 
-    it('ne laisse jamais les jetons dans les deux supports à la fois', () => {
-        tokenStorage.set('acces1', 'refresh1', true, 7)
-        tokenStorage.set('acces2', 'refresh2', false, 7)
+    it('garde la session tant que le navigateur reste ouvert', () => {
+        tokenStorage.set('acces', 'refresh', false, 7)
 
-        expect(localStorage.getItem(ACCESS_KEY)).toBeNull()
-        expect(sessionStorage.getItem(ACCESS_KEY)).toBe('acces2')
+        expect(tokenStorage.getAccess()).toBe('acces')
+    })
+
+    it('efface la session après la fermeture du navigateur', () => {
+        tokenStorage.set('acces', 'refresh', false, 7)
+        restartBrowser()
+
+        expect(tokenStorage.getAccess()).toBeNull()
+        expect(tokenStorage.getRefresh()).toBeNull()
+        expect(tokenStorage.getSessionId()).toBeNull()
+        expect(localStorage.size).toBe(0)
+    })
+
+    it('ne garde pas le mode précédent quand on se reconnecte en cochant la case', () => {
+        tokenStorage.set('acces1', 'refresh1', false, 7)
+        tokenStorage.set('acces2', 'refresh2', true, 8)
+        restartBrowser()
+
+        expect(tokenStorage.getRefresh()).toBe('refresh2')
     })
 })
 
 describe('rotation du refresh token', () => {
-    it('reste en sessionStorage quand la session y vivait', () => {
+    it('conserve le mode "sans se souvenir" choisi à la connexion', () => {
         tokenStorage.set('acces1', 'refresh1', false, 7)
         tokenStorage.set('acces2', 'refresh2', undefined, 7)
+        restartBrowser()
 
-        expect(sessionStorage.getItem(ACCESS_KEY)).toBe('acces2')
-        expect(localStorage.getItem(ACCESS_KEY)).toBeNull()
+        expect(tokenStorage.getAccess()).toBeNull()
     })
 
-    it('reste en localStorage quand la session y vivait', () => {
+    it('conserve le mode "se souvenir" choisi à la connexion', () => {
         tokenStorage.set('acces1', 'refresh1', true, 7)
         tokenStorage.set('acces2', 'refresh2', undefined, 7)
+        restartBrowser()
 
-        expect(localStorage.getItem(ACCESS_KEY)).toBe('acces2')
-        expect(sessionStorage.getItem(ACCESS_KEY)).toBeNull()
+        expect(tokenStorage.getAccess()).toBe('acces2')
     })
 
     it('conserve l\'identifiant de session quand l\'appelant l\'omet', () => {
@@ -84,19 +132,6 @@ describe('rotation du refresh token', () => {
 })
 
 describe('lecture', () => {
-    it('cherche d\'abord dans le localStorage', () => {
-        localStorage.setItem(ACCESS_KEY, 'depuis-local')
-        sessionStorage.setItem(ACCESS_KEY, 'depuis-session')
-
-        expect(tokenStorage.getAccess()).toBe('depuis-local')
-    })
-
-    it('se rabat sur le sessionStorage', () => {
-        sessionStorage.setItem(REFRESH_KEY, 'depuis-session')
-
-        expect(tokenStorage.getRefresh()).toBe('depuis-session')
-    })
-
     it('rend un nombre et non le texte stocké', () => {
         tokenStorage.set('acces', 'refresh', true, 42)
 
@@ -116,15 +151,13 @@ describe('lecture', () => {
 })
 
 describe('clear', () => {
-    it('vide les deux supports', () => {
-        localStorage.setItem(ACCESS_KEY, 'a')
-        localStorage.setItem(REFRESH_KEY, 'r')
+    it('vide le stockage, y compris le mode de session', () => {
+        tokenStorage.set('acces', 'refresh', false, 7)
         localStorage.setItem(SESSION_ID_KEY, '7')
-        sessionStorage.setItem(ACCESS_KEY, 'a')
 
         tokenStorage.clear()
 
         expect(localStorage.size).toBe(0)
-        expect(sessionStorage.size).toBe(0)
+        expect(localStorage.getItem(ACCESS_KEY)).toBeNull()
     })
 })
