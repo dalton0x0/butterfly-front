@@ -26,7 +26,7 @@ ENV VITE_APP_TAGLINE=${VITE_APP_TAGLINE}
 RUN npm run build
 
 # Étape 2 : service des fichiers.
-FROM nginxinc/nginx-unprivileged:1.30-alpine
+FROM nginxinc/nginx-unprivileged:1.31-alpine
 
 COPY --from=build /build/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
