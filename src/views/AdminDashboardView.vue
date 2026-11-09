@@ -16,6 +16,7 @@ import {blockService} from '@/services/blockService'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
+import RegistrationToggle from '@/components/RegistrationToggle.vue'
 
 const auth = useAuthStore()
 
@@ -184,23 +185,27 @@ onMounted(load)
         </ul>
       </div>
 
-      <!-- Raccourcis -->
-      <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-        <h2 class="text-[17px] font-semibold text-ink mb-4">Raccourcis</h2>
-        <div class="flex flex-col gap-2">
-          <RouterLink
-            v-for="link in quickLinks"
-            :key="link.to"
-            :to="link.to"
-            class="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-tint hover:bg-surface-hover transition-colors"
-          >
-            <div class="w-9 h-9 rounded-lg bg-accent/15 text-primary flex items-center justify-center">
-              <Icon :name="link.icon" :size="20"/>
-            </div>
-            <span class="text-[14px] font-medium text-ink flex-1">{{ link.label }}</span>
-            <Icon name="chevron_right" :size="20" class="text-muted"/>
-          </RouterLink>
+      <div class="flex flex-col gap-6">
+        <!-- Raccourcis -->
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
+          <h2 class="text-[17px] font-semibold text-ink mb-4">Raccourcis</h2>
+          <div class="flex flex-col gap-2">
+            <RouterLink
+              v-for="link in quickLinks"
+              :key="link.to"
+              :to="link.to"
+              class="flex items-center gap-3 px-3 py-3 rounded-xl bg-surface-tint hover:bg-surface-hover transition-colors"
+            >
+              <div class="w-9 h-9 rounded-lg bg-accent/15 text-primary flex items-center justify-center">
+                <Icon :name="link.icon" :size="20"/>
+              </div>
+              <span class="text-[14px] font-medium text-ink flex-1">{{ link.label }}</span>
+              <Icon name="chevron_right" :size="20" class="text-muted"/>
+            </RouterLink>
+          </div>
         </div>
+
+        <RegistrationToggle/>
       </div>
     </div>
   </template>

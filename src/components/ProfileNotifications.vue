@@ -6,7 +6,7 @@
 // arrière si le serveur refuse.
 //
 // Le serveur ne renvoie que les catégories qui concernent le rôle de l'utilisateur.
-// Un administrateur n'en a aucune : l'encart ne s'affiche pas.
+// Sans catégorie, l'encart ne s'affiche pas.
 import {computed, onMounted, ref} from 'vue'
 import {profileService} from '@/services/profileService'
 import {useAuthStore} from '@/stores/auth'
@@ -31,6 +31,10 @@ const LABELS = {
   NEW_CONTENT: {
     title: 'Nouveautés',
     description: 'Un récapitulatif quotidien des cours, exercices et quiz publiés dans vos blocs.'
+  },
+  REGISTRATIONS: {
+    title: 'Nouvelles inscriptions',
+    description: "Un compte est créé par l'inscription publique."
   }
 }
 
