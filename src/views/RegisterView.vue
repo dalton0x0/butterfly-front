@@ -100,7 +100,7 @@ async function handleRegister() {
 
     <div v-if="!registrationOpen" class="text-center">
       <p class="text-[14px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-3 mb-6">
-        Les inscriptions sont fermées. Votre compte est créé par l'administration de votre école,
+        Les inscriptions sont fermées. Votre compte est créé par l'administrateur de la plateforme
         qui vous envoie un lien d'activation par e-mail.
       </p>
       <RouterLink to="/connexion" class="text-[13px] text-primary font-semibold hover:underline">

@@ -2,7 +2,7 @@
 // Espace formateur, gestion de contenu : les blocs.
 // Un formateur ne voit et ne gère que ses blocs assignés (filtrage côté back).
 // GET /api/blocks (liste), POST/PUT/DELETE /api/blocks (CRUD, ADMIN/TEACHER).
-// Un bloc informatif (règlement, vie de l'école) est visible par tous les comptes et
+// Un bloc informatif (règlement, livret d'accueil) est visible par tous les comptes et
 // n'a pas de progression. Seuls l'administrateur et le gestionnaire le gèrent.
 import {computed, onMounted, reactive, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'

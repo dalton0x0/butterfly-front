@@ -79,7 +79,7 @@ Communes :
 Espace apprenant :
 
 - Parcours des blocs et modules, avec signalement des modules verrouillés et de leurs prérequis.
-- Blocs informatifs (règlement, vie de l'école) lisibles par tous, sans progression ni bouton
+- Blocs informatifs (règlement, livret d'accueil) lisibles par tous sans progression ni bouton
   « Marquer comme terminé ».
 - Suivi d'un cours et enregistrement de la progression.
 - Passation de quiz pilotée par le serveur : écran d'introduction qui n'engage à rien, questions
@@ -118,12 +118,12 @@ Espace administrateur :
 - Gestion des utilisateurs (comptes, rôles, statut, promotion) et des promotions.
 - Gestion du catalogue de badges.
 
-Espace gestionnaire (rôle `MANAGER`, l'administration d'un établissement) : le tableau de bord, les
-utilisateurs, les promotions, les contenus et le suivi des apprenants, sans la corbeille, les badges
-ni la file de corrections. Avec l'administrateur, il est le seul à créer un bloc informatif ou à
-convertir un bloc existant : la case n'apparaît pas au formateur. Il ne voit et ne gère que les apprenants et les formateurs : le back les
-retire des listes et de la recherche, et le filtre de rôle ne propose que ceux-là (`manageableRoles`
-dans `utils/roles.js`).
+Espace gestionnaire (rôle `MANAGER`, l'administration de l'organisme : CFA, entreprise, université...) :
+le tableau de bord, les utilisateurs, les promotions, les contenus et le suivi des apprenants, sans la corbeille,
+les badges ni la file de corrections. Avec l'administrateur, il est le seul à créer un bloc informatif ou à
+convertir un bloc existant : la case n'apparaît pas au formateur. Il ne voit et ne gère que les apprenants et
+les formateurs : le back les retire des listes et de la recherche, et le filtre de rôle ne propose que
+ceux-là (`manageableRoles`dans `utils/roles.js`).
 
 ## Architecture
 
