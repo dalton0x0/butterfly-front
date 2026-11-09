@@ -232,7 +232,9 @@ onMounted(load)
             <Icon name="folder_open" :size="16"/>
             Gérer
           </RouterLink>
+          <!-- Les modules d'un bloc informatif ne sont jamais complétés : pas de prérequis. -->
           <button
+            v-if="!block.informational"
             class="h-9 px-3 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-1.5 hover:bg-surface-tint transition-colors"
             @click="openPrereq(module)"
           >

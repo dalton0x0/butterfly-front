@@ -27,10 +27,13 @@ const courses = computed(() => module.value?.courses || [])
 const exercises = computed(() => module.value?.exercises || [])
 const quiz = computed(() => module.value?.quiz || null)
 
+// Un module de bloc informatif ne contient que des cours : pas d'onglet exercice ni quiz.
 const tabs = computed(() => [
   {key: 'courses', label: `Cours (${courses.value.length})`},
-  {key: 'exercises', label: `Exercices (${exercises.value.length})`},
-  {key: 'quiz', label: `Quiz (${quiz.value ? 1 : 0})`},
+  ...(module.value?.informational ? [] : [
+    {key: 'exercises', label: `Exercices (${exercises.value.length})`},
+    {key: 'quiz', label: `Quiz (${quiz.value ? 1 : 0})`}
+  ]),
   {key: 'order', label: 'Ordre'}
 ])
 

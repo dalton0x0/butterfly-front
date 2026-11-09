@@ -76,8 +76,10 @@ const blocksTruncated = computed(() => blocksTotal.value > blocks.value.length)
 async function loadBlocks(search) {
   const page = await blockSearchTask.run(() => blockService.getBlocks({search: search || undefined}))
   if (page) {
-    blocks.value = page.items
-    blocksTotal.value = page.totalElements
+    // Un bloc informatif est déjà visible par tous : le back refuse de l'assigner.
+    const assignable = page.items.filter((b) => !b.informational)
+    blocks.value = assignable
+    blocksTotal.value = page.totalElements - (page.items.length - assignable.length)
   }
 }
 

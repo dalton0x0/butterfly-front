@@ -2,6 +2,8 @@
 // Espace formateur, gestion de contenu : les blocs.
 // Un formateur ne voit et ne gère que ses blocs assignés (filtrage côté back).
 // GET /api/blocks (liste), POST/PUT/DELETE /api/blocks (CRUD, ADMIN/TEACHER).
+// Un bloc informatif (règlement, vie de l'école) est visible par tous les comptes et
+// n'a pas de progression. Seuls l'administrateur et le gestionnaire le gèrent.
 import {computed, onMounted, reactive, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {blockService} from '@/services/blockService'
@@ -18,10 +20,18 @@ const {loading, error, run} = useAsyncTask('Impossible de charger les blocs.', {
 const blocks = ref([])
 const success = ref('')
 
+// Le back renvoie aussi les blocs informatifs au formateur, car il peut les lire.
+// Il ne peut pas les modifier : on les retire de son espace de gestion.
+const manageableBlocks = computed(() =>
+  auth.hasGlobalScope ? blocks.value : blocks.value.filter((b) => !b.informational)
+)
+
 // Formulaire (création / modification)
 const showForm = ref(false)
 const editingId = ref(null) // null = création
-const form = reactive({name: '', description: '', cover: ''})
+const form = reactive({name: '', description: '', cover: '', informational: false})
+// Etat enregistré du bloc modifié : sert à prévenir quand on le convertit en informatif.
+const wasInformational = ref(false)
 const formError = ref('')
 const saving = ref(false)
 
@@ -88,6 +98,8 @@ function openCreate() {
   form.name = ''
   form.description = ''
   form.cover = ''
+  form.informational = false
+  wasInformational.value = false
   pendingCover.value = null
   formError.value = ''
   coverError.value = ''
@@ -99,6 +111,8 @@ function openEdit(block) {
   form.name = block.name || ''
   form.description = block.description || ''
   form.cover = block.cover || ''
+  form.informational = Boolean(block.informational)
+  wasInformational.value = form.informational
   pendingCover.value = null
   formError.value = ''
   coverError.value = ''
@@ -131,6 +145,10 @@ async function save() {
       name,
       description: form.description.trim() || null,
       cover: form.cover.trim() || null
+    }
+    // Un formateur n'envoie pas l'état : le back le laisse alors inchangé.
+    if (auth.hasGlobalScope) {
+      payload.informational = form.informational
     }
     if (editingId.value) {
       await blockService.updateBlock(editingId.value, payload)
@@ -180,8 +198,9 @@ const prereqError = ref('')
 const loadingPrereq = ref(false)
 const savingPrereq = ref(false)
 
+// Un bloc informatif n'est jamais terminé : il ne peut pas servir de prérequis.
 const prereqCandidates = computed(() =>
-  blocks.value.filter((b) => b.id !== prereqBlock.value?.id)
+  manageableBlocks.value.filter((b) => b.id !== prereqBlock.value?.id && !b.informational)
 )
 
 async function openPrereq(block) {
@@ -250,13 +269,13 @@ onMounted(load)
 
   <div v-if="loading" class="text-[15px] text-muted py-10 text-center">Chargement des blocs...</div>
   <div v-else-if="error" class="text-[15px] text-danger bg-danger/8 rounded-[10px] px-4 py-3">{{ error }}</div>
-  <div v-else-if="blocks.length === 0" class="text-[15px] text-muted py-10 text-center">
+  <div v-else-if="manageableBlocks.length === 0" class="text-[15px] text-muted py-10 text-center">
     Aucun bloc assigné. Créez un bloc ou demandez à un administrateur de vous en assigner un.
   </div>
 
   <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
     <div
-      v-for="block in blocks"
+      v-for="block in manageableBlocks"
       :key="block.id"
       class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden flex flex-col"
     >
@@ -265,7 +284,13 @@ onMounted(load)
         <BlockCover v-else :height="200"/>
       </div>
       <div class="p-5 flex flex-col gap-2 flex-1">
-        <h3 class="text-[17px] font-semibold text-navy">{{ block.name }}</h3>
+        <div class="flex items-start justify-between gap-2">
+          <h3 class="text-[17px] font-semibold text-navy">{{ block.name }}</h3>
+          <span
+            v-if="block.informational"
+            class="shrink-0 text-[12px] font-semibold text-primary bg-surface-tint rounded-full px-2.5 py-0.5"
+          >Informatif</span>
+        </div>
         <p class="text-[13px] text-ink-soft line-clamp-2 flex-1">{{ block.description || 'Aucune description.' }}</p>
         <div class="flex items-center gap-2 pt-2">
           <RouterLink
@@ -283,6 +308,7 @@ onMounted(load)
             <Icon name="edit" :size="16"/>
           </button>
           <button
+            v-if="!block.informational"
             class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
             aria-label="Prérequis"
             title="Blocs prérequis"
@@ -368,6 +394,27 @@ onMounted(load)
           </div>
           <p class="text-[12px] text-muted mt-1">PNG, JPEG, WebP ou GIF, 5 Mo maximum.</p>
           <p v-if="coverError" class="text-[12px] text-danger mt-1">{{ coverError }}</p>
+        </div>
+
+        <div v-if="auth.hasGlobalScope">
+          <label for="content-blocks-informational" class="flex items-start gap-3 cursor-pointer">
+            <input
+              id="content-blocks-informational"
+              v-model="form.informational"
+              type="checkbox"
+              class="w-4 h-4 mt-0.5 accent-[var(--color-primary)]"
+            />
+            <span>
+              <span class="block text-[14px] font-medium text-ink">Bloc informatif</span>
+              <span class="block text-[12px] text-muted">
+                Visible par tous les comptes, sans progression. Il ne contient que des cours.
+              </span>
+            </span>
+          </label>
+          <p v-if="form.informational && editingId && !wasInformational"
+             class="text-[12px] text-ink bg-warning/15 rounded-[10px] px-3 py-2 mt-2">
+            Les assignations de ce bloc seront retirées. Il ne doit contenir ni exercice, ni quiz, ni prérequis.
+          </p>
         </div>
 
         <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>
