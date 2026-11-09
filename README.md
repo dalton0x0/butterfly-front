@@ -46,11 +46,11 @@ serveur, jamais présumé côté client.
 | Composant             | Version | Rôle                                          |
 |-----------------------|---------|-----------------------------------------------|
 | Vue                   | 3.5     | Framework (Composition API, `<script setup>`) |
-| Vue Router            | 4.5     | Routage et gardes de navigation               |
-| Pinia                 | 2.3     | Gestion d'état (session, rôle)                |
-| Axios                 | 1.7     | Client HTTP et intercepteurs                  |
-| Tailwind CSS          | 4.0     | Styles utilitaires (via `@tailwindcss/vite`)  |
-| Vite                  | 6.0     | Bundler et serveur de développement           |
+| Vue Router            | 5.4     | Routage et gardes de navigation               |
+| Pinia                 | 4.1     | Gestion d'état (session, rôle)                |
+| Axios                 | 1.21    | Client HTTP et intercepteurs                  |
+| Tailwind CSS          | 4.3     | Styles utilitaires (via `@tailwindcss/vite`)  |
+| Vite                  | 8.3     | Bundler et serveur de développement           |
 | marked + highlight.js | 18 / 11 | Rendu Markdown des contenus de cours          |
 | DOMPurify             | 3.4     | Assainissement du HTML rendu (anti-XSS)       |
 
