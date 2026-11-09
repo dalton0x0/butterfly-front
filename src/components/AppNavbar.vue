@@ -35,15 +35,15 @@ const links = computed(() => {
       {label: 'Badges', to: '/admin/badges', icon: 'military_tech'}
     ]
   }
-  // Gestionnaire : l'administration sans les réglages de gamification et le suivi des
-  // apprenants. Il consulte les rendus sans corriger : pas de file de corrections.
+  // Gestionnaire : l'administration sans les réglages de gamification. Il suit les
+  // apprenants depuis Utilisateurs (aperçu et progression) comme l'administrateur.
+  // Il consulte les rendus sans corriger : pas de file de corrections.
   if (auth.isManager) {
     return [
       {label: 'Tableau de bord', to: '/admin', icon: 'dashboard'},
       {label: 'Utilisateurs', to: '/admin/utilisateurs', icon: 'group'},
       {label: 'Promotions', to: '/admin/promotions', icon: 'school'},
       {label: 'Contenus', to: '/admin/contenus', icon: 'category'},
-      {label: 'Apprenants', to: '/formateur/apprenants', icon: 'person'}
     ]
   }
   if (auth.isTeacher) {
