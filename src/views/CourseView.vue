@@ -26,8 +26,8 @@ const completing = ref(false)
 const completeError = ref('')
 const navigation = useModuleNavigation(CONTENT_TYPES.COURSE)
 
-// Seul un USER possède une progression de cours.
-const canComplete = computed(() => auth.role === ROLES.USER)
+// Seul un USER possède une progression de cours. Un cours informatif se lit sans être suivi.
+const canComplete = computed(() => auth.role === ROLES.USER && !course.value?.informational)
 
 // Source de la vidéo : lecteur embarqué (YouTube/Vimeo) ou balise video (fichier/URL directe).
 const videoSource = computed(() => resolveVideoSource(course.value?.videoUrl))

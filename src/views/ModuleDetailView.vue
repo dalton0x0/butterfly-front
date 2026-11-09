@@ -21,6 +21,8 @@ const tab = ref('all')
 const courses = computed(() => module.value?.courses || [])
 const exercises = computed(() => module.value?.exercises || [])
 const quiz = computed(() => module.value?.quiz || null)
+// Module d'un bloc informatif : lecture seule, sans progression.
+const informational = computed(() => Boolean(module.value?.informational))
 
 // Liste unifiée pour l'onglet "Tous" : même ordre que la navigation précédent / suivant.
 const combined = computed(() => buildModuleSequence(module.value))
@@ -28,8 +30,11 @@ const combined = computed(() => buildModuleSequence(module.value))
 const tabs = computed(() => [
   {key: 'all', label: `Tous (${combined.value.length})`},
   {key: 'courses', label: `Cours (${courses.value.length})`},
-  {key: 'exercises', label: `Exercices (${exercises.value.length})`},
-  {key: 'quiz', label: `Quiz (${quiz.value ? 1 : 0})`}
+  // Un module informatif ne contient que des cours.
+  ...(informational.value ? [] : [
+    {key: 'exercises', label: `Exercices (${exercises.value.length})`},
+    {key: 'quiz', label: `Quiz (${quiz.value ? 1 : 0})`}
+  ])
 ])
 
 // Progression dérivée des éléments réellement terminés.
@@ -43,6 +48,9 @@ const derived = computed(() => {
 })
 
 const headerChip = computed(() => {
+  if (informational.value) {
+    return {label: 'Informatif', variant: 'primary', icon: 'info'}
+  }
   if (module.value?.completed) {
     return {label: 'Terminé', variant: 'success', icon: 'check_circle'}
   }
@@ -88,10 +96,13 @@ onMounted(load)
       </div>
       <div class="flex flex-wrap gap-2 mb-4">
         <StatusChip :label="`${module.courseCount} cours`" variant="primary"/>
-        <StatusChip :label="`${module.exerciseCount} exercices`" variant="primary"/>
-        <StatusChip v-if="module.hasQuiz" label="1 quiz" variant="primary"/>
+        <template v-if="!informational">
+          <StatusChip :label="`${module.exerciseCount} exercices`" variant="primary"/>
+          <StatusChip v-if="module.hasQuiz" label="1 quiz" variant="primary"/>
+        </template>
       </div>
-      <ProgressBar :value="derived.percent" show-label/>
+      <!-- Un contenu informatif se lit sans être suivi : pas de progression. -->
+      <ProgressBar v-if="!informational" :value="derived.percent" show-label/>
     </div>
 
     <!-- Onglets -->
@@ -136,7 +147,7 @@ onMounted(load)
           variant="neutral"
         />
         <StatusChip
-          v-else
+          v-else-if="!informational"
           :label="item.completed ? 'Terminé' : 'À commencer'"
           :variant="item.completed ? 'success' : 'neutral'"
         />
@@ -158,7 +169,7 @@ onMounted(load)
           <Icon name="menu_book" :size="18"/>
         </div>
         <span class="flex-1 text-[15px]" :class="c.completed ? 'text-muted' : 'text-ink'">{{ c.name }}</span>
-        <span class="flex items-center gap-1 text-[13px]" :class="c.completed ? 'text-[#16a34a]' : 'text-muted'">
+        <span v-if="!informational" class="flex items-center gap-1 text-[13px]" :class="c.completed ? 'text-[#16a34a]' : 'text-muted'">
           <Icon :name="c.completed ? 'check_circle' : 'radio_button_unchecked'" :size="18"/>
           {{ c.completed ? 'Terminé' : 'À commencer' }}
         </span>

@@ -56,7 +56,10 @@ async function load() {
   try {
     block.value = await blockService.getBlock(id)
     // Le résumé peut ne pas exister (ex : formateur) : on tolère l'absence.
-    summary.value = await progressService.getBlockSummary(id).catch(() => null)
+    // Un bloc informatif n'a pas de progression : inutile de le demander.
+    summary.value = block.value.informational
+      ? null
+      : await progressService.getBlockSummary(id).catch(() => null)
   } catch (err) {
     error.value = err.message || 'Impossible de charger le bloc.'
   } finally {
@@ -85,10 +88,13 @@ onMounted(load)
         <h1 class="text-[30px] font-semibold text-navy mb-2">{{ block.name }}</h1>
         <p class="text-ink-soft mb-4">{{ block.description }}</p>
         <div class="flex flex-wrap gap-2">
+          <StatusChip v-if="block.informational" label="Informatif" variant="primary" icon="info"/>
           <StatusChip :label="`${totals.modules} modules`" variant="primary" icon="view_module"/>
           <StatusChip :label="`${totals.courses} cours`" variant="primary" icon="menu_book"/>
-          <StatusChip :label="`${totals.exercises} exercices`" variant="primary" icon="terminal"/>
-          <StatusChip :label="`${totals.quizzes} quiz`" variant="primary" icon="quiz"/>
+          <template v-if="!block.informational">
+            <StatusChip :label="`${totals.exercises} exercices`" variant="primary" icon="terminal"/>
+            <StatusChip :label="`${totals.quizzes} quiz`" variant="primary" icon="quiz"/>
+          </template>
         </div>
       </div>
       <div v-if="hasProgress" class="shrink-0">
@@ -136,8 +142,10 @@ onMounted(load)
         <!-- Chips -->
         <div class="flex flex-wrap gap-2">
           <StatusChip :label="`${module.courseCount} cours`" variant="primary"/>
-          <StatusChip :label="`${module.exerciseCount} exercices`" variant="primary"/>
-          <StatusChip v-if="module.hasQuiz" label="1 quiz" variant="primary"/>
+          <template v-if="!block.informational">
+            <StatusChip :label="`${module.exerciseCount} exercices`" variant="primary"/>
+            <StatusChip v-if="module.hasQuiz" label="1 quiz" variant="primary"/>
+          </template>
         </div>
 
         <!-- Pied : action ou verrou -->
@@ -147,7 +155,7 @@ onMounted(load)
           </span>
           <span v-else-if="moduleState(module) === 'open'"
                 class="h-9 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center">
-            Continuer
+            {{ block.informational ? 'Lire' : 'Continuer' }}
           </span>
         </div>
       </component>

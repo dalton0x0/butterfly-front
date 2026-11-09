@@ -34,6 +34,9 @@ function progressOf(block) {
 }
 
 function statusChip(block) {
+  if (block.informational) {
+    return {label: 'Informatif', variant: 'primary', icon: 'info'}
+  }
   if (block.locked) {
     return {label: 'Verrouillé', variant: 'neutral', icon: 'lock'}
   }
@@ -48,6 +51,9 @@ function statusChip(block) {
 }
 
 function actionLabel(block) {
+  if (block.informational) {
+    return 'Lire'
+  }
   if (block.locked) {
     return 'Verrouillé'
   }
