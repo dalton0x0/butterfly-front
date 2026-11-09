@@ -1,7 +1,7 @@
 # Image du frontend Vue.
 
 # Étape 1 : construction
-FROM node:26-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /build
 

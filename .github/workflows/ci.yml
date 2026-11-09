@@ -25,7 +25,7 @@ jobs:
           # Même version majeure que l'image de construction du Dockerfile.
           # Les deux doivent rester alignées, sinon le workflow valide un code
           # que l'image ne saurait pas construire.
-          node-version: '26'
+          node-version: '24'
           cache: npm
 
       - name: Installation des dépendances

@@ -22,6 +22,12 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Node reste sur la LTS choisie (24) : une version majeure se décide à la main en
+    # alignant le Dockerfile, la CI et les postes de développement. Les mises à jour
+    # mineures et correctives de l'image continuent d'arriver.
+    ignore:
+      - dependency-name: node
+        update-types: [ version-update:semver-major ]
 
   - package-ecosystem: github-actions
     directory: /
