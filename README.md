@@ -79,7 +79,7 @@ Communes :
 Espace apprenant :
 
 - Parcours des blocs et modules, avec signalement des modules verrouillés et de leurs prérequis.
-- Blocs informatifs (règlement, vie de l'école) lisibles par tous sans progression ni bouton
+- Blocs informatifs (règlement, vie de l'école) lisibles par tous, sans progression ni bouton
   « Marquer comme terminé ».
 - Suivi d'un cours et enregistrement de la progression.
 - Passation de quiz pilotée par le serveur : écran d'introduction qui n'engage à rien, questions
@@ -114,14 +114,16 @@ Espace formateur :
 
 Espace administrateur :
 
-- Tableau de bord global.
+- Tableau de bord global, avec l'interrupteur qui ouvre ou ferme l'inscription publique.
 - Gestion des utilisateurs (comptes, rôles, statut, promotion) et des promotions.
 - Gestion du catalogue de badges.
 
 Espace gestionnaire (rôle `MANAGER`, l'administration d'un établissement) : le tableau de bord, les
 utilisateurs, les promotions, les contenus et le suivi des apprenants, sans la corbeille, les badges
 ni la file de corrections. Avec l'administrateur, il est le seul à créer un bloc informatif ou à
-convertir un bloc existant : la case n'apparaît pas au formateur. Il ne voit et ne gère que les apprenants et les formateurs : le back les retire des listes et de la recherche et le filtre de rôle ne propose que ceux-là (`manageableRoles` dans `utils/roles.js`).
+convertir un bloc existant : la case n'apparaît pas au formateur. Il ne voit et ne gère que les apprenants et les formateurs : le back les
+retire des listes et de la recherche, et le filtre de rôle ne propose que ceux-là (`manageableRoles`
+dans `utils/roles.js`).
 
 ## Architecture
 
@@ -266,7 +268,9 @@ garde globale `router.beforeEach` redirige vers la connexion si l'utilisateur n'
 et bloque l'accès aux pages dont le rôle ne correspond pas.
 
 Quatre routes restent publiques : la connexion, l'inscription, la demande de réinitialisation et la
-définition d'un nouveau mot de passe. La confirmation d'adresse est accessible dans les deux états,
+définition d'un nouveau mot de passe. L'inscription est fermée par défaut : la page de connexion
+masque alors le lien « Créer un compte » (`GET /auth/registration`) et la page d'inscription
+l'explique au lieu d'afficher le formulaire. La confirmation d'adresse est accessible dans les deux états,
 connecté ou non.
 
 Les trois espaces :

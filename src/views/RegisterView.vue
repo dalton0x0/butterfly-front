@@ -1,8 +1,9 @@
 <script setup>
 // Inscription.
-import {reactive, ref} from 'vue'
+import {onMounted, reactive, ref} from 'vue'
 import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
+import {authService} from '@/services/authService'
 import {
   mapBackendError,
   validateEmail,
@@ -18,6 +19,14 @@ const router = useRouter()
 const auth = useAuthStore()
 
 const showPassword = ref(false)
+
+// La page reste joignable par son adresse : fermée, elle l'explique au lieu d'afficher un
+// formulaire que le serveur refuserait. En cas d'erreur réseau, le formulaire s'affiche
+// et le serveur garde le dernier mot.
+const registrationOpen = ref(true)
+onMounted(async () => {
+  registrationOpen.value = await authService.isRegistrationOpen().catch(() => true)
+})
 
 const form = reactive({
   firstName: '',
@@ -89,7 +98,17 @@ async function handleRegister() {
       <p class="text-[13px] text-muted">Rejoignez la plateforme {{ config.appName }}</p>
     </div>
 
-    <form class="flex flex-col gap-5" @submit.prevent="handleRegister" novalidate>
+    <div v-if="!registrationOpen" class="text-center">
+      <p class="text-[14px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-3 mb-6">
+        Les inscriptions sont fermées. Votre compte est créé par l'administration de votre école,
+        qui vous envoie un lien d'activation par e-mail.
+      </p>
+      <RouterLink to="/connexion" class="text-[13px] text-primary font-semibold hover:underline">
+        Retour à la connexion
+      </RouterLink>
+    </div>
+
+    <form v-else class="flex flex-col gap-5" @submit.prevent="handleRegister" novalidate>
       <!-- Erreur globale éventuelle renvoyée par le back -->
       <p v-if="errors.global" class="text-[13px] text-danger bg-danger/8 rounded-[10px] px-3 py-2">{{
           errors.global

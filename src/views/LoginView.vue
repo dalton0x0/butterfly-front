@@ -1,8 +1,9 @@
 <script setup>
 // Connexion.
-import {computed, reactive, ref} from 'vue'
+import {computed, onMounted, reactive, ref} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
+import {authService} from '@/services/authService'
 import {mapBackendError, validateEmail, validateRequired} from '@/utils/validators'
 import Icon from '@/components/Icon.vue'
 import LogoIcon from '@/components/LogoIcon.vue'
@@ -16,6 +17,13 @@ const rememberMe = ref(false)
 // Adresse non vérifiée après le délai de grâce : le serveur renvoie un 403 et le
 // message doit proposer un renvoi de lien plutôt qu'une nouvelle saisie du mot de passe.
 const emailNotVerified = ref(false)
+
+// Lien d'inscription affiché seulement si l'administration l'a ouverte. En cas d'erreur
+// réseau, il reste masqué : un lien vers une inscription fermée serait trompeur.
+const registrationOpen = ref(false)
+onMounted(async () => {
+  registrationOpen.value = await authService.isRegistrationOpen().catch(() => false)
+})
 
 const form = reactive({email: '', password: ''})
 const errors = reactive({email: '', password: '', global: ''})
@@ -155,7 +163,7 @@ async function handleLogin() {
       </button>
     </form>
 
-    <p class="text-[13px] text-muted mt-6">
+    <p v-if="registrationOpen" class="text-[13px] text-muted mt-6">
       Pas encore de compte ?
       <RouterLink to="/inscription" class="text-primary font-semibold hover:underline ml-1">Créer un compte</RouterLink>
     </p>

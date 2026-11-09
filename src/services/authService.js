@@ -6,6 +6,7 @@
   car l'intercepteur de http.js a déjà renvoyé l'enveloppe ApiResponse.
 
   Correspondance avec le back :
+  - GET /api/auth/registration vers RegistrationStatusResponse { open }
   - POST /api/auth/register vers AuthResponse
   - POST /api/auth/login vers AuthResponse
   - POST /api/auth/logout vers void
@@ -28,6 +29,15 @@ export const authService = {
     async login(credentials) {
         const envelope = await http.post('/auth/login', credentials)
         return envelope.data
+    },
+
+    /**
+     * Indique si l'inscription publique est ouverte. Public : lu avant toute connexion.
+     * @returns {Promise<boolean>}
+     */
+    async isRegistrationOpen() {
+        const envelope = await http.get('/auth/registration')
+        return envelope.data.open
     },
 
     /**
