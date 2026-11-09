@@ -5,11 +5,14 @@
 import {computed, onMounted, reactive, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {blockService} from '@/services/blockService'
+import {useAuthStore} from '@/stores/auth'
 import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
 import BlockCover from '@/components/BlockCover.vue'
 import Modal from '@/components/Modal.vue'
+
+const auth = useAuthStore()
 
 const {loading, error, run} = useAsyncTask('Impossible de charger les blocs.', {loadingFromStart: true})
 const blocks = ref([])
@@ -287,7 +290,10 @@ onMounted(load)
           >
             <Icon name="lock" :size="16"/>
           </button>
+          <!-- Supprimer un bloc est réservé à l'administrateur : il peut être partagé
+               par plusieurs formateurs et apprenants. -->
           <button
+            v-if="auth.isAdmin"
             class="h-9 w-9 rounded-[10px] border border-danger text-danger flex items-center justify-center hover:bg-danger/8 transition-colors"
             aria-label="Supprimer"
             @click="openDelete(block)"
