@@ -3,10 +3,11 @@
 // La promotion n'est proposée que pour le rôle Apprenant (contrainte back).
 // Aucun mot de passe : le titulaire reçoit un lien d'invitation pour choisir le sien.
 import {computed, onMounted, reactive, ref} from 'vue'
-import {ROLES} from '@/utils/roles'
+import {creatableRoles, roleChip, ROLES} from '@/utils/roles'
 import {useRouter} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
+import {useAuthStore} from '@/stores/auth'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 
 const router = useRouter()
@@ -22,6 +23,11 @@ const form = reactive({
 const promotions = ref([])
 const saving = ref(false)
 const error = ref('')
+
+const auth = useAuthStore()
+
+// Un gestionnaire ne crée que des apprenants et des formateurs, comme le vérifie le back.
+const roleOptions = computed(() => creatableRoles(auth.role))
 
 const isLearner = computed(() => form.role === ROLES.USER)
 
@@ -102,9 +108,7 @@ onMounted(loadPromotions)
             <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5" for="user-create-role">Rôle</label>
             <select id="user-create-role" v-model="form.role"
                     class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
-              <option value="USER">Apprenant</option>
-              <option value="TEACHER">Formateur</option>
-              <option value="ADMIN">Admin</option>
+              <option v-for="role in roleOptions" :key="role" :value="role">{{ roleChip(role).label }}</option>
             </select>
           </div>
           <div v-if="isLearner">

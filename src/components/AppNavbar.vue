@@ -13,7 +13,7 @@ const auth = useAuthStore()
 const router = useRouter()
 
 const homeLink = computed(() => {
-  if (auth.isAdmin) {
+  if (auth.hasGlobalScope) {
     return '/admin'
   }
   if (auth.isTeacher) {
@@ -33,6 +33,17 @@ const links = computed(() => {
       {label: 'Promotions', to: '/admin/promotions', icon: 'school'},
       {label: 'Contenus', to: '/admin/contenus', icon: 'category'},
       {label: 'Badges', to: '/admin/badges', icon: 'military_tech'}
+    ]
+  }
+  // Gestionnaire : l'administration sans les réglages de gamification et le suivi des
+  // apprenants. Il consulte les rendus sans corriger : pas de file de corrections.
+  if (auth.isManager) {
+    return [
+      {label: 'Tableau de bord', to: '/admin', icon: 'dashboard'},
+      {label: 'Utilisateurs', to: '/admin/utilisateurs', icon: 'group'},
+      {label: 'Promotions', to: '/admin/promotions', icon: 'school'},
+      {label: 'Contenus', to: '/admin/contenus', icon: 'category'},
+      {label: 'Apprenants', to: '/formateur/apprenants', icon: 'person'}
     ]
   }
   if (auth.isTeacher) {
@@ -128,7 +139,7 @@ async function logout() {
                 Mon profil
               </RouterLink>
               <RouterLink
-                v-if="!auth.isTeacher && !auth.isAdmin"
+                v-if="!auth.isTeacher && !auth.hasGlobalScope"
                 to="/badges"
                 class="flex items-center gap-3 px-4 py-2.5 text-[14px] text-ink hover:bg-surface-tint transition-colors"
                 @click="userMenuOpen = false"

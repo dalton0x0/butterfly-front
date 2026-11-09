@@ -3,7 +3,7 @@
 // recherche, filtres rôle et statut, et actions de cycle de vie (activer/désactiver,
 // supprimer logiquement, restaurer).
 import {computed, onMounted, ref} from 'vue'
-import {roleChip} from '@/utils/roles'
+import {canManageAccount, roleChip} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
@@ -157,8 +157,8 @@ onMounted(load)
     </RouterLink>
   </div>
 
-  <!-- Bascule actifs / supprimés -->
-  <div class="flex gap-1 mb-5 border-b border-line">
+  <!-- Bascule actifs / supprimés. La corbeille est réservée à l'administrateur. -->
+  <div v-if="auth.isAdmin" class="flex gap-1 mb-5 border-b border-line">
     <button
       type="button"
       class="px-4 py-2.5 text-[14px] font-medium border-b-2 -mb-px transition-colors"
@@ -195,6 +195,7 @@ onMounted(load)
             class="h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
       <option value="ALL">Rôle : tous</option>
       <option value="ADMIN">Admin</option>
+      <option value="MANAGER">Gestionnaire</option>
       <option value="TEACHER">Formateur</option>
       <option value="USER">Apprenant</option>
     </select>
@@ -266,6 +267,9 @@ onMounted(load)
               >
                 <Icon name="visibility" :size="18"/>
               </RouterLink>
+              <!-- Un gestionnaire ne gère que les apprenants et les formateurs : le back
+                   refuserait le reste, les actions sont donc masquées. -->
+              <template v-if="canManageAccount(auth.role, u.role)">
               <RouterLink
                 :to="`/admin/utilisateurs/${u.id}`"
                 class="text-ink-soft hover:bg-surface-tint p-2 rounded-full transition-colors inline-flex"
@@ -282,7 +286,9 @@ onMounted(load)
               >
                 <Icon name="power_settings_new" :size="18"/>
               </button>
+              </template>
               <button
+                v-if="auth.isAdmin"
                 class="p-2 rounded-full transition-colors"
                 :class="isSelf(u) ? 'text-line cursor-not-allowed' : 'text-[#ba1a1a] hover:bg-[#ba1a1a]/8'"
                 :disabled="isSelf(u)"

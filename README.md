@@ -116,6 +116,11 @@ Espace administrateur :
 - Gestion des utilisateurs (comptes, rôles, statut, promotion) et des promotions.
 - Gestion du catalogue de badges.
 
+Espace gestionnaire (rôle `MANAGER`, l'administration d'un établissement) : le tableau de bord, les
+utilisateurs, les promotions, les contenus et le suivi des apprenants, sans la corbeille, les badges
+ni la file de corrections. Il ne gère que les apprenants et les formateurs : la fiche d'un compte
+administrateur ou gestionnaire s'affiche en lecture seule (`canManageAccount` dans `utils/roles.js`).
+
 ## Architecture
 
 L'application applique une séparation nette des responsabilités. Une vue appelle un service métier,
@@ -164,7 +169,7 @@ un jeton de rafraîchissement de longue durée, avec rotation à chaque renouvel
   moi », un cookie de session sert de témoin : quand le navigateur a été fermé, il a disparu et les
   jetons sont effacés avant tout usage.
 - `stores/auth.js` : store Pinia exposant l'utilisateur courant et des accesseurs dérivés
-  (`isAuthenticated`, `role`, `isAdmin`, `isTeacher`, `fullName`). La session est restaurée au
+  (`isAuthenticated`, `role`, `isAdmin`, `isTeacher`, `isManager`, `hasGlobalScope`, `fullName`). La session est restaurée au
   rechargement de la page à partir du jeton de rafraîchissement persisté.
 
 Chaque rotation renvoie un nouvel identifiant de session enregistré au même titre que les jetons.

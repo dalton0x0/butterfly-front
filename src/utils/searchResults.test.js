@@ -15,6 +15,7 @@ describe('searchHitRoute', () => {
 
     it('mène à la fiche utilisateur adaptée au rôle', () => {
         expect(searchHitRoute({type: 'USER', id: 9}, ROLES.ADMIN)).toBe('/admin/utilisateurs/9')
+        expect(searchHitRoute({type: 'USER', id: 9}, ROLES.MANAGER)).toBe('/admin/utilisateurs/9')
         expect(searchHitRoute({type: 'USER', id: 9}, ROLES.TEACHER)).toBe('/formateur/apprenants/9')
         expect(searchHitRoute({type: 'USER', id: 9}, ROLES.USER)).toBeNull()
     })

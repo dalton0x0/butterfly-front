@@ -9,12 +9,15 @@ import {computed, onMounted, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {roleChip, ROLES} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
+import {useAuthStore} from '@/stores/auth'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
 import {blockService} from '@/services/blockService'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
+
+const auth = useAuthStore()
 
 const {loading, error, run} = useAsyncTask('Impossible de charger le tableau de bord.', {loadingFromStart: true})
 
@@ -32,6 +35,7 @@ const EMPTY_PAGE = {items: [], totalElements: 0}
 const counts = ref({
   learners: 0,
   teachers: 0,
+  managers: 0,
   admins: 0,
   disabled: 0,
   deleted: 0,
@@ -45,6 +49,7 @@ const recentLearners = ref([])
 const cards = computed(() => [
   {label: 'Apprenants', value: counts.value.learners, icon: 'school', tint: 'bg-accent/15 text-primary'},
   {label: 'Formateurs', value: counts.value.teachers, icon: 'co_present', tint: 'bg-accent/15 text-primary'},
+  {label: 'Gestionnaires', value: counts.value.managers, icon: 'account_circle', tint: 'bg-accent/15 text-primary'},
   {label: 'Administrateurs', value: counts.value.admins, icon: 'shield_person', tint: 'bg-accent/15 text-primary'},
   {label: 'Blocs', value: counts.value.blocks, icon: 'category', tint: 'bg-accent/15 text-primary'},
   {
@@ -54,7 +59,10 @@ const cards = computed(() => [
     tint: 'bg-accent/15 text-primary'
   },
   {label: 'Comptes désactivés', value: counts.value.disabled, icon: 'block', tint: 'bg-surface-tint text-ink-soft'},
-  {label: 'Corbeille', value: counts.value.deleted, icon: 'delete', tint: 'bg-surface-tint text-ink-soft'}
+  // La corbeille est réservée à l'administrateur.
+  ...(auth.isAdmin
+    ? [{label: 'Corbeille', value: counts.value.deleted, icon: 'delete', tint: 'bg-surface-tint text-ink-soft'}]
+    : [])
 ])
 
 const quickLinks = [
@@ -76,6 +84,7 @@ function load() {
     const [
       learners,
       teachers,
+      managers,
       admins,
       disabled,
       deleted,
@@ -86,9 +95,10 @@ function load() {
     ] = await Promise.all([
       userService.getUsers({role: ROLES.USER, size: COUNT_ONLY_SIZE}),
       userService.getUsers({role: ROLES.TEACHER, size: COUNT_ONLY_SIZE}),
+      userService.getUsers({role: ROLES.MANAGER, size: COUNT_ONLY_SIZE}),
       userService.getUsers({role: ROLES.ADMIN, size: COUNT_ONLY_SIZE}),
       userService.getUsers({enabled: false, size: COUNT_ONLY_SIZE}),
-      orEmptyPage(userService.getDeletedUsers({size: COUNT_ONLY_SIZE})),
+      auth.isAdmin ? orEmptyPage(userService.getDeletedUsers({size: COUNT_ONLY_SIZE})) : EMPTY_PAGE,
       orEmptyPage(blockService.getBlocks({size: COUNT_ONLY_SIZE})),
       orEmptyPage(promotionService.getPromotions({size: COUNT_ONLY_SIZE})),
       orEmptyPage(promotionService.getPromotions({active: true, size: COUNT_ONLY_SIZE})),
@@ -104,6 +114,7 @@ function load() {
     counts.value = {
       learners: learners.totalElements,
       teachers: teachers.totalElements,
+      managers: managers.totalElements,
       admins: admins.totalElements,
       disabled: disabled.totalElements,
       deleted: deleted.totalElements,

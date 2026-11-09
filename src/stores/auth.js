@@ -78,6 +78,9 @@ export const useAuthStore = defineStore('auth', () => {
     const role = computed(() => user.value?.role ?? null)
     const isAdmin = computed(() => role.value === ROLES.ADMIN)
     const isTeacher = computed(() => role.value === ROLES.TEACHER)
+    const isManager = computed(() => role.value === ROLES.MANAGER)
+    // Administrateur ou gestionnaire : accès à l'administration et à tous les contenus.
+    const hasGlobalScope = computed(() => isAdmin.value || isManager.value)
     const fullName = computed(() =>
         user.value ? `${user.value.firstName} ${user.value.lastName}` : ''
     )
@@ -207,6 +210,8 @@ export const useAuthStore = defineStore('auth', () => {
         role,
         isAdmin,
         isTeacher,
+        isManager,
+        hasGlobalScope,
         fullName,
         login,
         register,

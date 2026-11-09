@@ -6,7 +6,7 @@
   formateur ou un administrateur l'ouvre dans l'espace d'édition.
 */
 
-import {ROLES} from './roles'
+import {hasGlobalScope, ROLES} from './roles'
 
 const LEARNER_ROUTES = {
     BLOCK: '/blocs/',
@@ -43,7 +43,7 @@ const GROUPS = [
  */
 export function searchHitRoute(hit, role) {
     if (hit.type === 'USER') {
-        if (role === ROLES.ADMIN) {
+        if (hasGlobalScope(role)) {
             return `/admin/utilisateurs/${hit.id}`
         }
         return role === ROLES.TEACHER ? `/formateur/apprenants/${hit.id}` : null

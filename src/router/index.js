@@ -98,49 +98,49 @@ const routes = [
         alias: '/admin/contenus',
         name: 'content-blocks',
         component: () => import('@/views/ContentBlocksView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/contenus/blocs/:id',
         name: 'content-modules',
         component: () => import('@/views/ContentModulesView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/contenus/modules/:id',
         name: 'content-module',
         component: () => import('@/views/ContentModuleView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/contenus/quiz/:id',
         name: 'content-quiz-questions',
         component: () => import('@/views/ContentQuizQuestionsView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/contenus/modules/:moduleId/cours/nouveau',
         name: 'content-course-new',
         component: () => import('@/views/ContentCourseEditView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/contenus/cours/:id',
         name: 'content-course-edit',
         component: () => import('@/views/ContentCourseEditView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/contenus/modules/:moduleId/exercices/nouveau',
         name: 'content-exercise-new',
         component: () => import('@/views/ContentExerciseEditView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/contenus/exercices/:id',
         name: 'content-exercise-edit',
         component: () => import('@/views/ContentExerciseEditView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/corrections',
@@ -152,13 +152,13 @@ const routes = [
         path: '/formateur/apprenants',
         name: 'learners',
         component: () => import('@/views/ApprenantsView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/formateur/apprenants/:id',
         name: 'learner-detail',
         component: () => import('@/views/ApprenantDetailView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER]}
     },
 
     // Admin
@@ -166,31 +166,31 @@ const routes = [
         path: '/admin/utilisateurs',
         name: 'users',
         component: () => import('@/views/UsersView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/admin/utilisateurs/nouveau',
         name: 'user-create',
         component: () => import('@/views/UserCreateView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/admin/utilisateurs/:id',
         name: 'user-detail',
         component: () => import('@/views/UserDetailView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/admin/utilisateurs/:id/apercu',
         name: 'admin-user-detail',
         component: () => import('@/views/AdminUserDetailView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/admin/promotions',
         name: 'promotions',
         component: () => import('@/views/PromotionsView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
         path: '/admin/badges',
@@ -249,7 +249,7 @@ const routes = [
         path: '/admin',
         name: 'admin-dashboard',
         component: () => import('@/views/AdminDashboardView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.ADMIN]}
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
     },
 
     // 404
@@ -304,7 +304,7 @@ router.beforeEach(async (to) => {
         if (auth.isTeacher) {
             return {name: 'corrections'}
         }
-        if (auth.isAdmin) {
+        if (auth.hasGlobalScope) {
             return '/admin'
         }
     }
