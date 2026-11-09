@@ -3,7 +3,7 @@
 // recherche, filtres rôle et statut, et actions de cycle de vie (activer/désactiver,
 // supprimer logiquement, restaurer).
 import {computed, onMounted, ref} from 'vue'
-import {canManageAccount, roleChip} from '@/utils/roles'
+import {manageableRoles, roleChip} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
@@ -73,6 +73,22 @@ const {items: rows, page, totalPages, totalElements, loading, error, load, goToP
 const hasActiveFilter = computed(() =>
   Boolean(filters.value.search) || filters.value.role !== undefined || filters.value.enabled !== undefined
 )
+
+// Le filtre ne propose que les rôles visibles : un gestionnaire ne voit ni
+// administrateur ni gestionnaire, le back les retire déjà de la liste.
+const roleOptions = computed(() => manageableRoles(auth.role))
+
+// Basé sur les champs saisis et non sur les filtres envoyés : le bouton apparaît dès la
+// frappe, sans attendre le délai de la recherche.
+const hasFilterInput = computed(() =>
+  search.value !== '' || roleFilter.value !== 'ALL' || statusFilter.value !== 'ALL'
+)
+
+function resetFilters() {
+  search.value = ''
+  roleFilter.value = 'ALL'
+  statusFilter.value = 'ALL'
+}
 
 function flashMessage(text) {
   message.value = text
@@ -194,10 +210,7 @@ onMounted(load)
     <select id="users-role-filter" v-model="roleFilter"
             class="h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white">
       <option value="ALL">Rôle : tous</option>
-      <option value="ADMIN">Admin</option>
-      <option value="MANAGER">Gestionnaire</option>
-      <option value="TEACHER">Formateur</option>
-      <option value="USER">Apprenant</option>
+      <option v-for="role in roleOptions" :key="role" :value="role">{{ roleChip(role).label }}</option>
     </select>
     <label v-if="!showDeleted" for="users-status-filter" class="sr-only">Filtrer par statut</label>
     <select v-if="!showDeleted" id="users-status-filter" v-model="statusFilter"
@@ -206,6 +219,12 @@ onMounted(load)
       <option value="ACTIVE">Actifs</option>
       <option value="INACTIVE">Désactivés</option>
     </select>
+    <button v-if="hasFilterInput" type="button"
+            class="h-10 px-3 rounded-[10px] text-[14px] font-semibold text-primary inline-flex items-center gap-1.5 hover:bg-surface-tint transition-colors"
+            @click="resetFilters">
+      <Icon name="close" :size="18"/>
+      Réinitialiser
+    </button>
   </div>
 
   <div v-if="loading" class="text-[15px] text-muted py-10 text-center">Chargement des utilisateurs...</div>
@@ -267,9 +286,6 @@ onMounted(load)
               >
                 <Icon name="visibility" :size="18"/>
               </RouterLink>
-              <!-- Un gestionnaire ne gère que les apprenants et les formateurs : le back
-                   refuserait le reste, les actions sont donc masquées. -->
-              <template v-if="canManageAccount(auth.role, u.role)">
               <RouterLink
                 :to="`/admin/utilisateurs/${u.id}`"
                 class="text-ink-soft hover:bg-surface-tint p-2 rounded-full transition-colors inline-flex"
@@ -286,7 +302,6 @@ onMounted(load)
               >
                 <Icon name="power_settings_new" :size="18"/>
               </button>
-              </template>
               <button
                 v-if="auth.isAdmin"
                 class="p-2 rounded-full transition-colors"
