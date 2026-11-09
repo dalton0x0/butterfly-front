@@ -74,7 +74,6 @@ import mailIcon from '@material-symbols/svg-400/outlined/mail.svg?raw'
 import menuIcon from '@material-symbols/svg-400/outlined/menu.svg?raw'
 import menuBookIcon from '@material-symbols/svg-400/outlined/menu_book.svg?raw'
 import militaryTechIcon from '@material-symbols/svg-400/outlined/military_tech.svg?raw'
-import notificationsIcon from '@material-symbols/svg-400/outlined/notifications.svg?raw'
 import personIcon from '@material-symbols/svg-400/outlined/person.svg?raw'
 import personAddIcon from '@material-symbols/svg-400/outlined/person_add.svg?raw'
 import pictureAsPdfIcon from '@material-symbols/svg-400/outlined/picture_as_pdf.svg?raw'
@@ -181,7 +180,6 @@ export const ICONS = {
     menu: menuIcon,
     menu_book: menuBookIcon,
     military_tech: militaryTechIcon,
-    notifications: notificationsIcon,
     person: personIcon,
     person_add: personAddIcon,
     picture_as_pdf: pictureAsPdfIcon,

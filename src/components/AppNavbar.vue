@@ -96,11 +96,6 @@ async function logout() {
         <!-- Recherche globale -->
         <GlobalSearch/>
 
-        <button class="text-white p-2 rounded-full hover:bg-white/10 transition-colors hidden sm:block"
-                aria-label="Notifications">
-          <Icon name="notifications" :size="22"/>
-        </button>
-
         <!-- Menu utilisateur -->
         <div class="relative">
           <button
