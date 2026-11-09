@@ -3,7 +3,7 @@
 // La promotion n'est proposée que pour le rôle Apprenant (contrainte back).
 // Aucun mot de passe : le titulaire reçoit un lien d'invitation pour choisir le sien.
 import {computed, onMounted, reactive, ref} from 'vue'
-import {creatableRoles, roleChip, ROLES} from '@/utils/roles'
+import {manageableRoles, roleChip, ROLES} from '@/utils/roles'
 import {useRouter} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
@@ -27,7 +27,7 @@ const error = ref('')
 const auth = useAuthStore()
 
 // Un gestionnaire ne crée que des apprenants et des formateurs, comme le vérifie le back.
-const roleOptions = computed(() => creatableRoles(auth.role))
+const roleOptions = computed(() => manageableRoles(auth.role))
 
 const isLearner = computed(() => form.role === ROLES.USER)
 

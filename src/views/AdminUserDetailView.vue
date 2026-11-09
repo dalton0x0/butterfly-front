@@ -7,7 +7,7 @@ import {maxGrade} from '@/utils/grading'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
-import {canManageAccount, roleChip, ROLES} from '@/utils/roles'
+import {roleChip, ROLES} from '@/utils/roles'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
@@ -27,9 +27,6 @@ const actionMessage = ref('')
 
 const userId = computed(() => Number(route.params.id))
 const isSelf = computed(() => auth.user && auth.user.id === userId.value)
-
-// Un gestionnaire ne gère que les apprenants et les formateurs.
-const canManage = computed(() => canManageAccount(auth.role, user.value?.role))
 
 const fullName = computed(() =>
   user.value ? `${user.value.firstName} ${user.value.lastName}` : ''
@@ -130,7 +127,7 @@ onMounted(load)
     </div>
 
     <!-- Actions -->
-    <div v-if="canManage" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 mb-6">
+    <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 mb-6">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h2 class="text-[17px] font-semibold text-ink">Actions</h2>

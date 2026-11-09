@@ -1,7 +1,7 @@
 <script setup>
 // Espace admin : page détail et édition d'un utilisateur.
 import {computed, onMounted, reactive, ref, watch} from 'vue'
-import {canManageAccount, hasGlobalScope, roleChip as roleChipFor, ROLES} from '@/utils/roles'
+import {hasGlobalScope, roleChip as roleChipFor, ROLES} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
@@ -46,10 +46,6 @@ const savingPromotion = ref(false)
 const savingBlocks = ref(false)
 
 const roleChip = computed(() => roleChipFor(user.value?.role))
-
-// Un gestionnaire ne gère que les apprenants et les formateurs : sur un autre compte,
-// la fiche reste en lecture seule. Le back refuserait de toute façon les modifications.
-const canManage = computed(() => canManageAccount(auth.role, user.value?.role))
 const fullName = computed(() => (user.value ? `${user.value.firstName} ${user.value.lastName}` : ''))
 
 // Filtre de l'écran d'assignation. La recherche part au serveur : avec de nombreux
@@ -238,9 +234,6 @@ onMounted(load)
 
     <p v-if="message" class="text-[14px] text-success bg-success/10 rounded-[10px] px-4 py-2.5 mb-5">{{ message }}</p>
     <p v-if="error" class="text-[14px] text-danger bg-danger/8 rounded-[10px] px-4 py-2.5 mb-5">{{ error }}</p>
-    <p v-if="!canManage" class="text-[14px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-2.5 mb-5">
-      Ce compte est géré par l'administrateur : vous pouvez le consulter, pas le modifier.
-    </p>
 
     <!-- Deux colonnes indépendantes plutôt qu'une grille : chaque carte garde sa hauteur
          au lieu de s'aligner sur sa voisine, ce qui laissait un vide en bas des plus courtes. -->
@@ -254,23 +247,23 @@ onMounted(load)
               <div>
                 <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
                        for="user-detail-first-name">Prénom</label>
-                <input id="user-detail-first-name" v-model="identity.firstName" :disabled="!canManage"
-                       class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-surface-tint disabled:text-muted"/>
+                <input id="user-detail-first-name" v-model="identity.firstName"
+                       class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
               </div>
               <div>
                 <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
                        for="user-detail-last-name">Nom</label>
-                <input id="user-detail-last-name" v-model="identity.lastName" :disabled="!canManage"
-                       class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-surface-tint disabled:text-muted"/>
+                <input id="user-detail-last-name" v-model="identity.lastName"
+                       class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
               </div>
             </div>
             <div>
               <label class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5"
                      for="user-detail-email">E-mail</label>
-              <input id="user-detail-email" v-model="identity.email" type="email" :disabled="!canManage"
-                     class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-surface-tint disabled:text-muted"/>
+              <input id="user-detail-email" v-model="identity.email" type="email"
+                     class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
             </div>
-            <div v-if="canManage" class="flex justify-end">
+            <div class="flex justify-end">
               <button :disabled="savingIdentity"
                       class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
                       @click="saveIdentity">
@@ -281,7 +274,7 @@ onMounted(load)
         </div>
 
         <!-- Promotion (apprenant) -->
-        <div v-if="canManage && user.role === ROLES.USER" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+        <div v-if="user.role === ROLES.USER" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
           <h2 class="text-[17px] font-semibold text-ink mb-4">Promotion</h2>
           <label for="user-detail-promotion" class="sr-only">Promotion de l'apprenant</label>
           <div class="flex gap-2">
@@ -302,7 +295,7 @@ onMounted(load)
 
       <div class="flex flex-col gap-6">
         <!-- Rôle et statut -->
-        <div v-if="canManage" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
           <h2 class="text-[17px] font-semibold text-ink mb-4">{{ auth.isAdmin ? 'Rôle et statut' : 'Statut' }}</h2>
           <div class="flex flex-col gap-4">
             <!-- Changer un rôle reste réservé à l'administrateur -->
@@ -379,7 +372,7 @@ onMounted(load)
 
         <!-- Blocs assignés. Un administrateur ou un gestionnaire voit déjà tous les blocs :
              le back refuse de lui en assigner. -->
-        <div v-if="canManage && !hasGlobalScope(user.role)" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
+        <div v-if="!hasGlobalScope(user.role)" class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-6">
           <h2 class="text-[17px] font-semibold text-ink mb-1">Blocs assignés</h2>
           <p class="text-[13px] text-muted mb-1">Pour un formateur, définit sa portée pédagogique. Pour un apprenant, son
             inscription.</p>

@@ -118,8 +118,9 @@ Espace administrateur :
 
 Espace gestionnaire (rôle `MANAGER`, l'administration d'un établissement) : le tableau de bord, les
 utilisateurs, les promotions, les contenus et le suivi des apprenants, sans la corbeille, les badges
-ni la file de corrections. Il ne gère que les apprenants et les formateurs : la fiche d'un compte
-administrateur ou gestionnaire s'affiche en lecture seule (`canManageAccount` dans `utils/roles.js`).
+ni la file de corrections. Il ne voit et ne gère que les apprenants et les formateurs : le back les
+retire des listes et de la recherche et le filtre de rôle ne propose que ceux-là (`manageableRoles`
+dans `utils/roles.js`).
 
 ## Architecture
 

@@ -49,8 +49,13 @@ const recentLearners = ref([])
 const cards = computed(() => [
   {label: 'Apprenants', value: counts.value.learners, icon: 'school', tint: 'bg-accent/15 text-primary'},
   {label: 'Formateurs', value: counts.value.teachers, icon: 'co_present', tint: 'bg-accent/15 text-primary'},
-  {label: 'Gestionnaires', value: counts.value.managers, icon: 'account_circle', tint: 'bg-accent/15 text-primary'},
-  {label: 'Administrateurs', value: counts.value.admins, icon: 'shield_person', tint: 'bg-accent/15 text-primary'},
+  // Un gestionnaire ne voit ni les administrateurs ni les autres gestionnaires.
+  ...(auth.isAdmin
+    ? [
+        {label: 'Gestionnaires', value: counts.value.managers, icon: 'account_circle', tint: 'bg-accent/15 text-primary'},
+        {label: 'Administrateurs', value: counts.value.admins, icon: 'shield_person', tint: 'bg-accent/15 text-primary'}
+      ]
+    : []),
   {label: 'Blocs', value: counts.value.blocks, icon: 'category', tint: 'bg-accent/15 text-primary'},
   {
     label: 'Promotions actives',
@@ -95,8 +100,8 @@ function load() {
     ] = await Promise.all([
       userService.getUsers({role: ROLES.USER, size: COUNT_ONLY_SIZE}),
       userService.getUsers({role: ROLES.TEACHER, size: COUNT_ONLY_SIZE}),
-      userService.getUsers({role: ROLES.MANAGER, size: COUNT_ONLY_SIZE}),
-      userService.getUsers({role: ROLES.ADMIN, size: COUNT_ONLY_SIZE}),
+      auth.isAdmin ? userService.getUsers({role: ROLES.MANAGER, size: COUNT_ONLY_SIZE}) : EMPTY_PAGE,
+      auth.isAdmin ? userService.getUsers({role: ROLES.ADMIN, size: COUNT_ONLY_SIZE}) : EMPTY_PAGE,
       userService.getUsers({enabled: false, size: COUNT_ONLY_SIZE}),
       auth.isAdmin ? orEmptyPage(userService.getDeletedUsers({size: COUNT_ONLY_SIZE})) : EMPTY_PAGE,
       orEmptyPage(blockService.getBlocks({size: COUNT_ONLY_SIZE})),

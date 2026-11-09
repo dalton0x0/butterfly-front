@@ -31,32 +31,19 @@ export function roleChip(role) {
 // Rôles dont la portée couvre tous les blocs : ils ne reçoivent jamais de bloc.
 const GLOBAL_SCOPE_ROLES = [ROLES.ADMIN, ROLES.MANAGER]
 
-// Rôles des comptes qu'un gestionnaire peut créer et gérer.
-const ROLES_MANAGED_BY_MANAGER = [ROLES.USER, ROLES.TEACHER]
-
 export function hasGlobalScope(role) {
     return GLOBAL_SCOPE_ROLES.includes(role)
 }
 
 /**
- * Indique si un compte de ce rôle peut être géré par l'utilisateur connecté.
- * Le back applique la même règle : ce test ne fait que masquer ce qu'il refuserait.
- * @param {string} actorRole rôle de l'utilisateur connecté
- * @param {string} targetRole rôle du compte visé
- * @returns {boolean}
- */
-export function canManageAccount(actorRole, targetRole) {
-    if (actorRole === ROLES.ADMIN) {
-        return true
-    }
-    return actorRole === ROLES.MANAGER && ROLES_MANAGED_BY_MANAGER.includes(targetRole)
-}
-
-/**
- * Rôles proposés à la création d'un compte selon l'utilisateur connecté.
+ * Rôles des comptes que l'utilisateur connecté voit et gère : tous pour l'administrateur,
+ * apprenants et formateurs pour un gestionnaire. Le back applique la même règle aux
+ * listes, à la recherche et aux fiches. Sert au filtre de la liste et à la création.
  * @param {string} actorRole rôle de l'utilisateur connecté
  * @returns {string[]}
  */
-export function creatableRoles(actorRole) {
-    return actorRole === ROLES.ADMIN ? [ROLES.USER, ROLES.TEACHER, ROLES.MANAGER, ROLES.ADMIN] : ROLES_MANAGED_BY_MANAGER
+export function manageableRoles(actorRole) {
+    return actorRole === ROLES.ADMIN
+        ? [ROLES.USER, ROLES.TEACHER, ROLES.MANAGER, ROLES.ADMIN]
+        : [ROLES.USER, ROLES.TEACHER]
 }
