@@ -63,7 +63,7 @@ body {
   Listes déroulantes.
 
   Sans ce réglage, chaque navigateur dessine sa propre liste (fond gris et coins de
-  Safari, flèche système). appearance: none retire ce rendu natif et la flèche est
+  Safari, flèche système). appearance: none retire ce rendu natif, et la flèche est
   redessinée en SVG aux couleurs de l'application. Les classes Tailwind de chaque select
   (bordure, hauteur, arrondi) s'appliquent toujours.
 
@@ -88,6 +88,72 @@ select:focus-visible {
 
 select:disabled {
     cursor: not-allowed;
+}
+
+/*
+  Liste ouverte des options.
+
+  Par défaut, le navigateur la dessine avec les composants du système : le CSS ne
+  l'atteint pas. appearance: base-select la rend stylable. Chrome et Edge le prennent en
+  charge depuis la version 135. Les autres navigateurs ignorent ce bloc et gardent la
+  liste du système.
+
+  Le clavier, la sélection et l'accessibilité restent ceux du select natif.
+*/
+@supports (appearance: base-select) {
+    select:not([multiple]),
+    select:not([multiple])::picker(select) {
+        appearance: base-select;
+    }
+
+    /* La flèche SVG posée plus haut est conservée : on masque celle du navigateur. */
+    select:not([multiple])::picker-icon {
+        display: none;
+    }
+
+    /* En mode base-select, le champ fermé devient une boîte flexible : sans ce réglage,
+       le texte se colle en haut au lieu d'être centré verticalement. */
+    select:not([multiple]) {
+        align-items: center;
+    }
+
+    select:not([multiple]):open {
+        border-color: var(--color-primary);
+    }
+
+    select:not([multiple])::picker(select) {
+        margin-block: 4px;
+        padding: 4px;
+        border: 1px solid var(--color-line);
+        border-radius: 10px;
+        background-color: var(--color-surface);
+        box-shadow: 0 8px 24px rgba(7, 29, 46, 0.12);
+    }
+
+    select:not([multiple]) option {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--color-ink);
+        cursor: pointer;
+    }
+
+    /* La ligne choisie est déjà mise en couleur : la coche du navigateur ferait doublon. */
+    select:not([multiple]) option::checkmark {
+        display: none;
+    }
+
+    select:not([multiple]) option:hover,
+    select:not([multiple]) option:focus-visible {
+        outline: none;
+        background-color: var(--color-surface-hover);
+    }
+
+    select:not([multiple]) option:checked {
+        background-color: var(--color-surface-tint);
+        color: var(--color-primary);
+        font-weight: 600;
+    }
 }
 
 /* Lien de navigation actif géré par Vue Router */
