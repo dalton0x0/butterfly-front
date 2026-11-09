@@ -11,6 +11,34 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.3.0](https://github.com/dalton0x0/butterfly-front/compare/v3.2.0...v3.3.0) - 2026-11-09
+
+Espace gestionnaire (rôle `MANAGER`) : tableau de bord, utilisateurs, promotions et contenus, sans
+la corbeille, les badges ni la file de corrections. Il suit les apprenants depuis Utilisateurs
+(« Aperçu et progression ») comme l'administrateur. Il ne voit que les apprenants et les
+formateurs et le filtre de rôle ne propose que ceux-là (`manageableRoles`). La garde du routeur et
+la recherche globale tiennent compte de sa portée (`hasGlobalScope`). La liste des utilisateurs
+gagne un bouton qui remet les filtres à zéro. Cette version exige le backend v3.3.0.
+
+Blocs informatifs : une case « Bloc informatif » apparaît pour l'administrateur et le gestionnaire.
+Un tel bloc s'affiche avec une pastille « Informatif » et un bouton « Lire », sans progression ni
+bouton « Marquer comme terminé ». Ses modules n'ont ni onglet exercices ou quiz, ni prérequis. Le
+formateur ne les voit pas dans son espace de gestion et ils ne sont pas proposés à l'assignation.
+
+Inscription publique : un interrupteur du tableau de bord l'ouvre ou la ferme. Fermée, la page de
+connexion masque le lien « Créer un compte » et la page d'inscription l'explique au lieu d'afficher
+le formulaire. Le profil propose la préférence « Nouvelles inscriptions ».
+
+Les listes déroulantes ont la flèche et les couleurs de l'application. Dans Chrome et Edge 135 ou
+plus, la liste ouverte est elle aussi stylée (`appearance: base-select`). Les autres navigateurs
+gardent la liste du système. La cloche de la barre de navigation qui n'avait aucune action est retirée.
+
+L'image de construction et la CI reviennent à Node 24 LTS : une mise à jour Dependabot les avait
+passées sur Node 26 que tous les postes de développement ne peuvent pas installer. Dependabot ne
+propose plus de version majeure de Node.
+
+---
+
 ## [v3.2.0](https://github.com/dalton0x0/butterfly-front/compare/v3.1.0...v3.2.0) - 2026-11-08
 
 Formats de fichier élargis pour les rendus et les pièces jointes : Word, Excel, PowerPoint et
