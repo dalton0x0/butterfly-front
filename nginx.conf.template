@@ -206,6 +206,26 @@ server {
         proxy_request_buffering off;
     }
 
+    # Envoi d'une image (POST /api/media/images).
+    #
+    # Cette location exacte est indispensable. Le chemin est celui de la location
+    # /api/media/images/ ci-dessous, sans sa barre finale : faute de location plus
+    # précise, nginx répond lui-même par une redirection vers /api/media/images/ au lieu
+    # de transmettre l'envoi au backend. La limite de taille est alors celle par défaut
+    # de nginx (1 Mo), d'où une erreur 413 sur une image plus lourde.
+    location = /api/media/images {
+        proxy_pass http://$backend_host:8080$request_uri;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Le backend refuse les images de plus de 5 Mo. La marge couvre l'enveloppe
+        # multipart et laisse au backend le soin de répondre avec un message clair.
+        client_max_body_size 10m;
+    }
+
     # Images publiques : même réacheminement que /api/ avec un cache disque devant.
     #
     # ^~ fait gagner ce préfixe sur la location /api/ plus courte et sur les locations
