@@ -7,12 +7,20 @@
   Axios détecte le FormData et pose lui-même l'en-tête multipart.
   La réponse contient l'URL relative à stocker (cover, avatar, videoUrl).
 
+  Ces routes ne sont pas versionnées côté back (/api/media/..., et non /api/v1/...) :
+  les URL des médias sont enregistrées dans les contenus et doivent rester valables
+  quelle que soit la version de l'API. Chaque appel passe donc la racine non versionnée
+  en baseURL, tout en gardant le client commun et son jeton d'accès.
+
   L'usage d'une image (avatar, couverture, image de contenu) est transmis au back, qui
   range alors le fichier dans le sous-dossier correspondant. Les valeurs doivent
   correspondre exactement à l'enum MediaUsage côté back (en majuscules).
 */
 
-import http from './http'
+import http, {apiRoot} from './http'
+
+// Options communes aux appels : racine de l'API sans version.
+const unversioned = {baseURL: apiRoot}
 
 // Usages d'image alignés sur l'enum MediaUsage du back.
 export const MEDIA_USAGE = {
@@ -32,7 +40,7 @@ export const mediaService = {
         const formData = new FormData()
         formData.append('file', file)
         formData.append('usage', String(usage).toUpperCase())
-        const envelope = await http.post('/media/images', formData)
+        const envelope = await http.post('/media/images', formData, unversioned)
         return envelope.data
     },
 
@@ -43,7 +51,7 @@ export const mediaService = {
     async uploadVideo(file) {
         const formData = new FormData()
         formData.append('file', file)
-        const envelope = await http.post('/media/videos', formData)
+        const envelope = await http.post('/media/videos', formData, unversioned)
         return envelope.data
     },
 
@@ -58,7 +66,7 @@ export const mediaService = {
             return
         }
         try {
-            await http.delete('/media', {params: {url}})
+            await http.delete('/media', {...unversioned, params: {url}})
         } catch {
             // Nettoyage best-effort : un échec de suppression n'interrompt pas
             // le flux utilisateur. Le fichier éventuellement orphelin sera
