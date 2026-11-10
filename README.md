@@ -23,6 +23,7 @@ l'utilisateur connecté (apprenant, formateur, administrateur).
 - [Installation et configuration](#installation-et-configuration)
 - [Lancement](#lancement)
 - [Déploiement conteneurisé](#déploiement-conteneurisé)
+- [Intégration continue](#intégration-continue)
 - [Conventions](#conventions)
 - [Historique des versions](#historique-des-versions)
 - [Feuille de route](#feuille-de-route)
@@ -484,6 +485,29 @@ point d'entrée unique, sans port supplémentaire ouvert.
 
 L'orchestration complète vit dans un dépôt de déploiement distinct, backend et frontend étant
 versionnés séparément.
+
+## Intégration continue
+
+Le workflow `.github/workflows/ci.yml` s'exécute à chaque pull request, à chaque poussée sur `main`
+et à chaque tag de version. Il enchaîne trois jobs :
+
+| Job | Contenu | Bloquant |
+|---|---|---|
+| `build` | ESLint, tests Vitest et construction Vite | Tout échec |
+| `security` | Semgrep (sécurité du code) et Trivy (failles des dépendances, secrets, Dockerfile) | Résultat de gravité ERROR (Semgrep), HIGH ou CRITICAL avec correctif disponible (Trivy) |
+| `image` | Construction, scan Trivy de l'image, publication dans GHCR | Faille HIGH ou CRITICAL corrigeable dans l'image |
+
+Le job `image` ne tourne qu'après une poussée sur `main` ou un tag et seulement si les deux autres
+ont réussi : une image publiée est toujours une image testée. Chaque image porte l'étiquette
+`sha-<commit>`, plus `main` ou le numéro de version (`3.4.0` et `3.4` pour le tag `v3.4.0`).
+
+Une alerte écartée à raison se déclare au plus près de sa cause avec sa justification : un
+commentaire `nosemgrep` dans le code pour Semgrep, une entrée dans `.trivyignore` pour Trivy.
+
+Les actions tierces sont épinglées par SHA de commit et non par tag : un tag peut être déplacé
+vers un autre code, un SHA non. Dependabot propose leurs mises à jour.
+
+L'analyse SonarQube reste locale (voir [Accessibilité et qualité](#accessibilité-et-qualité)).
 
 ## Conventions
 
