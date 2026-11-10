@@ -1,12 +1,14 @@
 # Intégration continue du frontend.
 #
-# Trois jobs :
-#   1. build : analyse ESLint, tests unitaires et construction Vite ;
+# Quatre jobs :
+#   1. build    : analyse ESLint, tests unitaires et construction Vite ;
 #   2. security : analyse de sécurité du code (Semgrep) et des dépendances, secrets et
-#      Dockerfile (Trivy) ;
-#   3. image : construction de l'image, scan Trivy, publication dans GHCR. Seulement
-#      après une poussée sur main ou un tag de version et si les deux autres
-#      jobs ont réussi : une image publiée est toujours une image testée.
+#                 Dockerfile (Trivy) ;
+#   3. image    : construction de l'image, scan Trivy, publication dans GHCR. Seulement
+#                 après une poussée sur main ou un tag de version, et si les deux autres
+#                 jobs ont réussi : une image publiée est toujours une image testée.
+#   4. deploy-staging : après une image publiée depuis main, mise à jour de sa version
+#                 dans le dépôt butterfly-deploy. Argo CD déploie alors le staging.
 #
 # Les actions tierces sont épinglées par SHA de commit, et non par tag : un tag peut être
 # déplacé vers un autre code, un SHA non. Le commentaire indique la version
@@ -173,3 +175,70 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
+
+  deploy-staging:
+    name: Déploiement en staging
+    needs: [ image ]
+    # Sur main seulement : un tag de version publie une image, mais ne la déploie pas.
+    # La production se déploie par décision, à la main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    # Pas de concurrence à gérer entre deux exécutions de ce dépôt : sur main, le groupe
+    # concurrency du workflow les fait passer l'une après l'autre, dans l'ordre des
+    # poussées. Le staging reçoit donc toujours la dernière image en dernier.
+    steps:
+      - name: Récupération du dépôt de déploiement
+        # Clé de déploiement SSH, avec droit d'écriture sur butterfly-deploy seulement.
+        # Le GITHUB_TOKEN de ce workflow ne peut pas écrire dans un autre dépôt.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: dalton0x0/butterfly-deploy
+          ssh-key: ${{ secrets.DEPLOY_REPO_SSH_KEY }}
+
+      - name: Mise à jour de la version du staging
+        # Remplace l'étiquette de l'image dans le kustomization.yaml du staging, puis
+        # pousse le changement. Argo CD le détecte et déploie la nouvelle image.
+        #
+        # sed modifie la seule ligne newTag qui suit le nom de l'image, et laisse le reste
+        # du fichier intact. yq, plus naturel pour du YAML, supprime les lignes vides.
+        #
+        # Le backend et le frontend poussent dans le même dépôt : si l'autre a poussé
+        # entre-temps, la poussée est refusée. La modification est alors refaite sur la
+        # dernière version du dépôt, puis poussée à nouveau. Elle est refaite plutôt que
+        # rebasée : les deux étiquettes sont sur des lignes trop proches pour que Git
+        # fusionne les deux changements sans conflit.
+        env:
+          FILE: k8s/butterfly/staging/kustomization.yaml
+        run: |
+          # Même format que l'étiquette posée par docker/metadata-action : sha- suivi
+          # des 7 premiers caractères du commit.
+          TAG="sha-${GITHUB_SHA::7}"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          for attempt in 1 2 3; do
+            git fetch --quiet origin main
+            git reset --quiet --hard origin/main
+
+            # Garde-fou : si le nom de l'image ou la ligne newTag qui le suit venait à
+            # changer, le fichier ne serait plus mis à jour, sans aucune erreur visible.
+            grep -A1 -x "  - name: $IMAGE" "$FILE" | grep -q '^    newTag: ' \
+              || { echo "Image $IMAGE introuvable dans $FILE." >&2; exit 1; }
+
+            sed -i "\\#^  - name: $IMAGE\$#{n;s#^    newTag: .*#    newTag: $TAG#}" "$FILE"
+            if git diff --quiet; then
+              echo "Le staging utilise déjà $TAG."
+              exit 0
+            fi
+
+            git commit --quiet -am "chore(staging): deploy ${GITHUB_REPOSITORY#*/} $TAG" \
+              -m "Source : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/commit/$GITHUB_SHA"
+            if git push --quiet origin HEAD:main; then
+              echo "Staging mis à jour : $IMAGE:$TAG"
+              exit 0
+            fi
+            echo "Poussée refusée (tentative $attempt), nouvel essai."
+            sleep $((attempt * 5))
+          done
+          exit 1

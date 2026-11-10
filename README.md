@@ -124,7 +124,7 @@ université...) : le tableau de bord, les utilisateurs, les promotions et les co
 corbeille, les badges ni la file de corrections. Comme l'administrateur, il suit les apprenants
 depuis Utilisateurs (« Aperçu et progression »). Avec l'administrateur, il est le seul à créer un
 bloc informatif ou à convertir un bloc existant : la case n'apparaît pas au formateur. Il ne voit et
-ne gère que les apprenants et les formateurs : le back les retire des listes et de la recherche et
+ne gère que les apprenants et les formateurs : le back les retire des listes et de la recherche, et
 le filtre de rôle ne propose que ceux-là (`manageableRoles` dans `utils/roles.js`).
 
 ## Architecture
@@ -477,7 +477,7 @@ est faite par l'orchestration.
 Le fichier est un modèle : au démarrage, l'image nginx y remplace `${BACKEND_HOST}` (nom du
 service backend) et `${NGINX_LOCAL_RESOLVERS}` (résolveur DNS lu dans le conteneur). Le même
 fichier sert donc sous Docker Compose (`backend`, DNS de Docker) et sous Kubernetes (nom complet du
-service, CoreDNS) sans reconstruire l'image.
+service, CoreDNS), sans reconstruire l'image.
 
 Nginx garde aussi en cache disque les images publiques (`/api/media/images/`), au plus une journée
 et 500 Mo. Leur nom étant un UUID, le contenu d'une adresse ne change jamais : nginx les sert
@@ -494,22 +494,29 @@ versionnés séparément.
 ## Intégration continue
 
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque pull request, à chaque poussée sur `main`
-et à chaque tag de version. Il enchaîne trois jobs :
+et à chaque tag de version. Il enchaîne quatre jobs :
 
 | Job | Contenu | Bloquant |
 |---|---|---|
 | `build` | ESLint, tests Vitest et construction Vite | Tout échec |
 | `security` | Semgrep (sécurité du code) et Trivy (failles des dépendances, secrets, Dockerfile) | Résultat de gravité ERROR (Semgrep), HIGH ou CRITICAL avec correctif disponible (Trivy) |
 | `image` | Construction, scan Trivy de l'image, publication dans GHCR | Faille HIGH ou CRITICAL corrigeable dans l'image |
+| `deploy-staging` | Mise à jour de la version du staging dans `butterfly-deploy` | Échec de la poussée |
 
-Le job `image` ne tourne qu'après une poussée sur `main` ou un tag et seulement si les deux autres
+Le job `image` ne tourne qu'après une poussée sur `main` ou un tag, et seulement si les deux autres
 ont réussi : une image publiée est toujours une image testée. Chaque image porte l'étiquette
 `sha-<commit>`, plus `main` ou le numéro de version (`3.4.0` et `3.4` pour le tag `v3.4.0`).
 
-Une alerte écartée à raison se déclare au plus près de sa cause avec sa justification : un
+Après chaque image publiée depuis `main`, le job `deploy-staging` inscrit son étiquette
+`sha-<commit>` dans `k8s/butterfly/staging/kustomization.yaml` du dépôt `butterfly-deploy`.
+Argo CD déploie alors le staging de lui-même. Le job écrit dans ce dépôt avec une clé de
+déploiement SSH, rangée dans le secret Actions `DEPLOY_REPO_SSH_KEY`. La production ne se
+déploie jamais automatiquement.
+
+Une alerte écartée à raison se déclare au plus près de sa cause, avec sa justification : un
 commentaire `nosemgrep` dans le code pour Semgrep, une entrée dans `.trivyignore` pour Trivy.
 
-Les actions tierces sont épinglées par SHA de commit et non par tag : un tag peut être déplacé
+Les actions tierces sont épinglées par SHA de commit, et non par tag : un tag peut être déplacé
 vers un autre code, un SHA non. Dependabot propose leurs mises à jour.
 
 L'analyse SonarQube reste locale (voir [Accessibilité et qualité](#accessibilité-et-qualité)).
