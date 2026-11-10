@@ -1,26 +1,51 @@
-# Analyse statique et construction du frontend à chaque poussée et à chaque pull request.
+# Intégration continue du frontend.
 #
-# Deux étapes distinctes et non une seule : quand le workflow échoue, on sait
-# immédiatement si le problème vient d'une règle ESLint ou de la construction Vite.
+# Trois jobs :
+#   1. build : analyse ESLint, tests unitaires et construction Vite ;
+#   2. security : analyse de sécurité du code (Semgrep) et des dépendances, secrets et
+#      Dockerfile (Trivy) ;
+#   3. image : construction de l'image, scan Trivy, publication dans GHCR. Seulement
+#      après une poussée sur main ou un tag de version et si les deux autres
+#      jobs ont réussi : une image publiée est toujours une image testée.
+#
+# Les actions tierces sont épinglées par SHA de commit, et non par tag : un tag peut être
+# déplacé vers un autre code, un SHA non. Le commentaire indique la version
+# correspondante, et Dependabot propose les mises à jour.
 
 name: CI
 
 on:
   push:
     branches: [ main ]
+    tags: [ 'v*' ]
   pull_request:
+
+# Droits minimaux par défaut. Le job qui publie l'image élève les siens.
+permissions:
+  contents: read
+
+# Une nouvelle poussée sur une pull request annule l'exécution précédente, devenue inutile.
+# Sur main et sur les tags, chaque exécution va jusqu'au bout.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   build:
     name: Analyse et construction
     runs-on: ubuntu-latest
 
+    # Étapes distinctes et non une seule : quand le job échoue, on sait immédiatement
+    # si le problème vient d'une règle ESLint, d'un test ou de la construction Vite.
     steps:
       - name: Récupération des sources
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Installation de Node
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # Même version majeure que l'image de construction du Dockerfile.
           # Les deux doivent rester alignées, sinon le workflow valide un code
@@ -42,3 +67,109 @@ jobs:
 
       - name: Construction
         run: npm run build
+
+  security:
+    name: Analyse de sécurité
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Analyse du code (Semgrep)
+        # Analyse statique de sécurité : XSS, injection de code, stockage de données
+        # sensibles... Seuls les résultats de gravité ERROR font échouer le job. Les
+        # avertissements restent visibles dans le journal sans bloquer.
+        # Une alerte écartée à raison se marque dans le code par un commentaire
+        # « nosemgrep », accompagné de sa justification (exemple : MarkdownContent.vue).
+        env:
+          SEMGREP_SEND_METRICS: 'off'
+        run: |
+          python3 -m pip install --quiet semgrep==1.184.0
+          semgrep scan --config p/default --error --severity ERROR --metrics off
+
+      - name: Dépendances, secrets et Dockerfile (Trivy)
+        # vuln : failles connues des dépendances npm (lues dans package-lock.json) ;
+        # secret : clés, mots de passe ou jetons oubliés dans le code ;
+        # misconfig : erreurs de configuration du Dockerfile.
+        # ignore-unfixed : une faille sans correctif publié ne bloque pas, faute
+        # d'action possible. Une exception justifiée se déclare dans .trivyignore.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+  image:
+    name: Image Docker
+    needs: [ build, security ]
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # Publication dans GHCR avec le GITHUB_TOKEN du workflow : aucun secret à gérer.
+      packages: write
+
+    steps:
+      - name: Récupération des sources
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Préparation de Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Étiquettes de l'image
+        # sha-<commit> : identifiant unique de chaque image utilisé pour le déploiement.
+        # main : dernière image de la branche principale.
+        # 3.4.0 et 3.4 : sur un tag de version v3.4.0.
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=sha,prefix=sha-
+            type=raw,value=main,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+
+      - name: Construction de l'image
+        # Construite d'abord sans être publiée : le scan doit passer avant la publication.
+        # pull : récupère la dernière version des images de base et donc leurs
+        # correctifs de sécurité.
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          pull: true
+          load: true
+          tags: ${{ env.IMAGE }}:scan
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan de l'image (Trivy)
+        # Couvre ce que le scan des sources ne voit pas : le système de l'image de base
+        # (Alpine, nginx) et les paquets qu'elle contient.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}:scan
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+
+      - name: Connexion à GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publication de l'image
+        # Reconstruction instantanée : toutes les couches viennent du cache de l'étape
+        # de construction. L'image publiée est donc celle qui vient d'être scannée.
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha

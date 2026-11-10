@@ -12,6 +12,9 @@ const html = computed(() => renderMarkdown(props.source))
 </script>
 
 <template>
+  <!-- v-html volontaire : renderMarkdown passe le HTML par DOMPurify (voir markdown.js).
+       L'alerte avoid-v-html de Semgrep est donc écartée sur la ligne suivante. -->
+  <!-- nosemgrep -->
   <div class="md-content" v-html="html"></div>
 </template>
 
