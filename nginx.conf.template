@@ -1,10 +1,21 @@
 # Service des fichiers statiques et réacheminement de l'API.
+#
+# Modèle et non configuration figée : au démarrage, l'image officielle de nginx remplace
+# les variables NGINX_LOCAL_RESOLVERS et BACKEND_HOST par leur valeur (envsubst), puis
+# écrit le résultat dans /etc/nginx/conf.d/default.conf. Le même fichier sert ainsi sous
+# Docker Compose et sous Kubernetes.
+#
+# Seules ces deux variables sont remplacées (voir NGINX_ENVSUBST_FILTER dans le
+# Dockerfile) : les variables de nginx comme $host restent intactes. Dans les
+# commentaires, leurs noms s'écrivent sans dollar ni accolades, sinon envsubst les
+# remplacerait aussi.
 
-# Résolveur DNS interne de Docker. Sans lui, nginx résout le nom "backend" une seule
-# fois au démarrage et garde l'adresse en cache. Après un redémarrage du conteneur
-# backend qui change d'adresse, toutes les requêtes partiraient vers une adresse
-# morte jusqu'au prochain redémarrage de nginx.
-resolver 127.0.0.11 valid=30s ipv6=off;
+# Résolveur DNS, lu dans /etc/resolv.conf du conteneur au démarrage : 127.0.0.11 sous
+# Docker, le CoreDNS du cluster sous Kubernetes. Sans résolveur, nginx résout le nom du
+# backend une seule fois et garde l'adresse en cache. Après un redémarrage du backend qui
+# change d'adresse, toutes les requêtes partiraient vers une adresse morte jusqu'au
+# prochain redémarrage de nginx.
+resolver ${NGINX_LOCAL_RESOLVERS} valid=30s ipv6=off;
 
 # Cache disque des images servies par le backend (/api/media/images/).
 #
@@ -57,7 +68,9 @@ server {
 
     # Nom du service backend placé dans une variable : c'est ce qui force nginx à
     # interroger le résolveur à chaque requête au lieu de figer l'adresse.
-    set $backend_host backend;
+    # Le résolveur de nginx ne complète pas les noms courts : sous Kubernetes, BACKEND_HOST
+    # contient le nom complet (backend.<namespace>.svc.cluster.local).
+    set $backend_host ${BACKEND_HOST};
 
     # Compression des réponses textuelles. Les images et polices sont déjà compressées,
     # les inclure consommerait du processeur sans réduire la taille.

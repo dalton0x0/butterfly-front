@@ -399,7 +399,7 @@ src/
 |-- main.js           Point d'entrée
 ```
 
-À la racine : `Dockerfile` et `nginx.conf` pour l'image de production.
+À la racine : `Dockerfile` et `nginx.conf.template` pour l'image de production.
 
 ## Prérequis
 
@@ -463,7 +463,7 @@ le processus tourne sous un utilisateur sans droits et écoute sur le port 8080,
 non root ne pouvant se lier aux ports inférieurs à 1024. La correspondance vers le port 80
 est faite par l'orchestration.
 
-`nginx.conf` traite trois points qui, omis cassent le déploiement :
+`nginx.conf.template` traite trois points qui, omis cassent le déploiement :
 
 - **réécriture des routes** : toute adresse inconnue renvoie `index.html`, à charge pour Vue Router
   de résoudre la navigation. Sans cette règle, un rechargement sur `/profil` produit une erreur 404,
@@ -473,6 +473,11 @@ est faite par l'orchestration.
   l'adresse du client transmise par ce proxy, pour la même raison,
 - **taille de corps de requête** portée à 210 Mo, les vidéos pouvant atteindre 200 Mo côté applicatif
   alors que nginx rejette par défaut au-delà de 1 Mo.
+
+Le fichier est un modèle : au démarrage, l'image nginx y remplace `${BACKEND_HOST}` (nom du
+service backend) et `${NGINX_LOCAL_RESOLVERS}` (résolveur DNS lu dans le conteneur). Le même
+fichier sert donc sous Docker Compose (`backend`, DNS de Docker) et sous Kubernetes (nom complet du
+service, CoreDNS) sans reconstruire l'image.
 
 Nginx garde aussi en cache disque les images publiques (`/api/media/images/`), au plus une journée
 et 500 Mo. Leur nom étant un UUID, le contenu d'une adresse ne change jamais : nginx les sert

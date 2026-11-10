@@ -13,7 +13,7 @@ export {ALLOWED_FILE_ACCEPT as ALLOWED_UPLOAD_ACCEPT, ALLOWED_FILE_LABEL as ALLO
 const MAX_UPLOAD_SIZE_BYTES = 20 * 1024 * 1024
 
 // 50 Mo pour l'ensemble des fichiers d'une soumission, comme client_max_body_size dans
-// nginx.conf. Au-delà, nginx refuse la requête avant qu'elle n'atteigne le back.
+// nginx.conf.template. Au-delà, nginx refuse la requête avant qu'elle n'atteigne le back.
 const MAX_SUBMISSION_SIZE_BYTES = 50 * 1024 * 1024
 
 /**
