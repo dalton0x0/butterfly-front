@@ -28,6 +28,15 @@ RUN npm run build
 # Étape 2 : service des fichiers.
 FROM nginxinc/nginx-unprivileged:1.30-alpine
 
+# Applique les correctifs de sécurité publiés depuis la dernière reconstruction de
+# l'image de base. Celle-ci n'est reconstruite que de temps en temps : sans cette mise à
+# jour, une faille déjà corrigée par Alpine resterait dans l'image et le scan Trivy de
+# la CI bloquerait la publication.
+# L'image tourne en utilisateur nginx : la mise à jour exige root, le temps de cette
+# seule instruction. USER 101, plus bas, rétablit l'utilisateur sans privilèges.
+USER root
+RUN apk upgrade --no-cache
+
 COPY --from=build /build/dist /usr/share/nginx/html
 # Copié comme modèle : l'image le transforme en conf.d/default.conf au démarrage.
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
