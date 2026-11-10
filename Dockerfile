@@ -31,6 +31,11 @@ FROM nginxinc/nginx-unprivileged:1.30-alpine
 COPY --from=build /build/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# L'image de base tourne déjà avec l'utilisateur nginx (UID 101) et non root. Le rappeler
+# ici rend l'intention visible et l'identifiant numérique permet à Kubernetes de vérifier
+# runAsNonRoot : avec un nom d'utilisateur, il refuserait de démarrer le conteneur.
+USER 101
+
 EXPOSE 8080
 
 CMD ["nginx", "-g", "daemon off;"]
