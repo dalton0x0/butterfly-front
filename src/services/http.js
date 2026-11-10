@@ -20,7 +20,9 @@ import {ApiError} from './apiError'
 import {tokenStorage} from './tokenStorage'
 import {isAccessTokenExpiring} from '@/utils/jwt'
 
-const apiRoot = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
+// Racine de l'API, sans version. Exportée pour les routes que le back ne versionne pas
+// (les médias) : elles la passent en baseURL à la place de la racine versionnée.
+export const apiRoot = import.meta.env.VITE_API_URL || 'http://localhost:8080/api'
 
 // Version de l'API que ce frontend sait appeler. Elle est écrite dans le code et non dans
 // l'environnement : c'est le code qui dépend du contrat de l'API, pas le serveur sur lequel
