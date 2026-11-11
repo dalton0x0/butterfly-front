@@ -1,0 +1,51 @@
+# Nettoyage hebdomadaire des images publiées dans GHCR.
+#
+# Chaque poussée sur main publie une nouvelle image : sans nettoyage, elles s'accumulent
+# sans limite. Sont conservées :
+#   - les 10 images étiquetées les plus récentes, ce qui couvre le staging et un retour
+#     arrière récent ;
+#   - main et toutes les versions publiées (3.4.0, 3.4...), quel que soit leur âge : la
+#     production et ses retours arrière en dépendent.
+#
+# ghcr-cleanup-action plutôt qu'une suppression des versions sans étiquette : buildx
+# publie avec chaque image des manifestes sans étiquette (attestations), qui en font
+# partie. Un outil qui les supprimerait casserait l'image. Celui-ci les reconnaît et ne
+# supprime que les éléments réellement orphelins.
+#
+# Lancement manuel possible (onglet Actions), en simulation par défaut : le journal liste
+# ce qui serait supprimé, sans rien supprimer.
+
+name: Nettoyage GHCR
+
+on:
+  schedule:
+    # Chaque dimanche à 4 h 23 UTC.
+    - cron: '23 4 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Simulation, sans suppression
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  cleanup:
+    name: Suppression des anciennes images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Nettoyage
+        uses: dataaxiom/ghcr-cleanup-action@d52806a0dc70b430571a37da1fde39733ffd640f # v1.2.2
+        with:
+          # Le package porte le nom du dépôt (ghcr.io/dalton0x0/<dépôt>).
+          package: ${{ github.event.repository.name }}
+          keep-n-tagged: 10
+          exclude-tags: '^(main|\d+\.\d+(\.\d+)?)$'
+          use-regex: true
+          delete-untagged: true
+          # Planifié : suppression réelle. Manuel : simulation, sauf choix contraire.
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
