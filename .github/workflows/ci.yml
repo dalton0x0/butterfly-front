@@ -1,14 +1,17 @@
 # Intégration continue du frontend.
 #
 # Quatre jobs :
-#   1. build    : analyse ESLint, tests unitaires et construction Vite ;
+#   1. buildc: analyse ESLint, tests unitaires et construction Vite ;
 #   2. security : analyse de sécurité du code (Semgrep) et des dépendances, secrets et
-#                 Dockerfile (Trivy) ;
-#   3. image    : construction de l'image, scan Trivy, publication dans GHCR. Seulement
-#                 après une poussée sur main ou un tag de version, et si les deux autres
-#                 jobs ont réussi : une image publiée est toujours une image testée.
+#      Dockerfile (Trivy) ;
+#   3. imagec: construction de l'image, scan Trivy, publication dans GHCR. Seulement
+#      après une poussée sur main ou un tag de version, et si les deux autres
+#      jobs ont réussi : une image publiée est toujours une image testée.
 #   4. deploy-staging : après une image publiée depuis main, mise à jour de sa version
-#                 dans le dépôt butterfly-deploy. Argo CD déploie alors le staging.
+#      dans le dépôt butterfly-deploy. Argo CD déploie alors le staging.
+#   5. prepare-prod : après une image publiée depuis un tag de version, branche du dépôt
+#      butterfly-deploy qui inscrit cette version en production. Fusionner sa
+#      pull request déploie la version.
 #
 # Les actions tierces sont épinglées par SHA de commit, et non par tag : un tag peut être
 # déplacé vers un autre code, un SHA non. Le commentaire indique la version
@@ -205,9 +208,8 @@ jobs:
         #
         # Le backend et le frontend poussent dans le même dépôt : si l'autre a poussé
         # entre-temps, la poussée est refusée. La modification est alors refaite sur la
-        # dernière version du dépôt, puis poussée à nouveau. Elle est refaite plutôt que
-        # rebasée : les deux étiquettes sont sur des lignes trop proches pour que Git
-        # fusionne les deux changements sans conflit.
+        # dernière version du dépôt puis poussée à nouveau. La refaire plutôt que rebaser
+        # écarte tout conflit : le job ne s'arrête jamais sur une fusion à résoudre.
         env:
           FILE: k8s/butterfly/staging/kustomization.yaml
         run: |
@@ -242,3 +244,55 @@ jobs:
             sleep $((attempt * 5))
           done
           exit 1
+
+  prepare-prod:
+    name: Préparation de la mise en production
+    needs: [ image ]
+    # Sur un tag de version seulement.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    # Prépare la mise en production sans la faire : la nouvelle version est inscrite
+    # dans une branche du dépôt butterfly-deploy. Fusionner la pull request de cette
+    # branche déploie la version. Le moment du déploiement reste une décision : ordre
+    # entre backend et frontend, sauvegarde avant une migration, heure choisie.
+    steps:
+      - name: Récupération du dépôt de déploiement
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: dalton0x0/butterfly-deploy
+          ssh-key: ${{ secrets.DEPLOY_REPO_SSH_KEY }}
+
+      - name: Branche de mise en production
+        env:
+          FILE: k8s/butterfly/prod/kustomization.yaml
+        run: |
+          # Version sans le v du tag : v3.5.0 donne 3.5.0, étiquette publiée par la CI.
+          VERSION="${GITHUB_REF_NAME#v}"
+          BRANCH="prod/${GITHUB_REPOSITORY#*/}-$VERSION"
+
+          grep -A1 -x "  - name: $IMAGE" "$FILE" | grep -q '^    newTag: ' \
+            || { echo "Image $IMAGE introuvable dans $FILE." >&2; exit 1; }
+
+          git checkout -b "$BRANCH"
+          sed -i "\\#^  - name: $IMAGE\$#{n;s#^    newTag: .*#    newTag: \"$VERSION\"#}" "$FILE"
+          if git diff --quiet; then
+            echo "La production utilise déjà $VERSION." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit --quiet -am "chore(prod): deploy ${GITHUB_REPOSITORY#*/} $VERSION" \
+            -m "Source : $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME"
+          # --force : une relance du workflow sur le même tag remplace la branche.
+          git push --quiet --force origin "$BRANCH"
+
+          # Lien affiché dans le résumé de l'exécution, pour ouvrir la pull request.
+          {
+            echo "### Mise en production de ${GITHUB_REPOSITORY#*/} $VERSION prête"
+            echo
+            echo "[Ouvrir la pull request]($GITHUB_SERVER_URL/dalton0x0/butterfly-deploy/compare/main...$BRANCH?expand=1)"
+            echo
+            echo "Fusionner la pull request déploie la version en production."
+          } >> "$GITHUB_STEP_SUMMARY"

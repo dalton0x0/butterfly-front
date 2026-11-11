@@ -507,7 +507,7 @@ versionnés séparément.
 ## Intégration continue
 
 Le workflow `.github/workflows/ci.yml` s'exécute à chaque pull request, à chaque poussée sur `main`
-et à chaque tag de version. Il enchaîne quatre jobs :
+et à chaque tag de version. Il enchaîne cinq jobs :
 
 | Job | Contenu | Bloquant |
 |---|---|---|
@@ -515,6 +515,7 @@ et à chaque tag de version. Il enchaîne quatre jobs :
 | `security` | Semgrep (sécurité du code) et Trivy (failles des dépendances, secrets, Dockerfile) | Résultat de gravité ERROR (Semgrep), HIGH ou CRITICAL avec correctif disponible (Trivy) |
 | `image` | Construction, scan Trivy de l'image, publication dans GHCR | Faille HIGH ou CRITICAL corrigeable dans l'image |
 | `deploy-staging` | Mise à jour de la version du staging dans `butterfly-deploy` | Échec de la poussée |
+| `prepare-prod` | Branche de mise en production dans `butterfly-deploy` (tags de version) | Échec de la poussée |
 
 Le job `image` ne tourne qu'après une poussée sur `main` ou un tag, et seulement si les deux autres
 ont réussi : une image publiée est toujours une image testée. Chaque image porte l'étiquette
@@ -524,7 +525,14 @@ Après chaque image publiée depuis `main`, le job `deploy-staging` inscrit son 
 `sha-<commit>` dans `k8s/butterfly/staging/kustomization.yaml` du dépôt `butterfly-deploy`.
 Argo CD déploie alors le staging de lui-même. Le job écrit dans ce dépôt avec une clé de
 déploiement SSH, rangée dans le secret Actions `DEPLOY_REPO_SSH_KEY`. La production ne se
-déploie jamais automatiquement.
+déploie jamais automatiquement : sur un tag de version, le job `prepare-prod` pousse dans
+`butterfly-deploy` une branche `prod/<dépôt>-<version>` qui inscrit la version en production. Le
+lien vers sa pull request est affiché dans le résumé de l'exécution. Fusionner la pull request
+déploie la version.
+
+Le workflow `ghcr-cleanup.yml` supprime chaque semaine les anciennes images. Il garde les dix
+images étiquetées les plus récentes, ainsi que `main` et toutes les versions publiées
+(`3.4.0`, `3.4`...) quel que soit leur âge.
 
 Une alerte écartée à raison se déclare au plus près de sa cause, avec sa justification : un
 commentaire `nosemgrep` dans le code pour Semgrep, une entrée dans `.trivyignore` pour Trivy.
