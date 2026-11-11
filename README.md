@@ -417,7 +417,8 @@ L'URL de l'API est configurable via une variable d'environnement Vite. Créer un
 `.env.local`) à la racine pour surcharger la valeur par défaut :
 
 ```dotenv
-# URL de base de l'API (suffixe /api obligatoire, sans version : le client ajoute /v1)
+# URL de base de l'API (suffixe /api obligatoire, sans version : le client ajoute /v1
+# sauf pour les médias que le backend ne versionne pas)
 VITE_API_URL=http://localhost:8080/api
 
 # Nom affiché de l'application
@@ -469,7 +470,7 @@ est faite par l'orchestration.
   de résoudre la navigation. Sans cette règle, un rechargement sur `/profil` produit une erreur 404,
 - **en-tête `X-Forwarded-For`** : sans lui, la limitation de débit du backend verrait toutes les
   requêtes venir de nginx et leur appliquerait un unique quota bloquant tous les utilisateurs.
-  Derrière le proxy HTTPS de la pré-production (Caddy), `set_real_ip_from` fait reprendre à nginx
+  Derrière le proxy HTTPS (Traefik sous Kubernetes), `set_real_ip_from` fait reprendre à nginx
   l'adresse du client transmise par ce proxy, pour la même raison,
 - **taille de corps de requête** portée à 210 Mo, les vidéos pouvant atteindre 200 Mo côté applicatif
   alors que nginx rejette par défaut au-delà de 1 Mo.
@@ -484,9 +485,21 @@ et 500 Mo. Leur nom étant un UUID, le contenu d'une adresse ne change jamais : 
 sans solliciter le backend. Les vidéos ne sont pas mises en cache, elles sont lues par plages et
 rempliraient le cache. L'en-tête `X-Cache-Status` (`HIT` ou `MISS`) permet de le vérifier.
 
-Nginx réachemine aussi les chemins de Swagger (`/swagger-ui.html`, `/swagger-ui/`, `/v3/api-docs`),
+L'envoi d'une image (`POST /api/media/images`) a sa propre location exacte. Sans elle, nginx
+répondrait lui-même par une redirection vers `/api/media/images/`, le chemin du cache au lieu de
+transmettre l'envoi au backend.
+
+Nginx réachemine aussi les chemins de Swagger (`/swagger-ui.html`, `/swagger-ui/`, `/v3/api-docs`)
 que le profil docker du backend active : la documentation de l'API reste consultable à travers le
-point d'entrée unique, sans port supplémentaire ouvert.
+point d'entrée unique sans port supplémentaire ouvert. En production, le backend désactive Swagger
+et ces chemins répondent 404.
+
+L'en-tête HSTS n'est pas posé par nginx mais par le proxy HTTPS (Traefik) qui termine le
+chiffrement : sous Docker Compose sans HTTPS, il n'aurait pas de sens.
+
+L'image publiée par l'intégration continue est `ghcr.io/dalton0x0/butterfly-front`. nginx y tourne
+sous l'UID numérique 101 : Kubernetes exige un identifiant numérique pour vérifier qu'un conteneur
+ne tourne pas en root.
 
 L'orchestration complète vit dans un dépôt de déploiement distinct, backend et frontend étant
 versionnés séparément.
@@ -554,7 +567,7 @@ contenu de la version.
 
 ## Historique des versions
 
-Version courante : **v3.3.0**.
+Version courante : **v3.4.0**.
 
 L'historique complet des versions avec le détail de chaque livraison est dans [CHANGELOG.md](CHANGELOG.md).
 

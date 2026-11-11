@@ -11,6 +11,38 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.4.0](https://github.com/dalton0x0/butterfly-front/compare/v3.3.0...v3.4.0) - 2026-11-11
+
+Première version déployée sur Kubernetes en staging puis en production. Aucun changement de
+l'API : cette version fonctionne avec le backend v3.3.0 comme v3.4.0.
+
+Envoi des médias réparé (images, vidéos, suppression). Deux défauts se cumulaient. D'abord,
+`mediaService` appelait `/api/v1/media/...`, alors que le backend sert les médias sans version
+(`/api/media/...`) pour que les URL enregistrées dans les contenus restent valables d'une version
+de l'API à l'autre. Il passe désormais la racine non versionnée (`apiRoot`, exportée par `http.js`)
+et un test vérifie les adresses appelées. Ensuite, nginx répondait lui-même à
+`POST /api/media/images` par une redirection vers `/api/media/images/`, le chemin de son cache
+d'images, au lieu de transmettre l'envoi au backend : une image de plus de 1 Mo recevait une
+erreur 413, une plus petite une redirection bloquée par la CSP. Une location exacte transmet
+désormais l'envoi avec une limite de 10 Mo.
+
+Mises à jour majeures : Vite 8 (avec `@vitejs/plugin-vue` 6), Pinia 4, Vue Router 5 et
+`@eslint/js` 10. Elles n'ont demandé aucune modification du code.
+
+`nginx.conf` devient un modèle, `nginx.conf.template`, complété au démarrage avec le nom du service
+backend (`BACKEND_HOST`) et le résolveur DNS du conteneur. La même image fonctionne ainsi sous
+Docker Compose et sous Kubernetes sans reconstruction. L'image tourne sous l'UID numérique 101,
+exigé par `runAsNonRoot` de Kubernetes et applique à la construction les correctifs de sécurité
+d'Alpine publiés depuis la dernière reconstruction de l'image de base (`apk upgrade`).
+
+L'intégration continue ajoute une analyse de sécurité (Semgrep pour le code, Trivy pour les
+dépendances, les secrets oubliés et le Dockerfile), puis, sur `main` et sur les tags de version,
+construit l'image, la scanne et la publie dans GHCR (`ghcr.io/dalton0x0/butterfly-front`). Après
+chaque image publiée depuis `main`, le staging se met à jour seul. Le `v-html` du rendu Markdown
+est marqué `nosemgrep` avec sa justification : le HTML y passe par DOMPurify.
+
+---
+
 ## [v3.3.0](https://github.com/dalton0x0/butterfly-front/compare/v3.2.0...v3.3.0) - 2026-11-09
 
 Espace gestionnaire (rôle `MANAGER`) : tableau de bord, utilisateurs, promotions et contenus, sans
