@@ -193,6 +193,12 @@ const routes = [
         meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
     },
     {
+        path: '/admin/blocs/:id/membres',
+        name: 'block-members',
+        component: () => import('@/views/BlockMembersView.vue'),
+        meta: {requiresAuth: true, roles: [ROLES.ADMIN, ROLES.MANAGER]}
+    },
+    {
         path: '/admin/badges',
         name: 'admin-badges',
         component: () => import('@/views/BadgesAdminView.vue'),
