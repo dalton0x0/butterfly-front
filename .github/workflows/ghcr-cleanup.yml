@@ -44,8 +44,11 @@ jobs:
           # Le package porte le nom du dépôt (ghcr.io/dalton0x0/<dépôt>).
           package: ${{ github.event.repository.name }}
           keep-n-tagged: 10
-          exclude-tags: '^(main|\d+\.\d+(\.\d+)?)$'
-          use-regex: true
+          # Motifs simples et non expression régulière : *.* désigne toute étiquette qui
+          # contient un point, c'est-à-dire les versions (3.4.0, 3.4). Les étiquettes
+          # sha-<commit> n'en contiennent pas. L'action refuse par ailleurs les
+          # expressions régulières qu'elle juge exposées aux attaques par lenteur (ReDoS).
+          exclude-tags: main,*.*
           delete-untagged: true
           # Planifié : suppression réelle. Manuel : simulation, sauf choix contraire.
           dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
