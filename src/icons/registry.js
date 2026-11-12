@@ -76,6 +76,7 @@ import menuBookIcon from '@material-symbols/svg-400/outlined/menu_book.svg?raw'
 import militaryTechIcon from '@material-symbols/svg-400/outlined/military_tech.svg?raw'
 import personIcon from '@material-symbols/svg-400/outlined/person.svg?raw'
 import personAddIcon from '@material-symbols/svg-400/outlined/person_add.svg?raw'
+import personRemoveIcon from '@material-symbols/svg-400/outlined/person_remove.svg?raw'
 import pictureAsPdfIcon from '@material-symbols/svg-400/outlined/picture_as_pdf.svg?raw'
 import playArrowIcon from '@material-symbols/svg-400/outlined/play_arrow.svg?raw'
 import playCircleIcon from '@material-symbols/svg-400/outlined/play_circle.svg?raw'
@@ -182,6 +183,7 @@ export const ICONS = {
     military_tech: militaryTechIcon,
     person: personIcon,
     person_add: personAddIcon,
+    person_remove: personRemoveIcon,
     picture_as_pdf: pictureAsPdfIcon,
     play_arrow: playArrowIcon,
     play_circle: playCircleIcon,

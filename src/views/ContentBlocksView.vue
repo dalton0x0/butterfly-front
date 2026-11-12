@@ -316,6 +316,16 @@ onMounted(load)
           >
             <Icon name="lock" :size="16"/>
           </button>
+          <!-- Membres : l'assignation reste réservée à l'administrateur et au gestionnaire. -->
+          <RouterLink
+            v-if="auth.hasGlobalScope && !block.informational"
+            :to="`/admin/blocs/${block.id}/membres`"
+            class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
+            aria-label="Membres"
+            title="Apprenants et formateurs du bloc"
+          >
+            <Icon name="group" :size="16"/>
+          </RouterLink>
           <!-- Supprimer un bloc est réservé à l'administrateur : il peut être partagé
                par plusieurs formateurs et apprenants. -->
           <button

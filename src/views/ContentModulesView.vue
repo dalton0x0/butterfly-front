@@ -6,6 +6,7 @@ import {computed, onMounted, reactive, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute} from 'vue-router'
 import {blockService} from '@/services/blockService'
+import {useAuthStore} from '@/stores/auth'
 import {moduleService} from '@/services/moduleService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
@@ -13,6 +14,7 @@ import Breadcrumb from '@/components/Breadcrumb.vue'
 import Modal from '@/components/Modal.vue'
 
 const route = useRoute()
+const auth = useAuthStore()
 const blockId = Number(route.params.id)
 
 const {loading, error, run} = useAsyncTask('Impossible de charger le bloc.', {loadingFromStart: true})
@@ -190,13 +192,23 @@ onMounted(load)
         <h1 class="text-[30px] font-semibold text-navy">{{ block.name }}</h1>
         <p class="text-ink-soft mt-1">Modules du bloc</p>
       </div>
-      <button
-        class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
-        @click="openCreate"
-      >
-        <Icon name="add" :size="18"/>
-        Nouveau module
-      </button>
+      <div class="flex flex-wrap gap-2 self-start">
+        <RouterLink
+          v-if="auth.hasGlobalScope && !block.informational"
+          :to="`/admin/blocs/${block.id}/membres`"
+          class="h-10 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center gap-2 hover:bg-surface-tint transition-colors"
+        >
+          <Icon name="group" :size="18"/>
+          Membres
+        </RouterLink>
+        <button
+          class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity"
+          @click="openCreate"
+        >
+          <Icon name="add" :size="18"/>
+          Nouveau module
+        </button>
+      </div>
     </div>
 
     <p v-if="success" class="text-[14px] text-success bg-success/10 rounded-[10px] px-4 py-2.5 mb-5">{{ success }}</p>
