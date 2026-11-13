@@ -2,7 +2,7 @@
   Service de correction.
 
   Correspondance avec le back (ADMIN/TEACHER) :
-  - GET /api/progress/exercises?status=SUBMITTED&search=... vers Page<ExerciseProgressResponse>
+  - GET /api/progress/exercises?status=SUBMITTED&search=...&blockId=... vers Page<ExerciseProgressResponse>
   - GET /api/progress/exercises/{exerciseId}/users/{userId}/submissions vers Page<ExerciseSubmissionResponse>
   - POST /api/progress/exercises/{exerciseId}/users/{userId}/validate vers ExerciseProgressResponse
   - POST /api/progress/exercises/{exerciseId}/users/{userId}/reject vers ExerciseProgressResponse
@@ -26,6 +26,7 @@ export const correctionService = {
         if (filters.status) params.status = filters.status
         if (filters.userId) params.userId = filters.userId
         if (filters.promotionId) params.promotionId = filters.promotionId
+        if (filters.blockId) params.blockId = filters.blockId
         // La recherche est traitée par le serveur : sur la page reçue, elle ne trouverait
         // que ce qui est déjà affiché.
         if (filters.search) params.search = filters.search
