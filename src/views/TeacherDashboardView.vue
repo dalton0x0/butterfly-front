@@ -30,7 +30,8 @@ const otherInactive = computed(() => inactiveCount.value - inactiveLearners.valu
 const kpis = computed(() => [
   {label: 'À corriger', value: pendingCount.value, icon: 'rate_review'},
   {label: 'Blocs suivis', value: blocks.value.length, icon: 'category'},
-  {label: `Inactifs depuis ${inactivityDays.value} jours`, value: inactiveCount.value, icon: 'bedtime'}
+  // Un nombre d'apprenants à relancer, et non d'apprenants actifs : le libellé le dit.
+  {label: 'Apprenants à relancer', value: inactiveCount.value, icon: 'bedtime'}
 ])
 
 function fullName(person) {
@@ -114,14 +115,17 @@ onMounted(() => run(async () => {
         <!-- Apprenants inactifs -->
         <section class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-[17px] font-semibold text-ink">Sans activité depuis {{ inactivityDays }} jours</h2>
+            <div>
+              <h2 class="text-[17px] font-semibold text-ink">Apprenants à relancer</h2>
+              <p class="text-[13px] text-ink-soft">Aucune activité depuis au moins {{ inactivityDays }} jours</p>
+            </div>
             <RouterLink v-if="otherInactive > 0" to="/formateur/apprenants"
                         class="text-[13px] font-semibold text-primary hover:underline">
               Et {{ otherInactive }} autre{{ otherInactive > 1 ? 's' : '' }}
             </RouterLink>
           </div>
           <p v-if="inactiveLearners.length === 0" class="text-[14px] text-muted">
-            Tous vos apprenants ont été actifs récemment.
+            Personne à relancer : tous vos apprenants ont eu une activité ces {{ inactivityDays }} derniers jours.
           </p>
           <ul v-else class="flex flex-col divide-y divide-line-soft">
             <li v-for="learner in inactiveLearners" :key="learner.userId">
