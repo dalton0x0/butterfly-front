@@ -97,6 +97,8 @@ Espace apprenant :
 
 Espace formateur :
 
+- Tableau de bord, page d'accueil du formateur : rendus à corriger, apprenants à relancer et
+  résumé de chacun de ses blocs.
 - Gestion complète du contenu : blocs, modules, cours, exercices et quiz, avec prérequis et
   réordonnancement.
 - Éditeur Markdown avec barre de mise en forme, raccourcis clavier, continuation automatique des
@@ -110,13 +112,16 @@ Espace formateur :
   facultative avant une nouvelle tentative.
 - Téléversement de médias (images de couverture, images de contenu, vidéos).
 - File de correction : un exercice rendu est corrigé et clos ou renvoyé au travail avec une
-  note dans les deux cas et un retour écrit. Historique complet des rendus d'un apprenant.
+  note dans les deux cas et un retour écrit. Le rendu suivant s'ouvre aussitôt et la file se
+  filtre par bloc. Historique complet des rendus d'un apprenant.
 - Suivi des apprenants de son périmètre.
 
 Espace administrateur :
 
 - Tableau de bord global, avec l'interrupteur qui ouvre ou ferme l'inscription publique.
 - Gestion des utilisateurs (comptes, rôles, statut, promotion) et des promotions.
+- Membres d'un bloc : ajout et retrait de plusieurs apprenants ou formateurs en une fois ou d'une
+  promotion entière (aussi pour le gestionnaire).
 - Gestion du catalogue de badges.
 
 Espace gestionnaire (rôle `MANAGER`, l'administration de l'organisme : CFA, entreprise,
@@ -277,12 +282,11 @@ connecté ou non.
 
 Les trois espaces :
 
-- Apprenant (racine `/`) : `/`, `/blocs`, `/modules/:id`, `/cours/:id`, `/exercices`, `/quiz`,
-  `/badges`, `/profil`.
-- Formateur (`/formateur/...`) : gestion de contenu (`/formateur/contenus` et ses sous-écrans),
-  apprenants (`/formateur/apprenants` et le détail), corrections.
-- Administrateur (`/admin/...`) : tableau de bord (`/admin`), utilisateurs, promotions, badges. La
-  gestion de contenu est accessible à l'administrateur via l'alias `/admin/contenus`.
+- Apprenant (racine `/`) : `/`, `/blocs`, `/modules/:id`, `/cours/:id`, `/exercices`, `/quiz`, `/badges`, `/profil`.
+- Formateur (`/formateur/...`) : tableau de bord (`/formateur`), gestion de contenu (`/formateur/contenus` et ses
+  sous-écrans), apprenants (`/formateur/apprenants` et le détail), corrections.
+- Administrateur (`/admin/...`) : tableau de bord (`/admin`), utilisateurs, promotions, badges, membres d'un bloc
+  (`/admin/blocs/:id/membres`). La gestion de contenu est accessible à l'administrateur via l'alias `/admin/contenus`.
 
 ## Design system
 
@@ -575,7 +579,7 @@ contenu de la version.
 
 ## Historique des versions
 
-Version courante : **v3.4.0**.
+Version courante : **v3.5.0**.
 
 L'historique complet des versions avec le détail de chaque livraison est dans [CHANGELOG.md](CHANGELOG.md).
 

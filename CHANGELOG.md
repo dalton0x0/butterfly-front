@@ -11,6 +11,30 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.5.0](https://github.com/dalton0x0/butterfly-front/compare/v3.4.0...v3.5.0) - 2026-11-13
+
+Écran des membres d'un bloc (`/admin/blocs/:id/membres`), pour l'administrateur et le gestionnaire.
+Deux listes côte à côte, les membres et les comptes à ajouter, avec recherche, filtre de rôle et
+cases à cocher. La sélection survit au changement de page et se vide quand un filtre change, pour
+ne jamais agir sur des comptes qui ne sont plus affichés. Une promotion choisie dans le filtre
+s'ajoute en entier après confirmation. Le composant `BlockMemberList` sert aux deux listes. L'écran
+s'ouvre depuis l'en-tête d'un bloc ou depuis sa carte dans la liste des contenus, jamais pour un
+bloc informatif.
+
+Le formateur arrive désormais sur son tableau de bord (`/formateur`) et non plus sur la file de
+correction : rendus qui attendent le plus, apprenants à relancer et, pour chaque bloc, apprenants
+et rendus en attente. Un lien ouvre la file déjà filtrée sur un bloc.
+
+Correction à la chaîne : dans l'onglet À corriger, enregistrer une correction ou demander une
+reprise ouvre directement le rendu suivant, le curseur dans le champ de retour. La file se filtre
+par bloc et se trie du plus ancien rendu au plus récent. Le compteur à côté du titre affiche le
+total de la file et non plus le nombre de lignes de la page.
+
+Cette version exige le backend v3.5.0. L'intégration continue prépare la mise en production de la
+démonstration en même temps que celle de la production.
+
+---
+
 ## [v3.4.0](https://github.com/dalton0x0/butterfly-front/compare/v3.3.0...v3.4.0) - 2026-11-11
 
 Première version déployée sur Kubernetes en staging puis en production. Aucun changement de
