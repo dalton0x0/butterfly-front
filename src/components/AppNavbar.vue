@@ -48,6 +48,7 @@ const links = computed(() => {
   }
   if (auth.isTeacher) {
     return [
+      {label: 'Tableau de bord', to: '/formateur', icon: 'dashboard'},
       {label: 'Contenus', to: '/formateur/contenus', icon: 'category'},
       {label: 'Corrections', to: '/formateur/corrections', icon: 'rate_review'},
       {label: 'Apprenants', to: '/formateur/apprenants', icon: 'group'}
