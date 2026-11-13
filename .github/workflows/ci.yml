@@ -256,6 +256,7 @@ jobs:
     # dans une branche du dépôt butterfly-deploy. Fusionner la pull request de cette
     # branche déploie la version. Le moment du déploiement reste une décision : ordre
     # entre backend et frontend, sauvegarde avant une migration, heure choisie.
+    # La démonstration suit la production : la même pull request met les deux à jour.
     steps:
       - name: Récupération du dépôt de déploiement
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -265,17 +266,22 @@ jobs:
 
       - name: Branche de mise en production
         env:
-          FILE: k8s/butterfly/prod/kustomization.yaml
+          # La démonstration est facultative : son fichier est ignoré s'il n'existe pas.
+          FILES: k8s/butterfly/prod/kustomization.yaml k8s/butterfly/demo/kustomization.yaml
         run: |
           # Version sans le v du tag : v3.5.0 donne 3.5.0, étiquette publiée par la CI.
           VERSION="${GITHUB_REF_NAME#v}"
           BRANCH="prod/${GITHUB_REPOSITORY#*/}-$VERSION"
 
-          grep -A1 -x "  - name: $IMAGE" "$FILE" | grep -q '^    newTag: ' \
-            || { echo "Image $IMAGE introuvable dans $FILE." >&2; exit 1; }
-
           git checkout -b "$BRANCH"
-          sed -i "\\#^  - name: $IMAGE\$#{n;s#^    newTag: .*#    newTag: \"$VERSION\"#}" "$FILE"
+          for FILE in $FILES; do
+            if [[ "$FILE" != */prod/* && ! -f "$FILE" ]]; then
+              continue
+            fi
+            grep -A1 -x "  - name: $IMAGE" "$FILE" | grep -q '^    newTag: ' \
+              || { echo "Image $IMAGE introuvable dans $FILE." >&2; exit 1; }
+            sed -i "\\#^  - name: $IMAGE\$#{n;s#^    newTag: .*#    newTag: \"$VERSION\"#}" "$FILE"
+          done
           if git diff --quiet; then
             echo "La production utilise déjà $VERSION." | tee -a "$GITHUB_STEP_SUMMARY"
             exit 0
