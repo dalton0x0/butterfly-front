@@ -246,10 +246,12 @@ const routes = [
         meta: {layout: 'auth'}
     },
 
-    // Redirections pour les liens de la navbar formateur/admin
+    // Tableaux de bord du formateur et de l'administration
     {
         path: '/formateur',
-        redirect: '/formateur/corrections'
+        name: 'teacher-dashboard',
+        component: () => import('@/views/TeacherDashboardView.vue'),
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER]}
     },
     {
         path: '/admin',
@@ -308,7 +310,7 @@ router.beforeEach(async (to) => {
     // Le tableau de bord '/' est l'espace apprenant : le staff est redirigé vers le sien.
     if (to.name === 'dashboard' && auth.isAuthenticated) {
         if (auth.isTeacher) {
-            return {name: 'corrections'}
+            return {name: 'teacher-dashboard'}
         }
         if (auth.hasGlobalScope) {
             return '/admin'
