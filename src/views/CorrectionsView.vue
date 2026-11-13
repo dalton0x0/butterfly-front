@@ -8,12 +8,19 @@
 // l'exercice est clos sans préjuger de la réussite : la note porte seule le jugement.
 // « À retravailler » dit qu'un nouveau rendu est attendu avec ou sans note.
 // File : GET /api/progress/exercises?status=... (restreinte aux apprenants du formateur).
-import {computed, onMounted, ref} from 'vue'
+//
+// Correction à la chaîne : dans l'onglet À corriger, enregistrer une correction ou
+// demander une reprise ouvre directement le rendu suivant de la file. Le filtre de bloc,
+// combiné à la recherche sur le nom de l'exercice, permet de corriger le même exercice
+// pour tout un groupe sans revenir à la liste.
+import {computed, nextTick, onMounted, ref} from 'vue'
+import {useRoute} from 'vue-router'
 import {usePagedList} from '@/composables/usePagedList'
 import {useDebouncedRef} from '@/composables/useDebouncedRef'
 import {formatDate} from '@/utils/date'
 import {correctionService} from '@/services/correctionService'
 import {exerciseService} from '@/services/exerciseService'
+import {blockService} from '@/services/blockService'
 import {formatFileSize} from '@/utils/upload'
 import {formatGrade, maxGrade} from '@/utils/grading'
 import {saveBlobAs} from '@/utils/download'
@@ -27,6 +34,8 @@ const TABS = [
   {key: 'REJECTED', label: 'À retravailler'}
 ]
 
+const route = useRoute()
+
 const reviewSuccess = ref('')
 
 const currentTab = ref('SUBMITTED')
@@ -36,17 +45,24 @@ const currentTab = ref('SUBMITTED')
 const search = ref('')
 const debouncedSearch = useDebouncedRef(search)
 
+// Bloc filtré. Le tableau de bord formateur ouvre cette page avec ?blockId=.
+const blockFilter = ref(route.query.blockId ? Number(route.query.blockId) : '')
+const blocks = ref([])
+
 /*
-  Onglet et recherche sont deux filtres serveur.
+  Onglet, recherche et bloc sont des filtres serveur.
 */
 const filters = computed(() => ({
   status: currentTab.value,
-  search: debouncedSearch.value.trim() || undefined
+  search: debouncedSearch.value.trim() || undefined,
+  blockId: blockFilter.value || undefined
 }))
 
+// À corriger : les rendus les plus anciens d'abord, comme sur le tableau de bord.
 const {items: queue, page, totalPages, totalElements, loading, error, load, goToPage, refresh} = usePagedList(
-  ({page: current, status, search: term}) =>
-    correctionService.listProgress({status, search: term}, {page: current}),
+  ({page: current, status, search: term, blockId}) =>
+    correctionService.listProgress({status, search: term, blockId},
+      {page: current, sort: status === 'SUBMITTED' ? 'submittedAt' : 'updatedAt'}),
   {filters: () => filters.value, errorMessage: 'Impossible de charger les corrections.'}
 )
 
@@ -146,12 +162,25 @@ async function download(submission, file) {
 }
 
 async function finishReview(verb) {
-  reviewSuccess.value = `Exercice ${verb} pour ${studentName(selected.value)}.`
+  const done = `Exercice ${verb} pour ${studentName(selected.value)}.`
+  // Position de la ligne corrigée : après rechargement, la suivante prend sa place.
+  const position = queue.value.findIndex((item) => item.id === selected.value.id)
+  reviewSuccess.value = done
   selected.value = null
   submissions.value = []
   // Rechargement plutôt que retrait local : la ligne corrigée quitte l'onglet À corriger,
   // celle qui la suit doit remonter dans la page et le total affiché doit suivre.
   await refresh()
+
+  if (!isPending.value || queue.value.length === 0) {
+    return
+  }
+  const next = queue.value[Math.min(Math.max(position, 0), queue.value.length - 1)]
+  reviewSuccess.value = `${done} Rendu suivant : ${studentName(next)}.`
+  await select(next)
+  // Le retour est le premier champ à remplir : le curseur y est déjà.
+  await nextTick()
+  document.getElementById('corrections-feedback')?.focus()
 }
 
 async function refreshAfterUpdate(message) {
@@ -229,13 +258,24 @@ async function askForRework() {
   }
 }
 
-onMounted(load)
+onMounted(() => {
+  load()
+  // Les blocs ne servent qu'au filtre : leur échec n'empêche pas de corriger.
+  blockService.getBlocks({sort: 'name'})
+    .then((result) => {
+      blocks.value = result.items.filter((b) => !b.informational)
+    })
+    .catch(() => {
+      blocks.value = []
+    })
+})
 </script>
 
 <template>
   <div class="flex items-center gap-3 mb-6">
     <h1 class="text-[30px] font-semibold text-navy">Corrections</h1>
-    <StatusChip v-if="!loading" :label="`${queue.length}`" :variant="isPending ? 'warning' : 'neutral'"/>
+    <!-- Total de la file et non de la page affichée. -->
+    <StatusChip v-if="!loading" :label="`${totalElements}`" :variant="isPending ? 'warning' : 'neutral'"/>
   </div>
 
   <!-- Onglets -->
@@ -268,6 +308,14 @@ onMounted(load)
              placeholder="Rechercher un apprenant ou un exercice"
              class="flex-1 outline-none text-[14px] bg-transparent"/>
     </div>
+    <template v-if="blocks.length > 1">
+      <label for="corrections-block" class="sr-only">Filtrer par bloc</label>
+      <select id="corrections-block" v-model="blockFilter"
+              class="h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white max-w-[260px]">
+        <option value="">Bloc : tous</option>
+        <option v-for="b in blocks" :key="b.id" :value="b.id">{{ b.name }}</option>
+      </select>
+    </template>
   </div>
 
   <div v-if="loading" class="text-[15px] text-muted py-10 text-center">Chargement des corrections...</div>
@@ -277,7 +325,7 @@ onMounted(load)
     <!-- File -->
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden mb-6">
       <p v-if="queue.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">
-        <template v-if="filters.search">Aucun résultat pour cette recherche.</template>
+        <template v-if="filters.search || filters.blockId">Aucun résultat pour ces filtres.</template>
         <template v-else-if="isPending">Aucune correction en attente.</template>
         <template v-else>Aucune correction dans cet historique.</template>
       </p>
