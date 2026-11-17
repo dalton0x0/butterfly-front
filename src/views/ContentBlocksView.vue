@@ -7,6 +7,7 @@
 import {computed, onMounted, reactive, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {blockService} from '@/services/blockService'
+import {settingsService} from '@/services/settingsService'
 import {useAuthStore} from '@/stores/auth'
 import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
 import {ALLOWED_IMAGE_ACCEPT, mediaUrl, validateImageFile} from '@/utils/media'
@@ -19,6 +20,12 @@ const auth = useAuthStore()
 const {loading, error, run} = useAsyncTask('Impossible de charger les blocs.', {loadingFromStart: true})
 const blocks = ref([])
 const success = ref('')
+
+// Gestion des blocs réservée à l'administration : un formateur ne crée plus de bloc et ne
+// modifie plus leur fiche ni leurs prérequis. Le serveur refuse de toute façon, l'interface
+// évite seulement de proposer des boutons qui échoueraient.
+const blockManagementRestricted = ref(false)
+const canManageBlocks = computed(() => auth.hasGlobalScope || !blockManagementRestricted.value)
 
 // Le back renvoie aussi les blocs informatifs au formateur, car il peut les lire.
 // Il ne peut pas les modifier : on les retire de son espace de gestion.
@@ -245,8 +252,12 @@ async function savePrereq() {
 
 function load() {
   return run(async () => {
-    const page = await blockService.getBlocks({size: 100})
+    const [page, settings] = await Promise.all([
+      blockService.getBlocks({size: 100}),
+      auth.hasGlobalScope ? null : settingsService.getSettings()
+    ])
     blocks.value = page.items
+    blockManagementRestricted.value = Boolean(settings?.blockCreationRestricted)
   })
 }
 
@@ -257,6 +268,7 @@ onMounted(load)
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
     <h1 class="text-[30px] font-semibold text-navy">Contenus - Mes blocs</h1>
     <button
+      v-if="canManageBlocks"
       class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-opacity self-start"
       @click="openCreate"
     >
@@ -265,12 +277,17 @@ onMounted(load)
     </button>
   </div>
 
+  <p v-if="!canManageBlocks" class="text-[14px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-2.5 mb-5">
+    Les blocs sont créés et modifiés par l'administration. Vous gérez le contenu des blocs qui vous sont confiés.
+  </p>
   <p v-if="success" class="text-[14px] text-success bg-success/10 rounded-[10px] px-4 py-2.5 mb-5">{{ success }}</p>
 
   <div v-if="loading" class="text-[15px] text-muted py-10 text-center">Chargement des blocs...</div>
   <div v-else-if="error" class="text-[15px] text-danger bg-danger/8 rounded-[10px] px-4 py-3">{{ error }}</div>
   <div v-else-if="manageableBlocks.length === 0" class="text-[15px] text-muted py-10 text-center">
-    Aucun bloc assigné. Créez un bloc ou demandez à un administrateur de vous en assigner un.
+    {{ canManageBlocks
+      ? 'Aucun bloc assigné. Créez un bloc ou demandez à un administrateur de vous en assigner un.'
+      : 'Aucun bloc assigné. Demandez à un administrateur de vous en assigner un.' }}
   </div>
 
   <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -301,6 +318,7 @@ onMounted(load)
             Gérer le contenu
           </RouterLink>
           <button
+            v-if="canManageBlocks"
             class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
             aria-label="Modifier"
             @click="openEdit(block)"
@@ -308,7 +326,7 @@ onMounted(load)
             <Icon name="edit" :size="16"/>
           </button>
           <button
-            v-if="!block.informational"
+            v-if="canManageBlocks && !block.informational"
             class="h-9 w-9 rounded-[10px] border border-input text-primary flex items-center justify-center hover:bg-surface-tint transition-colors"
             aria-label="Prérequis"
             title="Blocs prérequis"
