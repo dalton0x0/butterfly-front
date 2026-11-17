@@ -236,7 +236,8 @@ onMounted(load)
       {{ hasActiveFilter ? 'Aucun résultat pour cette recherche.'
         : showDeleted ? 'La corbeille est vide.' : 'Aucun utilisateur à afficher.' }}
     </p>
-    <table v-else class="w-full text-[14px]">
+    <div v-else class="overflow-x-auto">
+    <table class="w-full min-w-[760px] text-[14px]">
       <thead>
       <tr class="bg-surface-tint text-[13px] text-ink-soft text-left">
         <th class="px-5 py-3 font-medium">Utilisateur</th>
@@ -318,6 +319,7 @@ onMounted(load)
       </tr>
       </tbody>
     </table>
+    </div>
 
     <Pagination
       :page="page"

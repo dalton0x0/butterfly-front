@@ -77,7 +77,8 @@ onMounted(load)
     </div>
 
     <div v-else class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
-      <table class="w-full text-[14px]">
+      <div class="overflow-x-auto">
+      <table class="w-full min-w-[600px] text-[14px]">
         <thead>
         <tr class="bg-surface-tint text-[13px] text-ink-soft text-left">
           <th class="px-5 py-2.5 font-medium">Quiz</th>
@@ -108,6 +109,7 @@ onMounted(load)
         </tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 </template>

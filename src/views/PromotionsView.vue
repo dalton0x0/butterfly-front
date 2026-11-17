@@ -215,7 +215,8 @@ onMounted(load)
   <div v-else class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
     <p v-if="filtered.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">Aucune promotion à
       afficher.</p>
-    <table v-else class="w-full text-[14px]">
+    <div v-else class="overflow-x-auto">
+    <table class="w-full min-w-[640px] text-[14px]">
       <thead>
       <tr class="bg-surface-tint text-[13px] text-ink-soft text-left">
         <th class="px-5 py-3 font-medium">Nom</th>
@@ -260,6 +261,7 @@ onMounted(load)
       </tr>
       </tbody>
     </table>
+    </div>
   </div>
 
   <!-- Modale création / édition -->
