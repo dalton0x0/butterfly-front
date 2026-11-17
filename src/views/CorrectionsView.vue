@@ -21,6 +21,7 @@ import {formatDate} from '@/utils/date'
 import {correctionService} from '@/services/correctionService'
 import {exerciseService} from '@/services/exerciseService'
 import {blockService} from '@/services/blockService'
+import {useAuthStore} from '@/stores/auth'
 import {formatFileSize} from '@/utils/upload'
 import {formatGrade, maxGrade} from '@/utils/grading'
 import {saveBlobAs} from '@/utils/download'
@@ -35,6 +36,7 @@ const TABS = [
 ]
 
 const route = useRoute()
+const auth = useAuthStore()
 
 const reviewSuccess = ref('')
 
@@ -49,19 +51,25 @@ const debouncedSearch = useDebouncedRef(search)
 const blockFilter = ref(route.query.blockId ? Number(route.query.blockId) : '')
 const blocks = ref([])
 
+// « Mes exercices » : ceux que le formateur a créés, plus ceux sans formateur pour auteur
+// (anciens exercices, exercices de l'administration). Ce sont les rendus dont il reçoit la
+// notification. Activé par défaut pour un formateur, qui partage ses blocs avec d'autres.
+const mineOnly = ref(auth.isTeacher)
+
 /*
-  Onglet, recherche et bloc sont des filtres serveur.
+  Onglet, recherche, bloc et « Mes exercices » sont des filtres serveur.
 */
 const filters = computed(() => ({
   status: currentTab.value,
   search: debouncedSearch.value.trim() || undefined,
-  blockId: blockFilter.value || undefined
+  blockId: blockFilter.value || undefined,
+  mine: mineOnly.value || undefined
 }))
 
 // À corriger : les rendus les plus anciens d'abord, comme sur le tableau de bord.
 const {items: queue, page, totalPages, totalElements, loading, error, load, goToPage, refresh} = usePagedList(
-  ({page: current, status, search: term, blockId}) =>
-    correctionService.listProgress({status, search: term, blockId},
+  ({page: current, status, search: term, blockId, mine}) =>
+    correctionService.listProgress({status, search: term, blockId, mine},
       {page: current, sort: status === 'SUBMITTED' ? 'submittedAt' : 'updatedAt'}),
   {filters: () => filters.value, errorMessage: 'Impossible de charger les corrections.'}
 )
@@ -316,6 +324,12 @@ onMounted(() => {
         <option v-for="b in blocks" :key="b.id" :value="b.id">{{ b.name }}</option>
       </select>
     </template>
+    <label for="corrections-mine"
+           class="h-10 px-3 border border-input rounded-[10px] bg-white flex items-center gap-2 text-[14px] text-ink cursor-pointer"
+           title="Les exercices que vous avez créés, et ceux sans formateur pour auteur">
+      <input id="corrections-mine" v-model="mineOnly" type="checkbox" class="w-4 h-4 rounded accent-[#0047ab]"/>
+      Mes exercices
+    </label>
   </div>
 
   <div v-if="loading" class="text-[15px] text-muted py-10 text-center">Chargement des corrections...</div>
