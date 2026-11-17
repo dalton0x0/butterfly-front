@@ -16,7 +16,7 @@ import {blockService} from '@/services/blockService'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
-import RegistrationToggle from '@/components/RegistrationToggle.vue'
+import PlatformSettingsCard from '@/components/PlatformSettingsCard.vue'
 
 const auth = useAuthStore()
 
@@ -205,7 +205,7 @@ onMounted(load)
           </div>
         </div>
 
-        <RegistrationToggle/>
+        <PlatformSettingsCard/>
       </div>
     </div>
   </template>
