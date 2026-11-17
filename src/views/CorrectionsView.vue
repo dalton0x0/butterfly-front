@@ -325,11 +325,12 @@ onMounted(() => {
     <!-- File -->
     <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden mb-6">
       <p v-if="queue.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">
-        <template v-if="filters.search || filters.blockId">Aucun résultat pour ces filtres.</template>
+        <template v-if="filters.search || filters.blockId || filters.mine">Aucun résultat pour ces filtres.</template>
         <template v-else-if="isPending">Aucune correction en attente.</template>
         <template v-else>Aucune correction dans cet historique.</template>
       </p>
-      <table v-else class="w-full text-[14px]">
+      <div v-else class="overflow-x-auto">
+      <table class="w-full min-w-[760px] text-[14px]">
         <thead>
         <tr class="bg-surface-tint text-[13px] text-ink-soft text-left">
           <th class="px-5 py-3 font-medium">Apprenant</th>
@@ -367,6 +368,7 @@ onMounted(() => {
         </tr>
         </tbody>
       </table>
+      </div>
 
       <Pagination
         :page="page"

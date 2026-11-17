@@ -67,7 +67,8 @@ onMounted(load)
       <p v-if="learners.length === 0" class="px-5 py-8 text-[15px] text-muted text-center">
         {{ hasActiveFilter ? 'Aucun résultat pour cette recherche.' : 'Aucun apprenant à afficher.' }}
       </p>
-      <table v-else class="w-full text-[14px]">
+      <div v-else class="overflow-x-auto">
+      <table class="w-full min-w-[680px] text-[14px]">
         <thead>
         <tr class="bg-surface-tint text-[13px] text-ink-soft text-left">
           <th class="px-5 py-3 font-medium">Apprenant</th>
@@ -107,6 +108,7 @@ onMounted(load)
         </tr>
         </tbody>
       </table>
+      </div>
 
       <Pagination
         :page="page"

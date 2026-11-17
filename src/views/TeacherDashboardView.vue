@@ -146,7 +146,8 @@ onMounted(() => run(async () => {
       <!-- Mes blocs -->
       <section class="bg-surface rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
         <h2 class="text-[17px] font-semibold text-ink px-5 pt-5 pb-3">Mes blocs</h2>
-        <table class="w-full text-[14px]">
+        <div class="overflow-x-auto">
+        <table class="w-full min-w-[520px] text-[14px]">
           <thead>
           <tr class="bg-surface-tint text-[13px] text-ink-soft text-left">
             <th class="px-5 py-3 font-medium">Bloc</th>
@@ -178,6 +179,7 @@ onMounted(() => run(async () => {
           </tr>
           </tbody>
         </table>
+        </div>
       </section>
     </template>
   </template>
