@@ -11,6 +11,31 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.6.0](https://github.com/dalton0x0/butterfly-front/compare/v3.5.0...v3.6.0) - 2026-11-17
+
+Les tableaux défilent horizontalement sur petit écran : utilisateurs, apprenants, promotions,
+corrections, résultats de quiz et tableau de bord du formateur. Chaque tableau reçoit une largeur
+minimale et défile dans sa carte qui garde ses coins arrondis au lieu d'être coupé.
+
+Nouvelle mise en page de la modification d'un utilisateur. L'identité avec la promotion pour un
+apprenant et le rôle et statut forment une première rangée de deux cartes de même hauteur. Les
+blocs assignés occupent toute la largeur en dessous, leur liste répartie en colonnes. Plus de grand
+vide sous la carte d'identité.
+
+Le tableau de bord d'administration regroupe les réglages dans une carte (`PlatformSettingsCard`) :
+inscription publique et gestion des blocs réservée à l'administration. `SettingSwitch` affiche une
+ligne de réglage et remplace `RegistrationToggle`. Quand la gestion des blocs est réservée, l'espace
+de contenus du formateur masque la création, la modification et les prérequis des blocs, et
+l'explique.
+
+La file de correction propose un filtre « Mes exercices », activé par défaut pour un formateur :
+les exercices qu'il a créés et ceux sans formateur pour auteur, c'est-à-dire ceux dont les
+soumissions lui sont notifiées.
+
+Requiert le backend v3.6.0.
+
+---
+
 ## [v3.5.0](https://github.com/dalton0x0/butterfly-front/compare/v3.4.0...v3.5.0) - 2026-11-13
 
 Écran des membres d'un bloc (`/admin/blocs/:id/membres`), pour l'administrateur et le gestionnaire.
