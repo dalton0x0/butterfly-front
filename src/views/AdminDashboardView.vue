@@ -1,18 +1,17 @@
 <script setup>
-// Espace admin : tableau de bord. Indicateurs et derniers inscrits.
+// Espace admin : tableau de bord. Indicateurs, derniers inscrits, rendus à corriger et
+// apprenants à relancer.
 //
-// Chaque indicateur est un comptage serveur et non un décompte de la liste reçue.
-// La version précédente demandait une page d'utilisateurs puis filtrait dessus :
-// au delà de vingt comptes, toutes les cartes mentaient sans le moindre signal et
-// les "derniers inscrits" étaient en réalité les premiers par ordre alphabétique.
+// Tout vient d'un seul appel : GET /api/users/me/admin-dashboard. Chaque indicateur y est
+// un comptage serveur et non le décompte d'une liste reçue. L'écran faisait auparavant dix
+// requêtes de comptage. Pour un gestionnaire, le serveur omet les comptes administrateurs
+// et gestionnaires et la corbeille : les cartes correspondantes disparaissent.
 import {computed, onMounted, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
-import {roleChip, ROLES} from '@/utils/roles'
+import {roleChip} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {useAuthStore} from '@/stores/auth'
-import {userService} from '@/services/userService'
-import {promotionService} from '@/services/promotionService'
-import {blockService} from '@/services/blockService'
+import {dashboardService} from '@/services/dashboardService'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
@@ -22,54 +21,33 @@ const auth = useAuthStore()
 
 const {loading, error, run} = useAsyncTask('Impossible de charger le tableau de bord.', {loadingFromStart: true})
 
-// Taille de page des requêtes qui ne servent qu'à compter. Une page vide serait
-// refusée par Spring, un seul élément suffit à obtenir totalElements.
-const COUNT_ONLY_SIZE = 1
+const dashboard = ref(null)
 
-// Nombre de lignes de la carte des derniers inscrits.
-const RECENT_LEARNERS_SIZE = 5
+const recentLearners = computed(() => dashboard.value?.recentLearners || [])
+const oldestPending = computed(() => dashboard.value?.oldestPending || [])
+const inactiveLearners = computed(() => dashboard.value?.inactiveLearners || [])
+const inactivityDays = computed(() => dashboard.value?.inactivityDays ?? 7)
 
-// Page de repli quand une liste est indisponible : le tableau de bord affiche zéro
-// plutôt que de ne rien afficher du tout.
-const EMPTY_PAGE = {items: [], totalElements: 0}
-
-const counts = ref({
-  learners: 0,
-  teachers: 0,
-  managers: 0,
-  admins: 0,
-  disabled: 0,
-  deleted: 0,
-  blocks: 0,
-  promotions: 0,
-  activePromotions: 0
+// Une carte par indicateur reçu. Un champ absent de la réponse (gestionnaire) n'a pas de carte.
+const cards = computed(() => {
+  const d = dashboard.value
+  if (!d) {
+    return []
+  }
+  const accent = 'bg-accent/15 text-primary'
+  const muted = 'bg-surface-tint text-ink-soft'
+  return [
+    {label: 'Apprenants', value: d.learners, icon: 'school', tint: accent},
+    {label: 'Formateurs', value: d.teachers, icon: 'co_present', tint: accent},
+    {label: 'Gestionnaires', value: d.managers, icon: 'account_circle', tint: accent},
+    {label: 'Administrateurs', value: d.admins, icon: 'shield_person', tint: accent},
+    {label: 'Blocs', value: d.blocks, icon: 'category', tint: accent},
+    {label: 'Promotions actives', value: `${d.activePromotions} / ${d.promotions}`, icon: 'workspaces', tint: accent},
+    {label: 'À corriger', value: d.pendingCount, icon: 'rate_review', tint: accent},
+    {label: 'Comptes désactivés', value: d.disabledAccounts, icon: 'block', tint: muted},
+    {label: 'Corbeille', value: d.deletedAccounts, icon: 'delete', tint: muted}
+  ].filter((card) => card.value !== undefined && card.value !== null)
 })
-
-const recentLearners = ref([])
-
-const cards = computed(() => [
-  {label: 'Apprenants', value: counts.value.learners, icon: 'school', tint: 'bg-accent/15 text-primary'},
-  {label: 'Formateurs', value: counts.value.teachers, icon: 'co_present', tint: 'bg-accent/15 text-primary'},
-  // Un gestionnaire ne voit ni les administrateurs ni les autres gestionnaires.
-  ...(auth.isAdmin
-    ? [
-        {label: 'Gestionnaires', value: counts.value.managers, icon: 'account_circle', tint: 'bg-accent/15 text-primary'},
-        {label: 'Administrateurs', value: counts.value.admins, icon: 'shield_person', tint: 'bg-accent/15 text-primary'}
-      ]
-    : []),
-  {label: 'Blocs', value: counts.value.blocks, icon: 'category', tint: 'bg-accent/15 text-primary'},
-  {
-    label: 'Promotions actives',
-    value: `${counts.value.activePromotions} / ${counts.value.promotions}`,
-    icon: 'workspaces',
-    tint: 'bg-accent/15 text-primary'
-  },
-  {label: 'Comptes désactivés', value: counts.value.disabled, icon: 'block', tint: 'bg-surface-tint text-ink-soft'},
-  // La corbeille est réservée à l'administrateur.
-  ...(auth.isAdmin
-    ? [{label: 'Corbeille', value: counts.value.deleted, icon: 'delete', tint: 'bg-surface-tint text-ink-soft'}]
-    : [])
-])
 
 const quickLinks = [
   {label: 'Gérer les utilisateurs', to: '/admin/utilisateurs', icon: 'group'},
@@ -77,63 +55,22 @@ const quickLinks = [
   {label: 'Gérer les contenus', to: '/admin/contenus', icon: 'category'}
 ]
 
-/**
- * Renvoie une page vide plutôt qu'une erreur quand une liste facultative échoue.
- * Un indicateur indisponible ne doit pas emporter tout l'écran.
- */
-function orEmptyPage(request) {
-  return request.catch(() => EMPTY_PAGE)
+// Apprenants non affichés dans la carte, signalés par un lien vers la liste complète.
+const otherInactive = computed(() => (dashboard.value?.inactiveLearnerCount ?? 0) - inactiveLearners.value.length)
+
+function fullName(person) {
+  return `${person.firstName || person.userFirstName || ''} ${person.lastName || person.userLastName || ''}`.trim()
 }
 
-function load() {
-  return run(async () => {
-    const [
-      learners,
-      teachers,
-      managers,
-      admins,
-      disabled,
-      deleted,
-      blocks,
-      promotions,
-      activePromotions,
-      latestLearners
-    ] = await Promise.all([
-      userService.getUsers({role: ROLES.USER, size: COUNT_ONLY_SIZE}),
-      userService.getUsers({role: ROLES.TEACHER, size: COUNT_ONLY_SIZE}),
-      auth.isAdmin ? userService.getUsers({role: ROLES.MANAGER, size: COUNT_ONLY_SIZE}) : EMPTY_PAGE,
-      auth.isAdmin ? userService.getUsers({role: ROLES.ADMIN, size: COUNT_ONLY_SIZE}) : EMPTY_PAGE,
-      userService.getUsers({enabled: false, size: COUNT_ONLY_SIZE}),
-      auth.isAdmin ? orEmptyPage(userService.getDeletedUsers({size: COUNT_ONLY_SIZE})) : EMPTY_PAGE,
-      orEmptyPage(blockService.getBlocks({size: COUNT_ONLY_SIZE})),
-      orEmptyPage(promotionService.getPromotions({size: COUNT_ONLY_SIZE})),
-      orEmptyPage(promotionService.getPromotions({active: true, size: COUNT_ONLY_SIZE})),
-      // Tri et filtre appliqués par le serveur : la carte annonce des inscriptions,
-      // elle doit donc montrer les comptes les plus récents et seulement des apprenants.
-      userService.getUsers({
-        role: ROLES.USER,
-        sort: 'createdAt,desc',
-        size: RECENT_LEARNERS_SIZE
-      })
-    ])
-
-    counts.value = {
-      learners: learners.totalElements,
-      teachers: teachers.totalElements,
-      managers: managers.totalElements,
-      admins: admins.totalElements,
-      disabled: disabled.totalElements,
-      deleted: deleted.totalElements,
-      blocks: blocks.totalElements,
-      promotions: promotions.totalElements,
-      activePromotions: activePromotions.totalElements
-    }
-
-    recentLearners.value = latestLearners.items
-  })
+function lastActivity(learner) {
+  return learner.lastActivityDate
+    ? `Dernière activité le ${formatDate(learner.lastActivityDate)}`
+    : 'Aucune activité pour le moment'
 }
 
-onMounted(load)
+onMounted(() => run(async () => {
+  dashboard.value = await dashboardService.getAdminDashboard()
+}))
 </script>
 
 <template>
@@ -157,32 +94,84 @@ onMounted(load)
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Derniers inscrits -->
-      <div class="lg:col-span-2 bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-[17px] font-semibold text-ink">Derniers inscrits</h2>
-          <RouterLink to="/admin/utilisateurs" class="text-[13px] text-primary font-semibold hover:underline">Tout
-            voir
-          </RouterLink>
-        </div>
-        <p v-if="recentLearners.length === 0" class="text-[14px] text-muted">Aucun apprenant inscrit.</p>
-        <ul v-else>
-          <li
-            v-for="(u, i) in recentLearners"
-            :key="u.id"
-            class="flex items-center gap-3 py-2.5"
-            :class="{ 'border-t border-line-soft': i > 0 }"
-          >
-            <Avatar :src="u.avatar" :name="`${u.firstName} ${u.lastName}`" :size="36"/>
-            <div class="flex-1 min-w-0">
-              <span class="text-[15px] text-ink block truncate">{{ u.firstName }} {{ u.lastName }}</span>
-              <span class="text-[12px] text-muted">{{ u.email }}</span>
+    <!-- items-start : sans lui, la grille étire chaque colonne à la hauteur de la plus
+         haute, et la carte des derniers inscrits grandissait avec les réglages à droite. -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
+      <div class="lg:col-span-2 flex flex-col gap-6">
+        <!-- Derniers inscrits -->
+        <section class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="text-[17px] font-semibold text-ink">Derniers inscrits</h2>
+            <RouterLink to="/admin/utilisateurs" class="text-[13px] text-primary font-semibold hover:underline">Tout
+              voir
+            </RouterLink>
+          </div>
+          <p v-if="recentLearners.length === 0" class="text-[14px] text-muted">Aucun apprenant inscrit.</p>
+          <ul v-else>
+            <li
+              v-for="(u, i) in recentLearners"
+              :key="u.id"
+              class="flex items-center gap-3 py-2.5"
+              :class="{ 'border-t border-line-soft': i > 0 }"
+            >
+              <Avatar :src="u.avatar" :name="fullName(u)" :size="36"/>
+              <div class="flex-1 min-w-0">
+                <span class="text-[15px] text-ink block truncate">{{ fullName(u) }}</span>
+                <span class="text-[12px] text-muted">{{ u.email }}</span>
+              </div>
+              <StatusChip v-bind="roleChip(u.role)"/>
+              <span class="text-[13px] text-muted shrink-0 w-20 text-right">{{ formatDate(u.createdAt) }}</span>
+            </li>
+          </ul>
+        </section>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:items-start">
+          <!-- Rendus en attente, les plus anciens d'abord -->
+          <section class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-[17px] font-semibold text-ink">À corriger</h2>
+              <RouterLink v-if="auth.canReview" to="/formateur/corrections"
+                          class="text-[13px] text-primary font-semibold hover:underline">
+                Corrections
+              </RouterLink>
             </div>
-            <StatusChip v-bind="roleChip(u.role)"/>
-            <span class="text-[13px] text-muted shrink-0 w-20 text-right">{{ formatDate(u.createdAt) }}</span>
-          </li>
-        </ul>
+            <p v-if="oldestPending.length === 0" class="text-[14px] text-muted">Aucun rendu en attente.</p>
+            <ul v-else class="flex flex-col divide-y divide-line-soft">
+              <li v-for="item in oldestPending" :key="item.id" class="py-2.5">
+                <p class="text-[14px] text-ink truncate">{{ fullName(item) }}</p>
+                <p class="text-[12px] text-muted truncate">
+                  {{ item.exerciseName }} · rendu le {{ formatDate(item.submittedAt) }}
+                </p>
+              </li>
+            </ul>
+          </section>
+
+          <!-- Apprenants à relancer -->
+          <section class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
+            <div class="flex items-center justify-between mb-1">
+              <h2 class="text-[17px] font-semibold text-ink">À relancer</h2>
+              <RouterLink v-if="otherInactive > 0" to="/admin/utilisateurs"
+                          class="text-[13px] font-semibold text-primary hover:underline">
+                Et {{ otherInactive }} autre{{ otherInactive > 1 ? 's' : '' }}
+              </RouterLink>
+            </div>
+            <p class="text-[13px] text-ink-soft mb-3">Aucune activité depuis au moins {{ inactivityDays }} jours</p>
+            <p v-if="inactiveLearners.length === 0" class="text-[14px] text-muted">Personne à relancer.</p>
+            <ul v-else class="flex flex-col divide-y divide-line-soft">
+              <li v-for="learner in inactiveLearners" :key="learner.userId">
+                <RouterLink :to="`/admin/utilisateurs/${learner.userId}/apercu`"
+                            class="py-2.5 flex items-center gap-3 hover:bg-surface-tint rounded-lg px-1 transition-colors">
+                  <Avatar :src="learner.avatar" :name="fullName(learner)" :size="32"/>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-[14px] text-ink truncate">{{ fullName(learner) }}</p>
+                    <p class="text-[12px] text-muted">{{ lastActivity(learner) }}</p>
+                  </div>
+                  <Icon name="chevron_right" :size="18" class="text-muted shrink-0"/>
+                </RouterLink>
+              </li>
+            </ul>
+          </section>
+        </div>
       </div>
 
       <div class="flex flex-col gap-6">
