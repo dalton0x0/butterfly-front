@@ -13,6 +13,8 @@
   - GET /api/blocks/{id}/members/candidates vers Page<UserResponse> (comptes ajoutables)
   - POST /api/blocks/{id}/members et /members/promotions/{promotionId} vers {updated, unchanged}
   - DELETE /api/blocks/{id}/members?userIds=1,2 vers {updated, unchanged}
+  - GET /api/blocks/{id}/correctors vers List<BlockCorrectorResponse> (ADMIN/MANAGER)
+  - POST /api/blocks/{id}/correctors/transfer vers le nombre d'exercices transférés
 
   Pour un USER, l'API ne renvoie que les blocs qui lui sont assignés.
   Pour un TEACHER, la liste ne contient que ses blocs assignés.
@@ -141,6 +143,26 @@ export const blockService = {
     async removeMembers(id, userIds) {
         const envelope = await http.delete(`/blocks/${id}/members`, {params: {userIds: userIds.join(',')}})
         return envelope.data
+    },
+
+    /**
+     * Correcteurs désignés sur les exercices du bloc, avec leur nombre d'exercices.
+     * teachesBlock est faux pour un correcteur qui n'est plus formateur du bloc.
+     * @returns {Promise<{userId: number, firstName: string, lastName: string, email: string,
+     *   exerciseCount: number, teachesBlock: boolean}[]>}
+     */
+    async getCorrectors(id) {
+        const envelope = await http.get(`/blocks/${id}/correctors`)
+        return envelope.data
+    },
+
+    /**
+     * Confie à un autre formateur du bloc tous les exercices corrigés par un compte.
+     * @returns {Promise<{count: number, message: string}>} nombre d'exercices et message du serveur
+     */
+    async transferCorrections(id, fromUserId, toUserId) {
+        const envelope = await http.post(`/blocks/${id}/correctors/transfer`, {fromUserId, toUserId})
+        return {count: envelope.data, message: envelope.message}
     }
 }
 
