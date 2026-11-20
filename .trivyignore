@@ -1,0 +1,18 @@
+# Exceptions Trivy, chacune justifiée et datée.
+#
+# Une date exp: rend l'exception caduque : passé ce jour, la faille bloque de nouveau la
+# CI. Elle oblige à revenir sur la décision au lieu de l'oublier.
+
+# nginx 1.30.6 de l'image de base nginx-unprivileged (paquet nginx.org, que apk upgrade
+# ne met pas à jour). Corrigées en 1.30.7 : exceptions à retirer dès que le tag
+# 1.30-alpine embarque cette version. Aucune n'est atteignable avec notre configuration :
+# le conteneur écoute en HTTP/1.1 sur 8080, sans TLS (terminé par Traefik), sans HTTP/2,
+# sans HTTP/3 et sans proxy mail.
+CVE-2026-113425 exp:2026-11-27
+CVE-2026-121810 exp:2026-11-27
+CVE-2026-123007 exp:2026-11-27
+CVE-2026-123633 exp:2026-11-27
+CVE-2026-118899 exp:2026-11-27
+# Le résolveur sert à joindre le backend par le DNS interne du cluster. L'exploiter
+# suppose de falsifier les réponses de ce DNS depuis l'intérieur du cluster.
+CVE-2026-123634 exp:2026-11-27
