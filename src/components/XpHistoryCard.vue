@@ -8,6 +8,7 @@ import {progressService} from '@/services/progressService'
 import {xpSourceLabel} from '@/utils/xp'
 import {formatDate} from '@/utils/date'
 import Icon from './Icon.vue'
+import DashboardSection from './DashboardSection.vue'
 
 const ENTRIES = 5
 
@@ -27,8 +28,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-    <h3 class="text-[17px] font-semibold text-ink mb-4">Derniers gains d'XP</h3>
+  <DashboardSection title="Derniers gains d'XP">
     <p v-if="loading" class="text-[14px] text-muted">Chargement...</p>
     <p v-else-if="error" class="text-[14px] text-danger bg-danger/8 rounded-[10px] px-3 py-2">{{ error }}</p>
     <p v-else-if="entries.length === 0" class="text-[14px] text-muted">
@@ -44,5 +44,5 @@ onMounted(async () => {
         <span class="text-[12px] text-muted shrink-0 w-20 text-right">{{ formatDate(entry.earnedAt) }}</span>
       </li>
     </ul>
-  </div>
+  </DashboardSection>
 </template>
