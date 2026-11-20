@@ -17,14 +17,15 @@ import {userService} from '@/services/userService'
 import {correctionService} from '@/services/correctionService'
 import Icon from './Icon.vue'
 import StatusChip from './StatusChip.vue'
+import Pagination from './Pagination.vue'
 
 const props = defineProps({
   userId: {type: Number, required: true}
 })
 
-// Taille alignée sur le reste du front : une liste complète, sans pagination visuelle.
-// Le plafond du serveur est à 100, la valeur reste donc dans les clous.
-const PAGE_SIZE = 50
+// Pages courtes : un apprenant actif accumule vite des dizaines de lignes par onglet, et
+// le bloc s'allongeait sans fin. Chaque onglet a sa propre pagination côté serveur.
+const PAGE_SIZE = 10
 
 const TABS = [
   {key: 'courses', label: 'Cours'},
@@ -79,8 +80,8 @@ function quizStatus(attempt) {
 }
 
 // Historique des soumissions, chargé à la demande et conservé par exercice.
-// Précharger les 50 lignes de l'onglet ferait 50 requêtes pour un panneau que le
-// formateur n'ouvrira peut-être jamais.
+// Précharger celui de chaque ligne de l'onglet ferait une requête par exercice pour un
+// panneau que le formateur n'ouvrira peut-être jamais.
 const expandedExerciseId = ref(null)
 const submissionsByExercise = ref({})
 const submissionsLoading = ref(false)
@@ -116,15 +117,41 @@ function submissionsOf(exerciseId) {
   return submissionsByExercise.value[exerciseId] || []
 }
 
+// Lecture d'une page de chaque onglet.
+const FETCHERS = {
+  courses: (page) => userService.getUserCourseProgress(props.userId, {page, size: PAGE_SIZE}),
+  exercises: (page) => correctionService.listProgress({userId: props.userId}, {page, size: PAGE_SIZE}),
+  quizzes: (page) => userService.getUserQuizAttempts(props.userId, {page, size: PAGE_SIZE})
+}
+
+const LISTS = {courses, exercises, quizzes}
+const pageLoading = ref(false)
+
+// Change de page dans l'onglet actif seulement : les compteurs des autres onglets restent justes.
+async function goToPage(page) {
+  const key = tab.value
+  pageLoading.value = true
+  error.value = ''
+  try {
+    LISTS[key].value = await FETCHERS[key](page)
+    expandedExerciseId.value = null
+  } catch (err) {
+    error.value = err.message || 'Impossible de charger cette page.'
+  } finally {
+    pageLoading.value = false
+  }
+}
+
 async function load() {
   loading.value = true
   error.value = ''
   forbidden.value = false
   try {
+    // Première page des trois onglets : leurs totaux s'affichent dans les intitulés.
     const [coursePage, exercisePage, quizPage] = await Promise.all([
-      userService.getUserCourseProgress(props.userId, {size: PAGE_SIZE}),
-      correctionService.listProgress({userId: props.userId}, {size: PAGE_SIZE}),
-      userService.getUserQuizAttempts(props.userId, {size: PAGE_SIZE})
+      FETCHERS.courses(0),
+      FETCHERS.exercises(0),
+      FETCHERS.quizzes(0)
     ])
     courses.value = coursePage
     exercises.value = exercisePage
@@ -142,7 +169,7 @@ async function load() {
   }
 }
 
-// Page de l'onglet actif, pour le compteur et la mention de troncature.
+// Page de l'onglet actif, pour la pagination.
 const pages = computed(() => ({
   courses: courses.value,
   exercises: exercises.value,
@@ -306,9 +333,14 @@ onMounted(load)
         </ul>
       </div>
 
-      <p v-if="currentPage.totalElements > PAGE_SIZE" class="text-[13px] text-muted mt-3">
-        {{ PAGE_SIZE }} entrées les plus récentes affichées sur {{ currentPage.totalElements }}.
-      </p>
+      <Pagination
+        :page="currentPage.page"
+        :total-pages="currentPage.totalPages"
+        :total-elements="currentPage.totalElements"
+        item-label="entrées"
+        :class="{ 'opacity-60 pointer-events-none': pageLoading }"
+        @change="goToPage"
+      />
     </template>
   </div>
 </template>
