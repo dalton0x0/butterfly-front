@@ -18,6 +18,7 @@ import {
 } from '@/utils/upload'
 import {saveBlobAs} from '@/utils/download'
 import {formatGrade} from '@/utils/grading'
+import {reviewerMention} from '@/utils/reviewer'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -473,10 +474,13 @@ onMounted(load)
               <!-- Note attribuée -->
               <p v-if="s.grade != null" class="text-[14px] text-ink mb-1">Note : {{ formatGrade(s.grade) }}</p>
 
-              <!-- Retour du formateur -->
+              <!-- Retour du correcteur -->
               <div v-if="s.feedback" class="rounded-xl p-3 bg-surface-tint">
                 <p class="text-[14px] text-ink">{{ s.feedback }}</p>
               </div>
+
+              <!-- Correction faite par l'administration et non par un formateur -->
+              <p v-if="reviewerMention(s)" class="text-[13px] text-muted mt-1">{{ reviewerMention(s) }}</p>
             </div>
           </div>
         </div>

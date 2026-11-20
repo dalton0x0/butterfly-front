@@ -24,6 +24,7 @@ import {blockService} from '@/services/blockService'
 import {useAuthStore} from '@/stores/auth'
 import {formatFileSize} from '@/utils/upload'
 import {formatGrade, maxGrade} from '@/utils/grading'
+import {reviewerMention} from '@/utils/reviewer'
 import {saveBlobAs} from '@/utils/download'
 import Icon from '@/components/Icon.vue'
 import Pagination from '@/components/Pagination.vue'
@@ -444,6 +445,9 @@ onMounted(() => {
             <StatusChip v-bind="statusChip(selected.status)"/>
             <span v-if="reviewedSubmission && reviewedSubmission.reviewedAt" class="text-[13px] text-muted">
               Corrigé le {{ formatDate(reviewedSubmission.reviewedAt) }}
+              <template v-if="reviewerMention(reviewedSubmission)">
+                · {{ reviewerMention(reviewedSubmission) }}
+              </template>
             </span>
           </div>
 

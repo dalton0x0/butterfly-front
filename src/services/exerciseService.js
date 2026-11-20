@@ -12,6 +12,8 @@
   - POST /api/exercises/{id}/attachments (multipart "file") vers ExerciseAttachmentResponse
   - GET /api/exercises/{id}/attachments/{attachmentId} vers fichier binaire
   - DELETE /api/exercises/{id}/attachments/{attachmentId}
+  - GET /api/exercises/{id}/correctors vers List<UserSummaryResponse> (équipe)
+  - PUT /api/exercises/{id}/correctors { userIds } vers List<UserSummaryResponse> (ADMIN, MANAGER)
 
   La soumission initiale est atomique : le contenu (partie JSON 'data') et au moins un
   fichier partent dans une seule requête multipart. L'endpoint .../files sert ensuite à
@@ -178,5 +180,29 @@ export const exerciseService = {
      */
     async deleteAttachment(exerciseId, attachmentId) {
         await http.delete(`/exercises/${exerciseId}/attachments/${attachmentId}`)
+    },
+
+    /**
+     * Correcteurs d'un exercice : les formateurs prévenus de ses soumissions.
+     *
+     * @param {number} exerciseId
+     * @returns {Promise<object[]>} UserSummaryResponse { id, firstName, lastName, email }
+     */
+    async getCorrectors(exerciseId) {
+        const envelope = await http.get(`/exercises/${exerciseId}/correctors`)
+        return envelope.data
+    },
+
+    /**
+     * Remplace les correcteurs d'un exercice (ADMIN, MANAGER). Une liste vide fait
+     * prévenir tous les formateurs du bloc.
+     *
+     * @param {number} exerciseId
+     * @param {number[]} userIds
+     * @returns {Promise<object[]>} les correcteurs enregistrés
+     */
+    async updateCorrectors(exerciseId, userIds) {
+        const envelope = await http.put(`/exercises/${exerciseId}/correctors`, {userIds})
+        return envelope.data
     }
 }
