@@ -60,7 +60,8 @@ const links = computed(() => {
     {label: 'Tableau de bord', to: '/', icon: 'dashboard'},
     {label: 'Mes blocs', to: '/blocs', icon: 'view_module'},
     {label: 'Mes exercices', to: '/exercices', icon: 'terminal'},
-    {label: 'Mes quiz', to: '/quiz', icon: 'quiz'}
+    {label: 'Mes quiz', to: '/quiz', icon: 'quiz'},
+    {label: 'Mes badges', to: '/badges', icon: 'military_tech'}
   ]
 })
 
@@ -134,15 +135,6 @@ async function logout() {
               >
                 <Icon name="person" :size="20" class="text-muted"/>
                 Mon profil
-              </RouterLink>
-              <RouterLink
-                v-if="!auth.isTeacher && !auth.hasGlobalScope"
-                to="/badges"
-                class="flex items-center gap-3 px-4 py-2.5 text-[14px] text-ink hover:bg-surface-tint transition-colors"
-                @click="userMenuOpen = false"
-              >
-                <Icon name="military_tech" :size="20" class="text-muted"/>
-                Mes badges
               </RouterLink>
               <div class="border-t border-line-soft">
                 <button
