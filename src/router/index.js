@@ -10,6 +10,7 @@ import {ROLES} from '@/utils/roles'
   - requiresAuth: true : page accessible uniquement si l'utilisateur est connecté
   - guestOnly: true : page réservée aux visiteurs non connectés
   - roles: [...] : rôles autorisés à accéder à la page
+  - requiresReview: true : page réservée aux comptes qui corrigent (voir auth.canReview)
 
   Le chargement des vues est différé (lazy import) pour alléger le bundle initial.
 */
@@ -146,7 +147,8 @@ const routes = [
         path: '/formateur/corrections',
         name: 'corrections',
         component: () => import('@/views/CorrectionsView.vue'),
-        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN]}
+        // Le gestionnaire n'y entre que si l'administrateur lui a ouvert la correction.
+        meta: {requiresAuth: true, roles: [ROLES.TEACHER, ROLES.ADMIN, ROLES.MANAGER], requiresReview: true}
     },
     {
         path: '/formateur/apprenants',
@@ -304,6 +306,11 @@ router.beforeEach(async (to) => {
 
     // Contrôle de rôle : si la route exige des rôles précis, on les vérifie.
     if (to.meta.roles && !to.meta.roles.includes(auth.role)) {
+        return {name: 'dashboard'}
+    }
+
+    // Correction : un gestionnaire n'y a accès que si le réglage est ouvert.
+    if (to.meta.requiresReview && !auth.canReview) {
         return {name: 'dashboard'}
     }
 

@@ -19,6 +19,9 @@ export const maxGrade = ref(DEFAULT_MAX_GRADE)
  *
  * En cas d'échec, le repli est conservé et l'affichage reste cohérent : un tableau de
  * bord ne doit pas rester vide parce qu'un réglage d'affichage n'a pas pu être lu.
+ *
+ * @returns {Promise<?object>} les réglages lus, pour que l'appelant s'en serve sans
+ * refaire la requête, ou null en cas d'échec
  */
 export async function loadGradingSettings() {
     try {
@@ -26,8 +29,10 @@ export async function loadGradingSettings() {
         if (settings?.maxGrade) {
             maxGrade.value = settings.maxGrade
         }
+        return settings
     } catch (error) {
         console.warn('[grading] barème indisponible, valeur par défaut conservée', error)
+        return null
     }
 }
 

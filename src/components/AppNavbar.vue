@@ -32,18 +32,20 @@ const links = computed(() => {
       {label: 'Utilisateurs', to: '/admin/utilisateurs', icon: 'group'},
       {label: 'Promotions', to: '/admin/promotions', icon: 'school'},
       {label: 'Contenus', to: '/admin/contenus', icon: 'category'},
+      {label: 'Corrections', to: '/formateur/corrections', icon: 'rate_review'},
       {label: 'Badges', to: '/admin/badges', icon: 'military_tech'}
     ]
   }
   // Gestionnaire : l'administration sans les réglages de gamification. Il suit les
   // apprenants depuis Utilisateurs (aperçu et progression) comme l'administrateur.
-  // Il consulte les rendus sans corriger : pas de file de corrections.
+  // Il corrige seulement si l'administrateur lui a ouvert ce droit.
   if (auth.isManager) {
     return [
       {label: 'Tableau de bord', to: '/admin', icon: 'dashboard'},
       {label: 'Utilisateurs', to: '/admin/utilisateurs', icon: 'group'},
       {label: 'Promotions', to: '/admin/promotions', icon: 'school'},
       {label: 'Contenus', to: '/admin/contenus', icon: 'category'},
+      ...(auth.canReview ? [{label: 'Corrections', to: '/formateur/corrections', icon: 'rate_review'}] : [])
     ]
   }
   if (auth.isTeacher) {
@@ -58,8 +60,7 @@ const links = computed(() => {
     {label: 'Tableau de bord', to: '/', icon: 'dashboard'},
     {label: 'Mes blocs', to: '/blocs', icon: 'view_module'},
     {label: 'Mes exercices', to: '/exercices', icon: 'terminal'},
-    {label: 'Mes quiz', to: '/quiz', icon: 'quiz'},
-    //{ label: 'Mes badges', to: '/badges', icon: 'military_tech' }
+    {label: 'Mes quiz', to: '/quiz', icon: 'quiz'}
   ]
 })
 

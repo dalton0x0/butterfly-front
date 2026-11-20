@@ -40,6 +40,8 @@ function mapUser(userResponse) {
         lastName: userResponse.lastName,
         email: userResponse.email,
         role: userResponse.role,
+        // Propriétaire de la plateforme : lui seul gère les autres administrateurs.
+        owner: Boolean(userResponse.owner),
         avatar: userResponse.avatar,
         enabled: userResponse.enabled,
         // Pilote l'affichage du bandeau de rappel : mapUser filtrant les champs, l'oublier
@@ -70,6 +72,9 @@ export const useAuthStore = defineStore('auth', () => {
     // Indique si la tentative de restauration de session a déjà eu lieu.
     const initialized = ref(false)
 
+    // Correction ouverte aux gestionnaires, réglée par l'administrateur.
+    const managerReviewEnabled = ref(false)
+
     // État de chargement pour désactiver les boutons des formulaires.
     const loading = ref(false)
 
@@ -81,6 +86,11 @@ export const useAuthStore = defineStore('auth', () => {
     const isManager = computed(() => role.value === ROLES.MANAGER)
     // Administrateur ou gestionnaire : accès à l'administration et à tous les contenus.
     const hasGlobalScope = computed(() => isAdmin.value || isManager.value)
+    const isOwner = computed(() => Boolean(user.value?.owner))
+    // Comptes qui corrigent : formateur et administrateur toujours, gestionnaire selon le réglage.
+    const canReview = computed(() =>
+        isAdmin.value || isTeacher.value || (isManager.value && managerReviewEnabled.value)
+    )
     const fullName = computed(() =>
         user.value ? `${user.value.firstName} ${user.value.lastName}` : ''
     )
@@ -101,8 +111,22 @@ export const useAuthStore = defineStore('auth', () => {
         }
         // Réglages d'affichage chargés avec la session : ils viennent du serveur et ne
         // doivent pas être devinés par le client.
-        await loadGradingSettings()
+        await loadSettings()
         initialized.value = true
+    }
+
+    // Réglages du serveur utiles à l'interface, lus en une seule requête.
+    async function loadSettings() {
+        const settings = await loadGradingSettings()
+        managerReviewEnabled.value = Boolean(settings?.managerReviewEnabled)
+    }
+
+    /**
+     * Met à jour le réglage de correction des gestionnaires après sa modification, pour
+     * que la navigation suive sans recharger la page.
+     */
+    function setManagerReviewEnabled(enabled) {
+        managerReviewEnabled.value = enabled
     }
 
     // Actions
@@ -154,6 +178,7 @@ export const useAuthStore = defineStore('auth', () => {
         } finally {
             tokenStorage.clear()
             user.value = null
+            managerReviewEnabled.value = false
             resetGradingSettings()
         }
     }
@@ -173,7 +198,7 @@ export const useAuthStore = defineStore('auth', () => {
                 user.value = mapUser(await authService.fetchProfile())
                 // Réglages d'affichage rechargés avec la session : ils viennent du
                 // serveur et ne doivent pas être devinés par le client.
-                await loadGradingSettings()
+                await loadSettings()
             } catch (error) {
                 console.warn('[auth] restauration de session impossible', error)
                 tokenStorage.clear()
@@ -212,6 +237,9 @@ export const useAuthStore = defineStore('auth', () => {
         isTeacher,
         isManager,
         hasGlobalScope,
+        isOwner,
+        managerReviewEnabled,
+        canReview,
         fullName,
         login,
         register,
@@ -219,6 +247,7 @@ export const useAuthStore = defineStore('auth', () => {
         init,
         setProfile,
         refreshProfile,
+        setManagerReviewEnabled,
         clearTokens
     }
 })
