@@ -1,7 +1,7 @@
 <script setup>
 // Espace admin : page détail et édition d'un utilisateur.
 import {computed, onMounted, reactive, ref, watch} from 'vue'
-import {hasGlobalScope, roleChip as roleChipFor, ROLES} from '@/utils/roles'
+import {canManageAccount, grantableRoles, hasGlobalScope, roleChip as roleChipFor, ROLES} from '@/utils/roles'
 import {useRoute} from 'vue-router'
 import {userService} from '@/services/userService'
 import {promotionService} from '@/services/promotionService'
@@ -13,6 +13,7 @@ import Breadcrumb from '@/components/Breadcrumb.vue'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
+import Modal from '@/components/Modal.vue'
 
 const route = useRoute()
 const auth = useAuthStore()
@@ -44,6 +45,26 @@ const savingInvitation = ref(false)
 const savingPasswordReset = ref(false)
 const savingPromotion = ref(false)
 const savingBlocks = ref(false)
+const savingOwnership = ref(false)
+const showTransfer = ref(false)
+
+// Compte que l'utilisateur connecté ne peut pas modifier : le propriétaire, ou un autre
+// administrateur quand on n'est pas propriétaire. Le back refuse de toute façon : l'écran
+// le dit avant le clic plutôt qu'après.
+const locked = computed(() => !canManageAccount(auth.user, user.value))
+const lockReason = computed(() => (user.value?.owner
+  ? 'Compte propriétaire de la plateforme : seul son titulaire peut le modifier.'
+  : 'Seul le propriétaire de la plateforme gère les comptes administrateurs.'))
+
+// Rôles proposés : ceux que l'on peut attribuer, plus le rôle actuel pour l'afficher.
+const roleChoices = computed(() => {
+  const roles = grantableRoles(auth.role, auth.isOwner)
+  return !user.value || roles.includes(user.value.role) ? roles : [...roles, user.value.role]
+})
+
+// Transfert de propriété : vers un autre administrateur actif dont le compte est activé.
+const canReceiveOwnership = computed(() =>
+  user.value?.enabled && !user.value?.pendingActivation)
 
 const roleChip = computed(() => roleChipFor(user.value?.role))
 const fullName = computed(() => (user.value ? `${user.value.firstName} ${user.value.lastName}` : ''))
@@ -172,6 +193,14 @@ function toggleStatus() {
     user.value.enabled ? 'Compte désactivé.' : 'Compte activé.')
 }
 
+async function confirmTransfer() {
+  showTransfer.value = false
+  await run(savingOwnership, () => userService.transferOwnership(userId.value),
+    `${fullName.value} est maintenant propriétaire de la plateforme.`)
+  // Le profil connecté n'est plus propriétaire : l'écran doit le refléter aussitôt.
+  await auth.refreshProfile()
+}
+
 function resendInvitation() {
   run(savingInvitation, () => userService.resendInvitation(userId.value), 'Invitation renvoyée.')
 }
@@ -224,6 +253,7 @@ onMounted(load)
           <p class="text-ink-soft truncate">{{ user.email }}</p>
           <div class="flex flex-wrap items-center gap-2 mt-2">
             <StatusChip v-bind="roleChip"/>
+            <StatusChip v-if="user.owner" label="Propriétaire" variant="primary"/>
             <span class="flex items-center gap-1.5 text-[13px]" :class="user.enabled ? 'text-[#16a34a]' : 'text-muted'">
               <span class="w-2 h-2 rounded-full" :class="user.enabled ? 'bg-[#16a34a]' : 'bg-muted'"></span>
               {{ user.enabled ? 'Actif' : 'Désactivé' }}
@@ -236,6 +266,10 @@ onMounted(load)
 
     <p v-if="message" class="text-[14px] text-success bg-success/10 rounded-[10px] px-4 py-2.5 mb-5">{{ message }}</p>
     <p v-if="error" class="text-[14px] text-danger bg-danger/8 rounded-[10px] px-4 py-2.5 mb-5">{{ error }}</p>
+    <p v-if="locked" class="text-[14px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-2.5 mb-5 flex items-center gap-2">
+      <Icon name="lock" :size="18"/>
+      {{ lockReason }}
+    </p>
 
     <!-- Première rangée : deux cartes de même hauteur, l'identité à gauche, le rôle et le
          statut à droite. Les blocs assignés, la carte la plus longue, occupent toute la
@@ -266,7 +300,7 @@ onMounted(load)
                    class="w-full h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"/>
           </div>
           <div class="flex justify-end">
-            <button :disabled="savingIdentity"
+            <button :disabled="savingIdentity || locked"
                     class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-60"
                     @click="saveIdentity">
               Enregistrer
@@ -301,14 +335,11 @@ onMounted(load)
             <label for="user-detail-role"
                    class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Rôle</label>
             <div class="flex gap-2">
-              <select id="user-detail-role" v-model="selectedRole" :disabled="isSelf"
+              <select id="user-detail-role" v-model="selectedRole" :disabled="isSelf || locked"
                       class="flex-1 h-10 px-3 border border-input rounded-[10px] text-[14px] text-ink bg-white disabled:bg-surface-tint disabled:text-muted">
-                <option value="USER">Apprenant</option>
-                <option value="TEACHER">Formateur</option>
-                <option value="MANAGER">Gestionnaire</option>
-                <option value="ADMIN">Admin</option>
+                <option v-for="r in roleChoices" :key="r" :value="r">{{ roleChipFor(r).label }}</option>
               </select>
-              <button :disabled="savingRole || isSelf || selectedRole === user.role"
+              <button :disabled="savingRole || isSelf || locked || selectedRole === user.role"
                       class="h-10 px-4 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
                       @click="saveRole">
                 Appliquer
@@ -322,7 +353,7 @@ onMounted(load)
             <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Statut du
               compte</p>
             <button
-              :disabled="savingStatus || isSelf"
+              :disabled="savingStatus || isSelf || locked"
               class="h-10 px-4 rounded-[10px] text-sm font-semibold border transition-colors flex items-center gap-2 disabled:opacity-50"
               :class="user.enabled ? 'border-danger text-danger hover:bg-danger/8' : 'border-[#16a34a] text-[#16a34a] hover:bg-[#16a34a]/8'"
               @click="toggleStatus"
@@ -340,7 +371,7 @@ onMounted(load)
               Ce compte n'est pas encore activé. Un nouveau lien remplace le précédent.
             </p>
             <button
-              :disabled="savingInvitation"
+              :disabled="savingInvitation || locked"
               class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
               @click="resendInvitation"
             >
@@ -357,13 +388,33 @@ onMounted(load)
               tant que le lien n'est pas utilisé.
             </p>
             <button
-              :disabled="savingPasswordReset"
+              :disabled="savingPasswordReset || locked"
               class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
               @click="sendPasswordReset"
             >
               <Icon name="lock_reset" :size="18"/>
               Envoyer un lien de réinitialisation
             </button>
+          </div>
+
+          <!-- Transfert de propriété : visible du seul propriétaire, sur un autre administrateur -->
+          <div v-if="auth.isOwner && !isSelf && user.role === ROLES.ADMIN" class="border-t border-line-soft pt-4">
+            <p class="block text-[12px] font-semibold text-muted uppercase tracking-wide mb-1.5">Propriété</p>
+            <p class="text-[13px] text-ink-soft mb-3">
+              Le propriétaire est le seul compte que personne ne peut rétrograder ni supprimer. Vous resterez
+              administrateur, mais ce compte gérera désormais les autres administrateurs, vous compris.
+            </p>
+            <button
+              :disabled="savingOwnership || !canReceiveOwnership"
+              class="h-10 px-4 rounded-[10px] text-sm font-semibold border border-primary text-primary hover:bg-primary/8 transition-colors flex items-center gap-2 disabled:opacity-50"
+              @click="showTransfer = true"
+            >
+              <Icon name="shield_person" :size="18"/>
+              Transférer la propriété
+            </button>
+            <p v-if="!canReceiveOwnership" class="text-[12px] text-muted mt-1.5">
+              Le compte doit être actif et activé pour recevoir la propriété.
+            </p>
           </div>
         </div>
       </div>
@@ -415,5 +466,35 @@ onMounted(load)
         </button>
       </div>
     </div>
+
+    <!-- Confirmation du transfert de propriété : l'action ne se défait que par le nouveau propriétaire -->
+    <Modal v-if="showTransfer" @close="showTransfer = false">
+      <div class="px-6 pt-6 pb-6 w-full max-w-[440px] text-center">
+        <div class="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4">
+          <Icon name="shield_person" :size="26"/>
+        </div>
+        <h3 class="text-[18px] font-semibold text-navy mb-2">Transférer la propriété</h3>
+        <p class="text-[14px] text-ink-soft mb-4">
+          <strong>{{ fullName }}</strong> deviendra propriétaire de la plateforme. Vous resterez administrateur,
+          mais seul ce compte pourra vous rendre la propriété.
+        </p>
+        <div class="flex justify-center gap-3">
+          <button
+            type="button"
+            class="h-10 px-4 rounded-[10px] border border-input text-ink text-sm font-semibold hover:bg-surface-tint transition-colors"
+            @click="showTransfer = false"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            class="h-10 px-5 rounded-[10px] bg-primary text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+            @click="confirmTransfer"
+          >
+            Transférer
+          </button>
+        </div>
+      </div>
+    </Modal>
   </template>
 </template>

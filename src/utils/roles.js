@@ -47,3 +47,34 @@ export function manageableRoles(actorRole) {
         ? [ROLES.USER, ROLES.TEACHER, ROLES.MANAGER, ROLES.ADMIN]
         : [ROLES.USER, ROLES.TEACHER]
 }
+
+/**
+ * Rôles que l'utilisateur connecté peut attribuer, à la création ou par changement de
+ * rôle. Seul le propriétaire de la plateforme nomme des administrateurs.
+ * @param {string} actorRole rôle de l'utilisateur connecté
+ * @param {boolean} actorIsOwner l'utilisateur connecté est-il propriétaire
+ * @returns {string[]}
+ */
+export function grantableRoles(actorRole, actorIsOwner) {
+    return manageableRoles(actorRole).filter((role) => role !== ROLES.ADMIN || actorIsOwner)
+}
+
+/**
+ * Indique si l'utilisateur connecté peut modifier un compte : identité, rôle, statut,
+ * invitation et mot de passe. Même règle que le back.
+ * - Personne d'autre que son titulaire ne touche au compte propriétaire.
+ * - Seul le propriétaire gère les autres comptes administrateurs.
+ * Une action sur son propre compte n'est pas concernée : chaque écran la traite à part.
+ * @param {{id: number, owner?: boolean}} actor l'utilisateur connecté
+ * @param {{id: number, role: string, owner?: boolean}} target le compte visé
+ * @returns {boolean}
+ */
+export function canManageAccount(actor, target) {
+    if (!actor || !target || actor.id === target.id) {
+        return true
+    }
+    if (target.owner) {
+        return false
+    }
+    return target.role !== ROLES.ADMIN || Boolean(actor.owner)
+}
