@@ -17,3 +17,19 @@ export function reviewerMention(submission) {
     }
     return null
 }
+
+/**
+ * Pastille du correcteur, placée à côté du statut pour rester visible.
+ * L'icône distingue une correction de l'administration de celle d'un formateur.
+ *
+ * @param {?{reviewerName?: string, reviewedByAdministration?: boolean}} submission
+ * @returns {?{label: string, variant: string, icon: string}} la pastille, ou null
+ */
+export function reviewerChip(submission) {
+    const label = reviewerMention(submission)
+    if (!label) {
+        return null
+    }
+    const icon = submission.reviewedByAdministration ? 'shield_person' : 'person'
+    return {label, variant: 'primary', icon}
+}

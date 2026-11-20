@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest'
-import {reviewerMention} from './reviewer'
+import {reviewerChip, reviewerMention} from './reviewer'
 
 describe('reviewerMention', () => {
     it("donne le nom du correcteur à l'équipe", () => {
@@ -17,5 +17,16 @@ describe('reviewerMention', () => {
 
     it('ne dit rien sans soumission', () => {
         expect(reviewerMention(null)).toBeNull()
+    })
+})
+
+describe('reviewerChip', () => {
+    it("marque une correction de l'administration avec son icône", () => {
+        expect(reviewerChip({reviewedByAdministration: true}))
+            .toEqual({label: "Corrigé par l'administration", variant: 'primary', icon: 'shield_person'})
+    })
+
+    it("ne crée pas de pastille quand il n'y a rien à dire", () => {
+        expect(reviewerChip({reviewedByAdministration: false})).toBeNull()
     })
 })

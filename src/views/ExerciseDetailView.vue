@@ -18,7 +18,7 @@ import {
 } from '@/utils/upload'
 import {saveBlobAs} from '@/utils/download'
 import {formatGrade} from '@/utils/grading'
-import {reviewerMention} from '@/utils/reviewer'
+import {reviewerChip} from '@/utils/reviewer'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
@@ -380,7 +380,11 @@ onMounted(load)
                 <span class="text-[14px] font-medium text-ink">Tentative {{
                     s.attemptNumber
                   }} - {{ formatDate(s.submittedAt) }}</span>
-                <StatusChip v-bind="statusChip(s.status)"/>
+                <div class="flex items-center gap-2 flex-wrap justify-end">
+                  <!-- Le correcteur est affiché à côté du statut pour ne pas passer inaperçu. -->
+                  <StatusChip v-if="reviewerChip(s)" v-bind="reviewerChip(s)"/>
+                  <StatusChip v-bind="statusChip(s.status)"/>
+                </div>
               </div>
 
               <!-- Contenu : édition en place si la soumission est en attente -->
@@ -479,8 +483,6 @@ onMounted(load)
                 <p class="text-[14px] text-ink">{{ s.feedback }}</p>
               </div>
 
-              <!-- Correction faite par l'administration et non par un formateur -->
-              <p v-if="reviewerMention(s)" class="text-[13px] text-muted mt-1">{{ reviewerMention(s) }}</p>
             </div>
           </div>
         </div>
