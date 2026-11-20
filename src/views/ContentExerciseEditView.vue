@@ -13,9 +13,12 @@ import Icon from '@/components/Icon.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import ExerciseAttachments from '@/components/ExerciseAttachments.vue'
+import ExerciseCorrectors from '@/components/ExerciseCorrectors.vue'
+import {useAuthStore} from '@/stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+const auth = useAuthStore()
 
 const isEdit = computed(() => route.name === 'content-exercise-edit')
 const exerciseId = computed(() => (isEdit.value ? Number(route.params.id) : null))
@@ -25,6 +28,8 @@ const saving = ref(false)
 const formError = ref('')
 const moduleId = ref(null)
 const moduleName = ref('')
+// Bloc de l'exercice : les correcteurs se choisissent parmi ses formateurs.
+const blockId = ref(null)
 const form = reactive({name: '', content: ''})
 
 // Référence à l'éditeur Markdown, pour récupérer ses images uploadées en session.
@@ -42,6 +47,8 @@ function load() {
       form.content = exercise.content || ''
       moduleId.value = exercise.moduleId
       moduleName.value = exercise.moduleName || 'Module'
+      const module = await moduleService.getModule(exercise.moduleId)
+      blockId.value = module.blockId
     } else {
       moduleId.value = Number(route.params.moduleId)
       const module = await moduleService.getModule(moduleId.value)
@@ -152,6 +159,12 @@ onMounted(load)
            composant garde les fichiers de côté et les envoie après l'enregistrement. -->
       <div class="border-t border-line-soft pt-5">
         <ExerciseAttachments ref="attachmentsRef" :exercise-id="exerciseId" manageable/>
+      </div>
+
+      <!-- Correcteurs : en modification seulement, l'exercice doit exister. Le formateur
+           qui le crée en devient le correcteur. -->
+      <div v-if="isEdit && blockId" class="border-t border-line-soft pt-5">
+        <ExerciseCorrectors :exercise-id="exerciseId" :block-id="blockId" :editable="auth.hasGlobalScope"/>
       </div>
 
       <p v-if="formError" class="text-[13px] text-danger">{{ formError }}</p>

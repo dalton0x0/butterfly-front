@@ -12,6 +12,7 @@
 import {computed, onMounted, ref} from 'vue'
 import {formatDate} from '@/utils/date'
 import {formatGrade} from '@/utils/grading'
+import {reviewerMention} from '@/utils/reviewer'
 import {userService} from '@/services/userService'
 import {correctionService} from '@/services/correctionService'
 import Icon from './Icon.vue'
@@ -267,6 +268,9 @@ onMounted(load)
                   </div>
                   <p v-if="submission.feedback" class="text-[13px] text-ink-soft mt-1 whitespace-pre-wrap break-words">
                     {{ submission.feedback }}
+                  </p>
+                  <p v-if="reviewerMention(submission)" class="text-[12px] text-muted mt-1">
+                    {{ reviewerMention(submission) }}
                   </p>
                 </li>
               </ol>
