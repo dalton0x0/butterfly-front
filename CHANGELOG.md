@@ -11,6 +11,56 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.7.0](https://github.com/dalton0x0/butterfly-front/compare/v3.6.0...v3.7.0) - 2026-11-20
+
+Correction ouverte à l'administration. L'administrateur a le lien « Corrections » et le
+gestionnaire aussi quand le réglage « Correction par les gestionnaires » est ouvert : la route
+vérifie la même règle (`requiresReview`, `auth.canReview`). Ce réglage, réservé à
+l'administrateur, rejoint `PlatformSettingsCard` et la navigation suit sans rechargement. La file
+de correction et l'aperçu d'un apprenant nomment le correcteur, la page d'exercice de l'apprenant
+indique « Corrigé par l'administration ». Cette mention est une pastille placée à côté du statut
+(`reviewerChip`) avec une icône propre à l'administration pour ne pas passer inaperçue. La
+modification d'un exercice affiche ses correcteurs en pastilles (`ExerciseCorrectors`).
+L'administration en retire un d'un clic ou ouvre « Gérer les correcteurs », une fenêtre avec une
+recherche parmi les formateurs du bloc. Le formateur voit les pastilles sans les modifier. La page
+des membres d'un bloc ajoute la carte « Correcteurs des exercices » (`BlockCorrectorsCard`). Elle
+signale un correcteur qui n'est plus formateur du bloc et transfère toutes ses corrections à un
+autre formateur en une fois.
+
+Propriétaire de la plateforme. Une pastille le signale dans la liste et sur la fiche. Sur un compte
+que l'utilisateur connecté ne peut pas modifier, la fiche explique pourquoi et désactive ses
+actions et la liste grise celles de la ligne (`canManageAccount`). Le rôle Admin n'est proposé
+qu'au propriétaire (`grantableRoles`). Le propriétaire transfère la propriété depuis la fiche d'un
+autre administrateur après confirmation.
+
+Les sessions du profil commencent par l'appareil (« Firefox sur macOS ») puis donnent la date de
+connexion, la dernière activité et l'adresse masquée. La date affichée jusqu'ici comme ouverture de
+session était en réalité la dernière activité.
+
+Le tableau de bord d'administration lit `GET /users/me/admin-dashboard` en une requête au lieu de
+dix. Deux cartes s'ajoutent : les rendus qui attendent depuis le plus longtemps et les apprenants à
+relancer. Les trois tableaux de bord partagent maintenant la même mise en page : un en-tête, quatre
+indicateurs (`KpiCard`) puis des rangées de deux cartes de même largeur (`DashboardSection`). Pour
+l'administration, les chiffres secondaires passent dans une carte « Plateforme » et les lignes
+qu'un gestionnaire ne gère pas disparaissent. Le tableau « Mes blocs » du formateur donne le même
+style à ses deux actions et surligne la ligne survolée. L'apprenant voit au plus quatre blocs avec
+un lien « Tous mes blocs » et ses derniers badges sur toute la largeur.
+
+La page d'un module affiche le vrai statut de chaque exercice (« En attente de correction »,
+« À retravailler »...) au lieu de « À faire » dans les onglets Tous et Exercices. Les pastilles
+viennent de `exerciseStatusChip` partagé avec « Mes exercices ». Le quiz réussi a sa pastille
+« Réussi » dans l'onglet Quiz comme dans l'onglet Tous.
+
+Les onglets Cours, Exercices et Quiz de l'aperçu d'un apprenant sont paginés par 10 au lieu
+d'afficher 50 lignes. L'aperçu montre aussi ses badges (`UserBadgesCard`). Le tableau de bord
+de l'apprenant affiche ses derniers gains d'XP (`XpHistoryCard`). La couleur des niveaux de badge
+passe dans `badgeLevelColor`. « Mes badges » quitte le menu du compte pour la barre de navigation
+de l'apprenant, à côté de ses autres pages.
+
+`.trivyignore` ignore jusqu'au 27 novembre six failles de nginx 1.30.6, corrigées en 1.30.7 mais
+pas encore dans l'image `nginx-unprivileged`. Aucune n'est atteignable avec la configuration du
+conteneur (HTTP/1.1 sans TLS, sans HTTP/2, HTTP/3 ni proxy mail).
+
 ## [v3.6.0](https://github.com/dalton0x0/butterfly-front/compare/v3.5.0...v3.6.0) - 2026-11-17
 
 Les tableaux défilent horizontalement sur petit écran : utilisateurs, apprenants, promotions,
