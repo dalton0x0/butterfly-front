@@ -8,11 +8,15 @@
 // - Gestion des blocs réservée. Activée, les formateurs ne créent plus de blocs et ne
 //   modifient plus leur fiche (nom, description, couverture, prérequis). Ils remplissent
 //   toujours les blocs qui leur sont confiés.
+// - Correction par les gestionnaires. Réglage de l'administrateur seul : un gestionnaire
+//   ne s'attribue pas lui-même ce droit. Selon les structures, l'administration corrige
+//   ou non.
 //
 // Chaque interrupteur enregistre aussitôt, comme les préférences de notification, et
 // revient en arrière si le serveur refuse.
 import {onMounted, reactive, ref} from 'vue'
 import {authService} from '@/services/authService'
+import {useAuthStore} from '@/stores/auth'
 import {settingsService} from '@/services/settingsService'
 import {mapBackendError} from '@/utils/validators'
 import SettingSwitch from '@/components/SettingSwitch.vue'
@@ -70,9 +74,24 @@ const blockManagement = useSetting(
   (restricted) => settingsService.updateBlockCreationRestricted(restricted)
 )
 
+const auth = useAuthStore()
+
+const managerReview = useSetting(
+  async () => (await settingsService.getSettings()).managerReviewEnabled,
+  async (enabled) => {
+    const saved = await settingsService.updateManagerReviewEnabled(enabled)
+    // La navigation des gestionnaires dépend de ce réglage : le store suit sans rechargement.
+    auth.setManagerReviewEnabled(saved)
+    return saved
+  }
+)
+
 onMounted(() => {
   registration.init()
   blockManagement.init()
+  if (auth.isAdmin) {
+    managerReview.init()
+  }
 })
 </script>
 
@@ -116,6 +135,26 @@ onMounted(() => {
       <p v-if="blockManagement.saved" class="text-[12px] text-success mt-2">Enregistré</p>
       <p v-if="blockManagement.error" class="text-[13px] text-danger bg-danger/8 rounded-[10px] px-3 py-2 mt-2">
         {{ blockManagement.error }}
+      </p>
+    </div>
+
+    <div v-if="auth.isAdmin" class="border-t border-line-soft mt-4 pt-4">
+      <SettingSwitch
+        id="setting-manager-review"
+        label="Correction par les gestionnaires"
+        :description="managerReview.on
+          ? 'Activée : les gestionnaires corrigent les exercices, comme l\'administrateur.'
+          : 'Désactivée : seuls les formateurs et l\'administrateur corrigent.'"
+        :checked="managerReview.on"
+        :disabled="managerReview.busy"
+        @toggle="managerReview.toggle"
+      />
+      <p v-if="managerReview.on" class="text-[12px] text-muted mt-2">
+        L'apprenant voit alors « Corrigé par l'administration » sur les corrections qui ne viennent pas d'un formateur.
+      </p>
+      <p v-if="managerReview.saved" class="text-[12px] text-success mt-2">Enregistré</p>
+      <p v-if="managerReview.error" class="text-[13px] text-danger bg-danger/8 rounded-[10px] px-3 py-2 mt-2">
+        {{ managerReview.error }}
       </p>
     </div>
   </div>

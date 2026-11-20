@@ -5,6 +5,7 @@ import http from './http'
   - GET /api/settings vers LearningSettingsResponse { maxGrade, blockCreationRestricted }
   - PUT /api/settings/registration vers RegistrationStatusResponse { open } (ADMIN, MANAGER)
   - PUT /api/settings/block-creation { restricted } (ADMIN, MANAGER)
+  - PUT /api/settings/manager-review { enabled } (ADMIN)
 */
 export const settingsService = {
 
@@ -40,5 +41,17 @@ export const settingsService = {
     async updateBlockCreationRestricted(restricted) {
         await http.put('/settings/block-creation', {restricted})
         return restricted
+    },
+
+    /**
+     * Ouvre ou ferme la correction des exercices aux gestionnaires. Réservé à
+     * l'administrateur.
+     *
+     * @param {boolean} enabled
+     * @returns {Promise<boolean>} l'état enregistré
+     */
+    async updateManagerReviewEnabled(enabled) {
+        await http.put('/settings/manager-review', {enabled})
+        return enabled
     }
 }
