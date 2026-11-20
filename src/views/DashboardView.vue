@@ -9,9 +9,10 @@ import {useAuthStore} from '@/stores/auth'
 import {dashboardService} from '@/services/dashboardService'
 import {mediaUrl} from '@/utils/media'
 import Icon from '@/components/Icon.vue'
-import {badgeIcon} from '@/utils/badgeIcons'
+import {badgeIcon, badgeLevelColor as levelColor} from '@/utils/badgeIcons'
 import ProgressBar from '@/components/ProgressBar.vue'
 import BlockCover from '@/components/BlockCover.vue'
+import XpHistoryCard from '@/components/XpHistoryCard.vue'
 
 // Date courte (jour et mois) pour le fil d'activité et les badges récents.
 function formatShortDate(value) {
@@ -29,12 +30,6 @@ const assignedBlocks = computed(() => dashboard.value?.assignedBlocks || [])
 const latestBadges = computed(() => (dashboard.value?.latestBadges || []).slice(0, 3))
 
 // Niveaux de badge : couleur de l'anneau.
-const LEVEL_COLORS = {BRONZE: '#b45309', SILVER: '#94a3b8', GOLD: '#f59e0b', PLATINUM: '#7c3aed'}
-
-function levelColor(level) {
-  return LEVEL_COLORS[level] || '#94a3b8'
-}
-
 const kpis = computed(() => [
   {label: 'Cours terminés', value: overview.value.totalCoursesCompleted ?? 0, icon: 'menu_book'},
   {label: 'Exercices validés', value: overview.value.totalExercisesValidated ?? 0, icon: 'terminal'},
@@ -134,8 +129,8 @@ onMounted(load)
       </RouterLink>
     </div>
 
-    <!-- Activité + badges -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <!-- Activité, badges et gains d'XP. items-start : chaque carte garde sa hauteur. -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
       <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
         <h3 class="text-[17px] font-semibold text-ink mb-4">Activité récente</h3>
         <p v-if="recentActivity.length === 0" class="text-[14px] text-muted">Aucune activité récente.</p>
@@ -155,23 +150,27 @@ onMounted(load)
         </ul>
       </div>
 
-      <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-        <h3 class="text-[17px] font-semibold text-ink mb-4">Derniers badges</h3>
-        <p v-if="latestBadges.length === 0" class="text-[14px] text-muted mb-4">Aucun badge obtenu pour le moment.</p>
-        <div v-else class="flex justify-around mb-4">
-          <div v-for="ub in latestBadges" :key="ub.id" class="flex flex-col items-center text-center gap-2">
-            <div
-              class="w-16 h-16 rounded-full flex items-center justify-center"
-              :style="{ border: `3px solid ${levelColor(ub.badge?.level)}`, background: 'var(--color-surface-tint)' }"
-            >
-              <Icon :name="badgeIcon(ub.badge?.icon)" :size="28" class="text-primary"/>
+      <div class="flex flex-col gap-4">
+        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
+          <h3 class="text-[17px] font-semibold text-ink mb-4">Derniers badges</h3>
+          <p v-if="latestBadges.length === 0" class="text-[14px] text-muted mb-4">Aucun badge obtenu pour le moment.</p>
+          <div v-else class="flex justify-around mb-4">
+            <div v-for="ub in latestBadges" :key="ub.id" class="flex flex-col items-center text-center gap-2">
+              <div
+                class="w-16 h-16 rounded-full flex items-center justify-center"
+                :style="{ border: `3px solid ${levelColor(ub.badge?.level)}`, background: 'var(--color-surface-tint)' }"
+              >
+                <Icon :name="badgeIcon(ub.badge?.icon)" :size="28" class="text-primary"/>
+              </div>
+              <span class="text-[13px] font-medium text-ink">{{ ub.badge?.name }}</span>
+              <span class="text-[12px] text-muted">{{ formatShortDate(ub.earnedAt) }}</span>
             </div>
-            <span class="text-[13px] font-medium text-ink">{{ ub.badge?.name }}</span>
-            <span class="text-[12px] text-muted">{{ formatShortDate(ub.earnedAt) }}</span>
           </div>
+          <RouterLink to="/badges" class="text-sm text-primary font-semibold hover:underline">Voir tous mes badges
+          </RouterLink>
         </div>
-        <RouterLink to="/badges" class="text-sm text-primary font-semibold hover:underline">Voir tous mes badges
-        </RouterLink>
+
+        <XpHistoryCard/>
       </div>
     </div>
   </template>

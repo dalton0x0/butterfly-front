@@ -15,6 +15,7 @@ import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import LearnerProgressDetail from '@/components/LearnerProgressDetail.vue'
+import UserBadgesCard from '@/components/UserBadgesCard.vue'
 
 const route = useRoute()
 
@@ -156,6 +157,9 @@ onMounted(load)
         </li>
       </ul>
     </div>
+
+    <!-- Badges obtenus : l'équipe ne voyait que le total d'XP -->
+    <UserBadgesCard :user-id="userId"/>
 
     <!-- Détail complet, au delà des dernières activités portées par l'aperçu -->
     <LearnerProgressDetail :user-id="userId"/>
