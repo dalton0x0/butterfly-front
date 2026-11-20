@@ -131,11 +131,21 @@ onMounted(loadSessions)
         <div class="flex items-center gap-3 min-w-0">
           <Icon name="devices" :size="20" class="text-muted shrink-0"/>
           <div class="min-w-0">
-            <p class="text-[14px] text-ink flex items-center gap-2 flex-wrap">
-              Session ouverte le {{ formatSessionDate(session.createdAt) }}
+            <!-- L'appareil d'abord : c'est ce qui permet de reconnaître une session. -->
+            <p class="text-[14px] font-medium text-ink flex items-center gap-2 flex-wrap">
+              {{ session.device || 'Appareil inconnu' }}
               <StatusChip v-if="session.id === currentSessionId" label="Cet appareil" variant="success"/>
             </p>
-            <p class="text-[12px] text-muted">Expire le {{ formatSessionDate(session.expiresAt) }}</p>
+            <!-- createdAt est la date du dernier renouvellement du jeton, donc de la
+                 dernière activité. startedAt est la connexion. -->
+            <p class="text-[12px] text-muted">
+              Connecté le {{ formatSessionDate(session.startedAt || session.createdAt) }}
+              · Dernière activité le {{ formatSessionDate(session.createdAt) }}
+            </p>
+            <p class="text-[12px] text-muted">
+              <template v-if="session.ipAddress">Adresse {{ session.ipAddress }} · </template>
+              Expire le {{ formatSessionDate(session.expiresAt) }}
+            </p>
           </div>
         </div>
         <button
