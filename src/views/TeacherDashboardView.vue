@@ -11,6 +11,8 @@ import {dashboardService} from '@/services/dashboardService'
 import {formatDate} from '@/utils/date'
 import Icon from '@/components/Icon.vue'
 import Avatar from '@/components/Avatar.vue'
+import KpiCard from '@/components/KpiCard.vue'
+import DashboardSection from '@/components/DashboardSection.vue'
 
 const auth = useAuthStore()
 
@@ -80,26 +82,15 @@ onMounted(() => run(async () => {
     <template v-else>
       <!-- Indicateurs -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <div v-for="kpi in kpis" :key="kpi.label"
-             class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex items-center gap-4">
-          <div class="w-11 h-11 rounded-full bg-accent/15 text-primary flex items-center justify-center shrink-0">
-            <Icon :name="kpi.icon" :size="22"/>
-          </div>
-          <div>
-            <p class="text-[26px] font-semibold text-navy leading-none">{{ kpi.value }}</p>
-            <p class="text-[13px] text-ink-soft mt-1">{{ kpi.label }}</p>
-          </div>
-        </div>
+        <KpiCard v-for="kpi in kpis" :key="kpi.label" v-bind="kpi"/>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <!-- Rendus en attente -->
-        <section class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-          <div class="flex items-center justify-between mb-4">
-            <h2 class="text-[17px] font-semibold text-ink">Rendus qui attendent le plus</h2>
-            <RouterLink v-if="pendingCount > 0" to="/formateur/corrections"
-                        class="text-[13px] font-semibold text-primary hover:underline">Tout voir</RouterLink>
-          </div>
+        <DashboardSection title="Rendus qui attendent le plus">
+          <template v-if="pendingCount > 0" #action>
+            <RouterLink to="/formateur/corrections" class="text-primary hover:underline">Tout voir</RouterLink>
+          </template>
           <p v-if="oldestPending.length === 0" class="text-[14px] text-muted">Aucun rendu en attente.</p>
           <ul v-else class="flex flex-col divide-y divide-line-soft">
             <li v-for="item in oldestPending" :key="item.id" class="py-2.5 flex items-center gap-3">
@@ -110,20 +101,16 @@ onMounted(() => run(async () => {
               <span class="text-[12px] text-ink-soft shrink-0">Rendu le {{ formatDate(item.submittedAt) }}</span>
             </li>
           </ul>
-        </section>
+        </DashboardSection>
 
         <!-- Apprenants inactifs -->
-        <section class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h2 class="text-[17px] font-semibold text-ink">Apprenants à relancer</h2>
-              <p class="text-[13px] text-ink-soft">Aucune activité depuis au moins {{ inactivityDays }} jours</p>
-            </div>
-            <RouterLink v-if="otherInactive > 0" to="/formateur/apprenants"
-                        class="text-[13px] font-semibold text-primary hover:underline">
+        <DashboardSection title="Apprenants à relancer"
+                          :subtitle="`Aucune activité depuis au moins ${inactivityDays} jours`">
+          <template v-if="otherInactive > 0" #action>
+            <RouterLink to="/formateur/apprenants" class="text-primary hover:underline">
               Et {{ otherInactive }} autre{{ otherInactive > 1 ? 's' : '' }}
             </RouterLink>
-          </div>
+          </template>
           <p v-if="inactiveLearners.length === 0" class="text-[14px] text-muted">
             Personne à relancer : tous vos apprenants ont eu une activité ces {{ inactivityDays }} derniers jours.
           </p>
@@ -140,7 +127,7 @@ onMounted(() => run(async () => {
               </RouterLink>
             </li>
           </ul>
-        </section>
+        </DashboardSection>
       </div>
 
       <!-- Mes blocs -->
@@ -157,8 +144,9 @@ onMounted(() => run(async () => {
           </tr>
           </thead>
           <tbody>
-          <tr v-for="block in blocks" :key="block.blockId" class="border-t border-line-soft">
-            <td class="px-5 py-3 text-ink">{{ block.blockName }}</td>
+          <tr v-for="block in blocks" :key="block.blockId"
+              class="border-t border-line-soft hover:bg-surface-tint/60 transition-colors">
+            <td class="px-5 py-3 text-ink font-medium">{{ block.blockName }}</td>
             <td class="px-5 py-3 text-ink-soft">{{ block.learnerCount }}</td>
             <td class="px-5 py-3">
               <span :class="block.pendingCount > 0 ? 'text-primary font-semibold' : 'text-ink-soft'">
@@ -166,14 +154,17 @@ onMounted(() => run(async () => {
               </span>
             </td>
             <td class="px-5 py-3 text-right">
+              <!-- Les deux actions ont le même style : la colonne se lit d'un bloc. -->
               <RouterLink v-if="block.pendingCount > 0"
                           :to="{path: '/formateur/corrections', query: {blockId: block.blockId}}"
-                          class="text-[13px] font-semibold text-primary hover:underline">
+                          class="inline-flex items-center gap-1 text-[13px] font-semibold text-primary hover:underline">
                 Corriger ce bloc
+                <Icon name="chevron_right" :size="16"/>
               </RouterLink>
               <RouterLink v-else :to="`/formateur/contenus/blocs/${block.blockId}`"
-                          class="text-[13px] font-semibold text-ink-soft hover:underline">
+                          class="inline-flex items-center gap-1 text-[13px] font-semibold text-primary hover:underline">
                 Voir le contenu
+                <Icon name="chevron_right" :size="16"/>
               </RouterLink>
             </td>
           </tr>

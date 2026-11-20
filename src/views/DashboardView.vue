@@ -1,6 +1,10 @@
 <script setup>
 // Tableau de bord apprenant : en-tête, KPIs, blocs assignés, activité récente,
-// derniers badges. Tout vient d'un seul appel : GET /api/users/me/dashboard.
+// derniers gains d'XP et derniers badges. Tout vient d'un seul appel :
+// GET /api/users/me/dashboard, sauf l'historique d'XP chargé par sa carte.
+//
+// La mise en page suit celle des autres rôles : un en-tête, quatre indicateurs, puis des
+// rangées de deux cartes de même largeur.
 import {computed, onMounted, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {formatDate} from '@/utils/date'
@@ -13,6 +17,11 @@ import {badgeIcon, badgeLevelColor as levelColor} from '@/utils/badgeIcons'
 import ProgressBar from '@/components/ProgressBar.vue'
 import BlockCover from '@/components/BlockCover.vue'
 import XpHistoryCard from '@/components/XpHistoryCard.vue'
+import KpiCard from '@/components/KpiCard.vue'
+import DashboardSection from '@/components/DashboardSection.vue'
+
+// Le tableau de bord donne un aperçu : la liste complète des blocs a sa propre page.
+const MAX_DASHBOARD_BLOCKS = 4
 
 // Date courte (jour et mois) pour le fil d'activité et les badges récents.
 function formatShortDate(value) {
@@ -27,9 +36,9 @@ const dashboard = ref(null)
 const overview = computed(() => dashboard.value?.overview || {})
 const streak = computed(() => dashboard.value?.streak || {})
 const assignedBlocks = computed(() => dashboard.value?.assignedBlocks || [])
-const latestBadges = computed(() => (dashboard.value?.latestBadges || []).slice(0, 3))
+const shownBlocks = computed(() => assignedBlocks.value.slice(0, MAX_DASHBOARD_BLOCKS))
+const latestBadges = computed(() => dashboard.value?.latestBadges || [])
 
-// Niveaux de badge : couleur de l'anneau.
 const kpis = computed(() => [
   {label: 'Cours terminés', value: overview.value.totalCoursesCompleted ?? 0, icon: 'menu_book'},
   {label: 'Exercices validés', value: overview.value.totalExercisesValidated ?? 0, icon: 'terminal'},
@@ -60,43 +69,31 @@ onMounted(load)
         <h1 class="text-[30px] font-semibold text-navy">Bonjour {{ auth.user?.firstName }}</h1>
         <p class="text-ink-soft mt-1">Continuez votre progression.</p>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <span
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
-          <Icon name="bolt" :size="18"/> {{ overview.totalXp ?? 0 }} XP
-        </span>
-        <span
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
-          <Icon name="local_fire_department" :size="18"/> Série : {{ streak.currentStreak ?? 0 }} jours
-        </span>
-        <span
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium">
-          <Icon name="quiz" :size="18"/> {{ overview.totalQuizzesPassed ?? 0 }} quiz réussis
-        </span>
-      </div>
+      <!-- La série n'est pas un indicateur cumulé : elle reste à part, près du nom. -->
+      <span
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-tint text-primary text-sm font-medium self-start">
+        <Icon name="local_fire_department" :size="18"/> Série : {{ streak.currentStreak ?? 0 }} jours
+      </span>
     </div>
 
-    <!-- KPIs -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-      <div v-for="kpi in kpis" :key="kpi.label"
-           class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5 flex flex-col gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 rounded-xl bg-accent/15 flex items-center justify-center text-primary">
-            <Icon :name="kpi.icon" :size="22"/>
-          </div>
-          <span class="text-[13px] text-ink-soft">{{ kpi.label }}</span>
-        </div>
-        <div class="text-2xl font-semibold text-ink tabular-nums">{{ kpi.value }}</div>
-      </div>
+    <!-- Indicateurs -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+      <KpiCard v-for="kpi in kpis" :key="kpi.label" v-bind="kpi"/>
     </div>
 
     <!-- Blocs assignés -->
-    <h2 class="text-[22px] font-semibold text-navy mb-4">Mes blocs de compétences</h2>
-    <div v-if="assignedBlocks.length === 0" class="text-[15px] text-muted mb-10">Aucun bloc assigné pour le moment.
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-[22px] font-semibold text-navy">Mes blocs de compétences</h2>
+      <RouterLink v-if="assignedBlocks.length > MAX_DASHBOARD_BLOCKS" to="/blocs"
+                  class="text-[13px] font-semibold text-primary hover:underline">
+        Tous mes blocs ({{ assignedBlocks.length }})
+      </RouterLink>
     </div>
-    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-10">
+    <div v-if="assignedBlocks.length === 0" class="text-[15px] text-muted mb-8">Aucun bloc assigné pour le moment.
+    </div>
+    <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
       <RouterLink
-        v-for="block in assignedBlocks"
+        v-for="block in shownBlocks"
         :key="block.blockId"
         :to="`/blocs/${block.blockId}`"
         class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-4 flex items-center gap-4 hover:shadow-md transition-shadow"
@@ -121,57 +118,49 @@ onMounted(load)
             terminés</p>
           <ProgressBar :value="Math.round(block.overallPercent || 0)" show-label/>
         </div>
-        <button
-          class="shrink-0 h-10 px-4 rounded-[10px] text-white text-sm font-semibold hover:opacity-90 transition-opacity hidden sm:block"
+        <span
+          class="shrink-0 h-10 px-4 rounded-[10px] text-white text-sm font-semibold items-center hidden sm:inline-flex"
           :class="block.locked ? 'bg-muted' : 'bg-primary'">
           {{ block.locked ? 'Verrouillé' : 'Continuer' }}
-        </button>
+        </span>
       </RouterLink>
     </div>
 
-    <!-- Activité, badges et gains d'XP. items-start : chaque carte garde sa hauteur. -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:items-start">
-      <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-        <h3 class="text-[17px] font-semibold text-ink mb-4">Activité récente</h3>
+    <!-- Rangée de deux cartes, puis les badges sur toute la largeur. -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <DashboardSection title="Activité récente">
         <p v-if="recentActivity.length === 0" class="text-[14px] text-muted">Aucune activité récente.</p>
-        <ul v-else>
-          <li
-            v-for="(item, i) in recentActivity"
-            :key="i"
-            class="flex items-center gap-3 py-2.5"
-            :class="{ 'border-t border-line-soft': i > 0 }"
-          >
+        <ul v-else class="flex flex-col divide-y divide-line-soft">
+          <li v-for="(item, i) in recentActivity" :key="i" class="flex items-center gap-3 py-2.5">
             <div class="w-8 h-8 rounded-full bg-surface-tint flex items-center justify-center text-primary shrink-0">
               <Icon :name="item.icon" :size="18"/>
             </div>
-            <span class="text-[15px] text-ink flex-1">{{ item.text }}</span>
-            <span class="text-[13px] text-muted shrink-0">{{ formatShortDate(item.at) }}</span>
+            <span class="text-[14px] text-ink flex-1">{{ item.text }}</span>
+            <span class="text-[12px] text-ink-soft shrink-0">{{ formatShortDate(item.at) }}</span>
           </li>
         </ul>
-      </div>
+      </DashboardSection>
 
-      <div class="flex flex-col gap-4">
-        <div class="bg-surface rounded-2xl shadow-[var(--shadow-card)] p-5">
-          <h3 class="text-[17px] font-semibold text-ink mb-4">Derniers badges</h3>
-          <p v-if="latestBadges.length === 0" class="text-[14px] text-muted mb-4">Aucun badge obtenu pour le moment.</p>
-          <div v-else class="flex justify-around mb-4">
-            <div v-for="ub in latestBadges" :key="ub.id" class="flex flex-col items-center text-center gap-2">
-              <div
-                class="w-16 h-16 rounded-full flex items-center justify-center"
-                :style="{ border: `3px solid ${levelColor(ub.badge?.level)}`, background: 'var(--color-surface-tint)' }"
-              >
-                <Icon :name="badgeIcon(ub.badge?.icon)" :size="28" class="text-primary"/>
-              </div>
-              <span class="text-[13px] font-medium text-ink">{{ ub.badge?.name }}</span>
-              <span class="text-[12px] text-muted">{{ formatShortDate(ub.earnedAt) }}</span>
-            </div>
-          </div>
-          <RouterLink to="/badges" class="text-sm text-primary font-semibold hover:underline">Voir tous mes badges
-          </RouterLink>
-        </div>
-
-        <XpHistoryCard/>
-      </div>
+      <XpHistoryCard/>
     </div>
+
+    <DashboardSection title="Derniers badges">
+      <template #action>
+        <RouterLink to="/badges" class="text-primary hover:underline">Voir tous mes badges</RouterLink>
+      </template>
+      <p v-if="latestBadges.length === 0" class="text-[14px] text-muted">Aucun badge obtenu pour le moment.</p>
+      <div v-else class="flex flex-wrap gap-8">
+        <div v-for="ub in latestBadges" :key="ub.id" class="flex flex-col items-center text-center gap-2 w-24">
+          <div
+            class="w-16 h-16 rounded-full flex items-center justify-center"
+            :style="{ border: `3px solid ${levelColor(ub.badge?.level)}`, background: 'var(--color-surface-tint)' }"
+          >
+            <Icon :name="badgeIcon(ub.badge?.icon)" :size="28" class="text-primary"/>
+          </div>
+          <span class="text-[13px] font-medium text-ink">{{ ub.badge?.name }}</span>
+          <span class="text-[12px] text-muted">{{ formatShortDate(ub.earnedAt) }}</span>
+        </div>
+      </div>
+    </DashboardSection>
   </template>
 </template>
