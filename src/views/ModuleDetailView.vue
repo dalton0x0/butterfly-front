@@ -1,8 +1,9 @@
 <script setup>
 // Détail d'un module : en-tête + onglets Cours / Exercices / Quiz.
 // GET /api/modules/{id} renvoie en un seul appel les cours, exercices et le quiz,
-// chacun avec un booléen "completed". La progression de l'en-tête est dérivée de
-// ces éléments réels.
+// chacun avec un booléen "completed". Un exercice porte aussi son statut (rendu, à
+// retravailler...) pour afficher le même état que « Mes exercices ». La progression de
+// l'en-tête est dérivée de ces éléments réels.
 import {computed, onMounted, ref} from 'vue'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {useRoute} from 'vue-router'
@@ -10,8 +11,9 @@ import {moduleService} from '@/services/moduleService'
 import Icon from '@/components/Icon.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
 import StatusChip from '@/components/StatusChip.vue'
+import {exerciseStatusChip} from '@/utils/exerciseStatus'
 import Breadcrumb from '@/components/Breadcrumb.vue'
-import {buildModuleSequence, contentKindLabel, contentRoute} from '@/utils/moduleSequence'
+import {buildModuleSequence, CONTENT_TYPES, contentKindLabel, contentRoute} from '@/utils/moduleSequence'
 
 const route = useRoute()
 const {loading, error, run} = useAsyncTask('Impossible de charger le module.', {loadingFromStart: true})
@@ -68,6 +70,18 @@ const breadcrumb = computed(() => {
   items.push({label: module.value?.name || 'Module'})
   return items
 })
+
+// Pastille d'un élément de l'onglet Tous : le statut détaillé pour un exercice, terminé
+// ou non pour un cours et le quiz.
+function itemChip(item) {
+  if (item._type === CONTENT_TYPES.EXERCISE) {
+    return exerciseStatusChip(item.status)
+  }
+  if (item._type === CONTENT_TYPES.QUIZ) {
+    return item.completed ? {label: 'Réussi', variant: 'success'} : {label: 'Non tenté', variant: 'neutral'}
+  }
+  return item.completed ? {label: 'Terminé', variant: 'success'} : {label: 'À commencer', variant: 'neutral'}
+}
 
 function load() {
   return run(async () => {
@@ -148,8 +162,7 @@ onMounted(load)
         />
         <StatusChip
           v-else-if="!informational"
-          :label="item.completed ? 'Terminé' : 'À commencer'"
-          :variant="item.completed ? 'success' : 'neutral'"
+          v-bind="itemChip(item)"
         />
         <Icon v-if="!item.locked" name="chevron_right" :size="20" class="text-muted"/>
       </component>
@@ -202,8 +215,7 @@ onMounted(load)
         />
         <StatusChip
           v-else
-          :label="e.completed ? 'Terminé' : 'À faire'"
-          :variant="e.completed ? 'success' : 'neutral'"
+          v-bind="exerciseStatusChip(e.status)"
         />
         <Icon v-if="!e.locked" name="chevron_right" :size="20" class="text-muted"/>
       </component>
@@ -230,8 +242,9 @@ onMounted(load)
         </div>
         <div class="flex-1">
           <span class="text-[15px] text-ink block">{{ quiz.name }}</span>
-          <span class="text-[13px] text-muted">{{ quiz.completed ? 'Déjà réussi' : 'Non tenté' }}</span>
         </div>
+        <!-- Même pastille que l'onglet Tous : l'état ne doit pas dépendre de l'onglet. -->
+        <StatusChip :label="quiz.completed ? 'Réussi' : 'Non tenté'" :variant="quiz.completed ? 'success' : 'neutral'"/>
         <span class="h-9 px-4 rounded-[10px] border border-input text-primary text-sm font-semibold flex items-center">
           {{ quiz.completed ? 'Rejouer' : 'Commencer' }}
         </span>

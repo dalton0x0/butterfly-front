@@ -8,21 +8,11 @@ import {exerciseService} from '@/services/exerciseService'
 import Icon from '@/components/Icon.vue'
 import StatusChip from '@/components/StatusChip.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
+import {exerciseStatusChip} from '@/utils/exerciseStatus'
 
 const {loading, error, run} = useAsyncTask('Impossible de charger les exercices.', {loadingFromStart: true})
 const exercises = ref([])
 
-const STATUS_MAP = {
-  NOT_STARTED: {label: 'À faire', variant: 'neutral', icon: 'radio_button_unchecked'},
-  IN_PROGRESS: {label: 'En cours', variant: 'primary', icon: 'schedule'},
-  SUBMITTED: {label: 'En attente de correction', variant: 'warning', icon: 'schedule'},
-  VALIDATED: {label: 'Corrigé', variant: 'success', icon: 'check_circle'},
-  REJECTED: {label: 'À retravailler', variant: 'danger', icon: 'cancel'}
-}
-
-function statusChip(status) {
-  return STATUS_MAP[status] || STATUS_MAP.NOT_STARTED
-}
 
 const filter = ref('all')
 const filters = [
@@ -87,7 +77,7 @@ onMounted(load)
           <span class="text-[15px] font-medium text-ink block truncate">{{ e.name }}</span>
           <span class="text-[13px] text-muted">{{ e.moduleName }}</span>
         </div>
-        <StatusChip v-bind="statusChip(e.status)"/>
+        <StatusChip v-bind="exerciseStatusChip(e.status)"/>
         <Icon name="chevron_right" :size="20" class="text-muted shrink-0"/>
       </RouterLink>
 
