@@ -44,3 +44,15 @@ export function badgeIcon(code) {
     const name = MATERIAL_BY_BADGE_ICON[code] || code
     return hasIcon(name) ? name : DEFAULT_BADGE_ICON
 }
+
+// Couleur de bordure par niveau de badge.
+const LEVEL_COLORS = {BRONZE: '#b45309', SILVER: '#94a3b8', GOLD: '#f59e0b', PLATINUM: '#7c3aed'}
+
+/**
+ * Renvoie la couleur associée au niveau d'un badge, gris par défaut.
+ * @param {string} level niveau du badge (BRONZE, SILVER, GOLD, PLATINUM)
+ * @returns {string} couleur hexadécimale
+ */
+export function badgeLevelColor(level) {
+    return LEVEL_COLORS[level] || '#94a3b8'
+}

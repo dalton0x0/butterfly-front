@@ -3,11 +3,22 @@
 
   GET /api/badges/me/progress renvoie tous les badges avec pour l'utilisateur connecté
   l'état (obtenu ou non), la valeur courante, la cible et le pourcentage.
+  GET /api/badges/users/{userId} renvoie les badges obtenus par un apprenant (équipe).
 */
 
 import http from './http'
 
 export const badgeService = {
+    /**
+     * Badges obtenus par un apprenant, les plus récents d'abord. Réservé à l'équipe :
+     * un formateur ne voit que les apprenants de ses blocs.
+     * @returns {Promise<object[]>} liste de UserBadgeResponse { id, badge, earnedAt }
+     */
+    async getUserBadges(userId) {
+        const envelope = await http.get(`/badges/users/${userId}`)
+        return envelope.data
+    },
+
     /**
      * @returns {Promise<object[]>} liste de BadgeProgressResponse
      * { badge, earned, currentValue, targetValue, percent, earnedAt }
