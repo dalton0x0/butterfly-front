@@ -10,6 +10,7 @@ import {useRoute} from 'vue-router'
 import {useAsyncTask} from '@/composables/useAsyncTask'
 import {blockService} from '@/services/blockService'
 import {promotionService} from '@/services/promotionService'
+import BlockCorrectorsCard from '@/components/BlockCorrectorsCard.vue'
 import BlockMemberList from '@/components/BlockMemberList.vue'
 import Breadcrumb from '@/components/Breadcrumb.vue'
 import Icon from '@/components/Icon.vue'
@@ -24,6 +25,7 @@ const promotions = ref([])
 
 const membersList = ref(null)
 const candidatesList = ref(null)
+const correctorsCard = ref(null)
 
 const busy = ref(false)
 const success = ref('')
@@ -62,8 +64,13 @@ async function act(action, describe) {
   try {
     const result = await action()
     success.value = describe(result)
-    // Un compte change de liste : les deux se rechargent.
-    await Promise.all([membersList.value?.reset(), candidatesList.value?.reset()])
+    // Un compte change de liste : les deux se rechargent. Un formateur retiré peut aussi
+    // rester correcteur : la carte des correcteurs se recharge pour le signaler.
+    await Promise.all([
+      membersList.value?.reset(),
+      candidatesList.value?.reset(),
+      correctorsCard.value?.reload()
+    ])
   } catch (err) {
     actionError.value = err.message || "L'opération a échoué."
   } finally {
@@ -173,6 +180,8 @@ onMounted(() => run(async () => {
           </template>
         </BlockMemberList>
       </div>
+
+      <BlockCorrectorsCard ref="correctorsCard" :block-id="blockId" class="mt-6"/>
     </template>
 
     <Modal v-if="showPromotionConfirm && candidatePromotion" @close="showPromotionConfirm = false">
