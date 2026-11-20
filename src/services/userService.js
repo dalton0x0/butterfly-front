@@ -149,6 +149,15 @@ export const userService = {
     },
 
     /**
+     * Transfère la propriété de la plateforme à un autre administrateur (propriétaire
+     * uniquement). L'ancien propriétaire reste administrateur.
+     */
+    async transferOwnership(userId) {
+        const envelope = await http.post(`/users/${userId}/ownership`)
+        return envelope.data
+    },
+
+    /**
      * Assigne une promotion à un utilisateur (ADMIN).
      */
     async assignPromotion(userId, promotionId) {

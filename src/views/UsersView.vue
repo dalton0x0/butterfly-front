@@ -3,7 +3,7 @@
 // recherche, filtres rôle et statut, et actions de cycle de vie (activer/désactiver,
 // supprimer logiquement, restaurer).
 import {computed, onMounted, ref} from 'vue'
-import {manageableRoles, roleChip} from '@/utils/roles'
+import {canManageAccount, manageableRoles, roleChip} from '@/utils/roles'
 import {formatDate} from '@/utils/date'
 import {userService} from '@/services/userService'
 import {useAuthStore} from '@/stores/auth'
@@ -34,6 +34,12 @@ const deleteError = ref('')
 
 function isSelf(user) {
   return auth.user && user.id === auth.user.id
+}
+
+// Actions de ligne interdites : son propre compte, le compte propriétaire, ou un autre
+// administrateur quand on n'est pas propriétaire. Le back refuse de la même façon.
+function isLocked(user) {
+  return isSelf(user) || !canManageAccount(auth.user, user)
 }
 
 function fullName(user) {
@@ -110,7 +116,7 @@ function switchView(deleted) {
 }
 
 async function toggleEnabled(user) {
-  if (isSelf(user)) {
+  if (isLocked(user)) {
     return
   }
   try {
@@ -123,7 +129,7 @@ async function toggleEnabled(user) {
 }
 
 function askDelete(user) {
-  if (isSelf(user)) {
+  if (isLocked(user)) {
     return
   }
   deleting.value = user
@@ -260,7 +266,10 @@ onMounted(load)
           </div>
         </td>
         <td class="px-5 py-3">
-          <StatusChip v-bind="roleChip(u.role)"/>
+          <div class="flex flex-wrap gap-1">
+            <StatusChip v-bind="roleChip(u.role)"/>
+            <StatusChip v-if="u.owner" label="Propriétaire" variant="primary"/>
+          </div>
         </td>
         <td class="px-5 py-3 text-ink-soft">{{ u.promotionName || '-' }}</td>
         <td class="px-5 py-3">
@@ -276,7 +285,8 @@ onMounted(load)
         <td class="px-5 py-3 text-right">
           <div class="flex items-center justify-end gap-1">
             <template v-if="showDeleted">
-              <button class="text-primary text-[13px] font-semibold hover:underline" @click="restoreUser(u)">Restaurer
+              <button class="text-primary text-[13px] font-semibold hover:underline disabled:text-line disabled:no-underline"
+                      :disabled="isLocked(u)" @click="restoreUser(u)">Restaurer
               </button>
             </template>
             <template v-else>
@@ -296,8 +306,8 @@ onMounted(load)
               </RouterLink>
               <button
                 class="p-2 rounded-full transition-colors"
-                :class="isSelf(u) ? 'text-line cursor-not-allowed' : 'text-ink-soft hover:bg-surface-tint'"
-                :disabled="isSelf(u)"
+                :class="isLocked(u) ? 'text-line cursor-not-allowed' : 'text-ink-soft hover:bg-surface-tint'"
+                :disabled="isLocked(u)"
                 :title="u.enabled ? 'Désactiver' : 'Activer'"
                 @click="toggleEnabled(u)"
               >
@@ -306,8 +316,8 @@ onMounted(load)
               <button
                 v-if="auth.isAdmin"
                 class="p-2 rounded-full transition-colors"
-                :class="isSelf(u) ? 'text-line cursor-not-allowed' : 'text-[#ba1a1a] hover:bg-[#ba1a1a]/8'"
-                :disabled="isSelf(u)"
+                :class="isLocked(u) ? 'text-line cursor-not-allowed' : 'text-[#ba1a1a] hover:bg-[#ba1a1a]/8'"
+                :disabled="isLocked(u)"
                 title="Supprimer"
                 @click="askDelete(u)"
               >
