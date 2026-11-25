@@ -150,6 +150,10 @@ jobs:
           tags: ${{ env.IMAGE }}:scan
           cache-from: type=gha
           cache-to: type=gha,mode=max
+            # L'étape finale est toujours reconstruite : sans cela, la couche de mise à
+            # jour des paquets venait du cache et les correctifs de sécurité publiés
+            # depuis n'étaient jamais installés.
+          no-cache-filters: runtime
 
       - name: Scan de l'image (Trivy)
         # Couvre ce que le scan des sources ne voit pas : le système de l'image de base
