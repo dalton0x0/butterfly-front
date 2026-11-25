@@ -26,7 +26,7 @@ ENV VITE_APP_TAGLINE=${VITE_APP_TAGLINE}
 RUN npm run build
 
 # Étape 2 : service des fichiers.
-FROM nginxinc/nginx-unprivileged:1.30-alpine
+FROM nginxinc/nginx-unprivileged:1.30-alpine AS runtime
 
 # Applique les correctifs de sécurité publiés depuis la dernière reconstruction de
 # l'image de base. Celle-ci n'est reconstruite que de temps en temps : sans cette mise à
