@@ -14,8 +14,9 @@ const auth = useAuthStore()
 
 const showPassword = ref(false)
 const rememberMe = ref(false)
-// Adresse non vérifiée après le délai de grâce : le serveur renvoie un 403 et le
-// message doit proposer un renvoi de lien plutôt qu'une nouvelle saisie du mot de passe.
+// Adresse pas encore confirmée (inscription publique, ou délai de grâce dépassé après un
+// changement d'adresse) : le serveur renvoie un 403 et le message doit proposer un renvoi
+// de lien plutôt qu'une nouvelle saisie du mot de passe.
 const emailNotVerified = ref(false)
 
 // Lien d'inscription affiché seulement si l'administration l'a ouverte. En cas d'erreur
