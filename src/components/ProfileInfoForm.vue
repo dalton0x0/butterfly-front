@@ -1,6 +1,6 @@
 <script setup>
 // Informations personnelles et avatar.
-import {onBeforeUnmount, reactive, ref} from 'vue'
+import {computed, onBeforeUnmount, reactive, ref} from 'vue'
 import {profileService} from '@/services/profileService'
 import {mapBackendError, validateEmail, validateRequired} from '@/utils/validators'
 import {mediaService, MEDIA_USAGE} from '@/services/mediaService'
@@ -22,7 +22,13 @@ const infoForm = reactive({
   email: auth.user?.email || '',
   avatar: auth.user?.avatar || ''
 })
-const infoErrors = reactive({firstName: '', lastName: '', email: '', avatar: '', global: ''})
+const infoErrors = reactive({firstName: '', lastName: '', email: '', avatar: '', currentPassword: '', global: ''})
+
+// Changer d'adresse demande le mot de passe actuel : l'adresse sert à récupérer le compte,
+// le serveur refuse donc ce changement sans preuve d'identité.
+const currentPassword = ref('')
+const emailIsChanging = computed(() =>
+    infoForm.email.trim().toLowerCase() !== (auth.user?.email || '').toLowerCase())
 const infoSuccess = ref('')
 const emailChanged = ref(false)
 const infoLoading = ref(false)
@@ -92,7 +98,11 @@ function validateInfo() {
   infoErrors.lastName = validateRequired(infoForm.lastName, 'Le nom est obligatoire.')
   infoErrors.email = validateEmail(infoForm.email)
   infoErrors.avatar = ''
+  infoErrors.currentPassword = emailIsChanging.value
+      ? validateRequired(currentPassword.value, "Le mot de passe actuel est obligatoire pour changer d'adresse.")
+      : ''
   return !infoErrors.firstName && !infoErrors.lastName && !infoErrors.email && !infoErrors.avatar
+      && !infoErrors.currentPassword
 }
 
 async function submitInfo() {
@@ -110,8 +120,10 @@ async function submitInfo() {
       firstName: infoForm.firstName,
       lastName: infoForm.lastName,
       email: infoForm.email,
-      avatar: infoForm.avatar.trim() ? infoForm.avatar.trim() : null
+      avatar: infoForm.avatar.trim() ? infoForm.avatar.trim() : null,
+      currentPassword: emailIsChanging.value ? currentPassword.value : null
     })
+    currentPassword.value = ''
     auth.setProfile(updated)
     // L'avatar est désormais persisté (ou retiré)
     pendingAvatar.value = null
@@ -129,7 +141,8 @@ async function submitInfo() {
     }
   } catch (err) {
     const {fieldErrors, globalError} = mapBackendError(err, {
-      knownFields: ['firstName', 'lastName', 'email', 'avatar']
+      knownFields: ['firstName', 'lastName', 'email', 'avatar', 'currentPassword'],
+      unauthorizedField: 'currentPassword'
     })
     Object.assign(infoErrors, fieldErrors)
     infoErrors.global = globalError
@@ -179,6 +192,25 @@ async function submitInfo() {
         :class="infoErrors.email ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
       />
       <p v-if="infoErrors.email" class="text-[12px] text-danger mt-1">{{ infoErrors.email }}</p>
+    </div>
+
+    <div v-if="emailIsChanging" class="mb-4">
+      <label for="profile-current-password" class="block text-[13px] text-ink-soft mb-1">
+        Mot de passe actuel
+      </label>
+      <input
+        id="profile-current-password"
+        v-model="currentPassword"
+        @input="clearInfoError('currentPassword')"
+        type="password"
+        autocomplete="current-password"
+        class="w-full h-10 px-3 border rounded-[10px] text-[15px] focus:outline-none focus:ring-1 transition-colors"
+        :class="infoErrors.currentPassword ? 'border-danger focus:border-danger focus:ring-danger' : 'border-input focus:border-primary focus:ring-primary'"
+      />
+      <p v-if="infoErrors.currentPassword" class="text-[12px] text-danger mt-1">{{ infoErrors.currentPassword }}</p>
+      <p v-else class="text-[12px] text-muted mt-1">
+        Exigé pour changer d'adresse. Un message prévient l'ancienne adresse.
+      </p>
     </div>
 
     <div class="mb-4">
