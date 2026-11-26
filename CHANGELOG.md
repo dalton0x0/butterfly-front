@@ -11,6 +11,11 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.8.1](https://github.com/dalton0x0/butterfly-front/compare/v3.8.0...v3.8.1) - 2026-11-26
+
+Le réglage « Nouvelles inscriptions » du profil décrit le nouveau moment de l'envoi : quand un
+compte créé par l'inscription publique confirme son adresse (backend v3.8.1).
+
 ## [v3.8.0](https://github.com/dalton0x0/butterfly-front/compare/v3.7.0...v3.8.0) - 2026-11-25
 
 L'inscription n'ouvre plus de session : l'écran invite à confirmer son adresse par e-mail et
