@@ -234,10 +234,18 @@ l'en-tête `Referer` envoyé aux ressources externes de la page.
 si un compte correspond à une adresse. Afficher un message différent selon le cas annulerait cette
 précaution côté interface.
 
-**Le code 403 renvoyé à la connexion est traité à part.** Il signale une adresse non vérifiée après
-le délai de grâce : les identifiants sont corrects, c'est l'état du compte qui bloque. L'écran
-affiche donc le message du serveur et un lien vers le renvoi de confirmation, plutôt que le message
-d'identifiants invalides qui orienterait vers la mauvaise piste.
+**Le code 403 renvoyé à la connexion est traité à part.** Il signale une adresse pas encore
+confirmée : inscription publique ou délai de grâce dépassé après un changement d'adresse. Les
+identifiants sont corrects, c'est l'état du compte qui bloque. L'écran affiche donc le message
+du serveur et un lien vers le renvoi de confirmation, plutôt que le message d'identifiants invalides
+qui orienterait vers la mauvaise piste.
+
+**L'inscription n'ouvre pas de session.** L'écran affiche toujours le même message « consultez
+votre boîte de réception » : le serveur répond de la même façon que l'adresse soit libre ou non.
+
+**La confirmation d'adresse attend un clic.** La page ne confirme rien à l'ouverture : les
+messageries d'entreprise (Microsoft Defender) ouvrent les liens reçus pour les analyser et une
+confirmation automatique consommerait le lien avant son destinataire.
 
 **Le bandeau de rappel vit dans le layout** et non dans une vue : il doit suivre l'utilisateur où
 qu'il aille. Il peut être masqué pour la session en cours mais réapparaît au chargement suivant,
@@ -579,7 +587,7 @@ contenu de la version.
 
 ## Historique des versions
 
-Version courante : **v3.7.0**.
+Version courante : **v3.8.0**.
 
 L'historique complet des versions avec le détail de chaque livraison est dans [CHANGELOG.md](CHANGELOG.md).
 

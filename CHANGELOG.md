@@ -11,6 +11,16 @@ commits qu'elle apporte. La toute première version renvoie vers son tag n'ayant
 
 ---
 
+## [v3.8.0](https://github.com/dalton0x0/butterfly-front/compare/v3.7.0...v3.8.0) - 2026-11-25
+
+L'inscription n'ouvre plus de session : l'écran invite à confirmer son adresse par e-mail et
+affiche le même message que l'adresse soit libre ou non. La page de confirmation attend un clic sur
+« Confirmer mon adresse » au lieu de confirmer à l'ouverture : les messageries d'entreprise
+(Microsoft Defender) ouvrent les liens reçus pour les analyser et consommaient le lien avant son
+destinataire. Changer son adresse depuis le profil demande le mot de passe actuel. Les listes et
+fiches d'utilisateurs affichent « Adresse non confirmée » au lieu de « Actif » pour un compte qui
+n'a pas encore confirmé son adresse.
+
 ## [v3.7.0](https://github.com/dalton0x0/butterfly-front/compare/v3.6.0...v3.7.0) - 2026-11-20
 
 Correction ouverte à l'administration. L'administrateur a le lien « Corrections » et le
