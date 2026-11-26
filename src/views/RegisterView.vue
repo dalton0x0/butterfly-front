@@ -1,7 +1,6 @@
 <script setup>
 // Inscription.
 import {onMounted, reactive, ref} from 'vue'
-import {useRouter} from 'vue-router'
 import {useAuthStore} from '@/stores/auth'
 import {authService} from '@/services/authService'
 import {
@@ -15,8 +14,11 @@ import Icon from '@/components/Icon.vue'
 import PasswordStrengthMeter from '@/components/PasswordStrengthMeter.vue'
 import config from "@/utils/config.js";
 
-const router = useRouter()
 const auth = useAuthStore()
+
+// Adresse affichée une fois l'inscription envoyée : le compte n'est utilisable qu'après
+// confirmation, l'écran invite donc à consulter sa boîte de réception.
+const submittedEmail = ref('')
 
 const showPassword = ref(false)
 
@@ -77,7 +79,7 @@ async function handleRegister() {
       email: form.email,
       password: form.password
     })
-    router.push('/')
+    submittedEmail.value = form.email.trim()
   } catch (err) {
     const {fieldErrors, globalError} = mapBackendError(err, {
       knownFields: ['firstName', 'lastName', 'email', 'password']
@@ -105,6 +107,22 @@ async function handleRegister() {
       </p>
       <RouterLink to="/connexion" class="text-[13px] text-primary font-semibold hover:underline">
         Retour à la connexion
+      </RouterLink>
+    </div>
+
+    <div v-else-if="submittedEmail" class="text-center">
+      <p class="text-[14px] text-ink-soft bg-surface-tint rounded-[10px] px-4 py-3 mb-4 leading-relaxed">
+        Un e-mail vient d'être envoyé à <strong class="text-ink">{{ submittedEmail }}</strong>.
+        Cliquez sur le lien qu'il contient pour confirmer votre adresse. Vous pourrez ensuite
+        vous connecter.
+      </p>
+      <p class="text-[13px] text-muted mb-6 leading-relaxed">
+        Rien reçu après quelques minutes ? Vérifiez vos courriers indésirables. Une messagerie
+        professionnelle peut aussi retenir le message : votre service informatique peut le
+        libérer.
+      </p>
+      <RouterLink to="/connexion" class="text-[13px] text-primary font-semibold hover:underline">
+        Aller à la connexion
       </RouterLink>
     </div>
 

@@ -11,18 +11,18 @@ import LogoIcon from '@/components/LogoIcon.vue'
 const route = useRoute()
 const auth = useAuthStore()
 
-const status = ref('verifying')
+// La confirmation attend un clic et ne part pas à l'ouverture de la page. Les messageries
+// d'entreprise (Microsoft Defender en tête) ouvrent les liens reçus pour les analyser,
+// parfois dans un vrai navigateur : une confirmation automatique serait déclenchée par ce
+// robot, qui consommerait le lien avant son destinataire.
+const status = ref('ready')
 
 const resendForm = reactive({email: '', error: '', loading: false, submitted: false})
 
 const token = typeof route.query.token === 'string' ? route.query.token : ''
 
 async function verify() {
-  if (!token) {
-    status.value = 'missing-token'
-    return
-  }
-
+  status.value = 'verifying'
   try {
     await authService.verifyEmail(token)
     status.value = 'verified'
@@ -55,7 +55,11 @@ async function handleResend() {
   }
 }
 
-onMounted(verify)
+onMounted(() => {
+  if (!token) {
+    status.value = 'missing-token'
+  }
+})
 </script>
 
 <template>
@@ -64,16 +68,26 @@ onMounted(verify)
       <LogoIcon/>
     </div>
 
-    <template v-if="status === 'verifying'">
-      <h2 class="text-[22px] font-semibold text-navy mb-1">Vérification en cours</h2>
-      <p class="text-[13px] text-muted text-center">Merci de patienter un instant.</p>
+    <template v-if="status === 'ready' || status === 'verifying'">
+      <h2 class="text-[22px] font-semibold text-navy mb-1">Confirmer votre adresse</h2>
+      <p class="text-[13px] text-ink-soft text-center mb-6 leading-relaxed">
+        Cliquez sur le bouton ci-dessous pour confirmer votre adresse e-mail.
+      </p>
+      <button
+        type="button"
+        :disabled="status === 'verifying'"
+        class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-60 disabled:cursor-not-allowed"
+        @click="verify"
+      >
+        {{ status === 'verifying' ? 'Confirmation en cours...' : 'Confirmer mon adresse' }}
+      </button>
     </template>
 
     <template v-else-if="status === 'verified'">
       <h2 class="text-[22px] font-semibold text-navy mb-1">Adresse confirmée</h2>
       <p class="text-[13px] text-ink-soft text-center mb-6 leading-relaxed">
-        Votre adresse e-mail est vérifiée. Votre compte pourra être récupéré en cas d'oubli
-        de mot de passe.
+        Votre adresse e-mail est confirmée. Vous pouvez utiliser votre compte, et le récupérer
+        en cas d'oubli de mot de passe.
       </p>
       <RouterLink :to="auth.isAuthenticated ? '/' : '/connexion'"
                   class="w-full h-10 rounded-[10px] bg-primary text-white text-sm font-semibold flex items-center justify-center hover:opacity-90 transition-opacity">

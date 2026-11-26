@@ -7,7 +7,7 @@
 
   Correspondance avec le back :
   - GET /api/auth/registration vers RegistrationStatusResponse { open }
-  - POST /api/auth/register vers AuthResponse
+  - POST /api/auth/register vers void (aucune session : adresse à confirmer)
   - POST /api/auth/login vers AuthResponse
   - POST /api/auth/logout vers void
   - POST /api/auth/verify-email vers void
@@ -42,12 +42,11 @@ export const authService = {
 
     /**
      * Inscrit un nouvel utilisateur (rôle USER par défaut côté back).
+     * Aucune session n'est ouverte : l'adresse doit d'abord être confirmée.
      * @param {{ firstName: string, lastName: string, email: string, password: string }} payload
-     * @returns {Promise<object>} AuthResponse
      */
     async register(payload) {
-        const envelope = await http.post('/auth/register', payload)
-        return envelope.data
+        await http.post('/auth/register', payload)
     },
 
     /**

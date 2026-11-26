@@ -149,15 +149,14 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     /**
-     * Inscrit puis connecte l'utilisateur (le back renvoie directement les jetons).
-     * On garde la session par défaut après une inscription réussie.
+     * Inscrit l'utilisateur sans ouvrir de session : l'adresse doit être confirmée avant
+     * la première connexion. Le back répond de la même façon que l'adresse soit libre ou
+     * non, l'écran affiche donc toujours le même message.
      */
     async function register(payload) {
         loading.value = true
         try {
-            const authResponse = await authService.register(payload)
-            await establishSession(authResponse, true)
-            return user.value
+            await authService.register(payload)
         } finally {
             loading.value = false
         }
