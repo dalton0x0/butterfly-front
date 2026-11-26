@@ -34,7 +34,7 @@ const LABELS = {
   },
   REGISTRATIONS: {
     title: 'Nouvelles inscriptions',
-    description: "Un compte est créé par l'inscription publique."
+    description: "Un compte créé par l'inscription publique confirme son adresse."
   }
 }
 
