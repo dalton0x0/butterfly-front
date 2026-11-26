@@ -259,6 +259,7 @@ onMounted(load)
               {{ user.enabled ? 'Actif' : 'Désactivé' }}
             </span>
             <StatusChip v-if="user.pendingActivation" label="Invitation en attente" variant="warning"/>
+            <StatusChip v-else-if="user.emailVerified === false" label="Adresse non confirmée" variant="warning"/>
           </div>
         </div>
       </div>
